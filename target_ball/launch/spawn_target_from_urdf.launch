@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="namespace" default="target"/>
+  <arg name="model" default="$(find pesat_resources)/urdf/ball.urdf"/>
+  <arg name="tf_prefix" default="$(optenv ROS_NAMESPACE)"/>
+  <arg name="x" default="5.0"/>
+  <arg name="y" default="0.0"/>
+  <arg name="z" default="10.5"/>
+
+  <!-- send the robot XML to param server -->
+  <param name="target_description" textfile="$(arg model)"/>
+  <param name="tf_prefix" type="string" value="$(arg tf_prefix)" />
+
+  <!-- push robot_description to factory and spawn robot in gazebo -->
+  <node name="spawn_$(arg namespace)" pkg="gazebo_ros" type="spawn_model"
+   args="-param target_description
+         -urdf
+         -x $(arg x)
+         -y $(arg y)
+         -z $(arg z)
+         -model $(arg namespace)"
+   respawn="false" output="screen">
+  </node>
+</launch>

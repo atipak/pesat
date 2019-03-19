@@ -1,0 +1,5 @@
+publish_default_positions:
+   - 'bebop2/imu_joint'
+   - 'bebop2/imugt_joint'
+   - 'bebop2/odometry_sensor1_joint'
+   - 'bebop2/odometry_sensorgt_joint'

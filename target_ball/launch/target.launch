@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+    <group ns="target">
+        <include file="$(find target_ball)/launch/spawn_target_from_urdf.launch">
+        </include>
+    </group>
+</launch>

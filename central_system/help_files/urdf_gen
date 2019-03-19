@@ -1,0 +1,1 @@
+rosrun xacro xacro -o $(find velocity_controller)/urdf/bebop2.urdf $(find rotors_description)/urdf/mav_generic_odometry_sensor.gazebo namespace:="bebop2" enable_mavlink_interface:="false" enable_ground_truth:="true" enable_logging:="false" mav_name:="bebop2"

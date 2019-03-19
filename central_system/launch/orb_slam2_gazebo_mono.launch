@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="namespace" default="bebop2" />
+  <node name="orb_slam2_gazebo_mono" pkg="orb_slam2_ros"
+      type="orb_slam2_ros_mono" args="
+          $(find orb_slam2_ros)/orb_slam2/Vocabulary/ORBvoc.txt
+          $(find pesat_resources)/config/gazebo_camera.yaml"
+      output="screen">
+       <remap from="/camera/image_raw" to="$(arg namespace)/camera_base/image_raw" />
+
+       <param name="publish_pointcloud" type="bool" value="true" />
+       <param name="pointcloud_frame_id" type="string" value="map" />
+       <param name="camera_frame_id" type="string" value="$(arg namespace)/camera_base_link" />
+  </node>
+</launch>

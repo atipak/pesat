@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+
+  <node name="bebop_moveit" pkg="central_system" type="bebop_moveit_tut.py" respawn="false" output="screen">
+  </node>
+
+</launch>

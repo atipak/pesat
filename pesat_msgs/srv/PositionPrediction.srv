@@ -1,0 +1,5 @@
+# probabilistic maps
+sensor_msgs/Image[] maps
+---
+# target position
+geometry_msgs/Pose[] target

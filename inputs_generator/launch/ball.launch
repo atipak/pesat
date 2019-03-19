@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+
+<launch>
+	<node name="generator" pkg="inputs_generator" type="ball_recognition.py" output="screen"/>
+</launch>

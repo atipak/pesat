@@ -1,0 +1,2 @@
+model_checkpoint_path: "ball_recognition"
+all_model_checkpoint_paths: "ball_recognition"

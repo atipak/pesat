@@ -1,0 +1,7 @@
+# target position
+geometry_msgs/Pose[] target
+# drone position
+geometry_msgs/Pose[] drone
+---
+# probabilistic maps
+sensor_msgs/Image[] maps
