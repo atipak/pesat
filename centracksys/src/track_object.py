@@ -56,6 +56,7 @@ class TargetPursuer(object):
         self.image_width = self.params["image_width"]
         self.image_height = self.params["image_height"]
         self.last_seen = 0  # we start in search mode
+        self.last_position_time = -1
 
     def init_prediction(self):
         self.position_epsilon = self.params["position_epsilon"]  # meters
@@ -105,6 +106,7 @@ class TargetPursuer(object):
             r = 1
         return int(value) + r
 
+    # callbacks
     def callback_target_information(self, data):
         self.target_information = data
         if data:
@@ -171,7 +173,6 @@ class TargetPursuer(object):
             pose_goal.position.z = p.pose.position.z
             (_, _, yaw) = tf.transformations.euler_from_quaternion(p.pose.orientation)
             quaternion = tf.transformations.quaternion_from_euler(0, 0, yaw)
-            # type(pose) = geometry_msgs.msg.Pose
             pose_goal.orientation.x = quaternion[0]
             pose_goal.orientation.y = quaternion[1]
             pose_goal.orientation.z = quaternion[2]
@@ -224,7 +225,7 @@ class TargetPursuer(object):
             print("Service did not process request: " + str(exc))
         return
 
-    def current_next_positions(self, rounded_time):
+    def current_next_predicted_poses(self, rounded_time):
         index = int(rounded_time / 0.5)
         if index >= len(self.pmaps):
             return (0, 0, 0, 0)
@@ -385,9 +386,17 @@ class TargetPursuer(object):
         else:
             return t_plan
 
+    def add_position_to_history(self, target_x, target_y, target_yaw, position_time, buffer_length):
+        if position_time != self.last_position_time:
+            self.history_positions.append(self.Pose(target_x, target_y, target_yaw))
+        else:
+            self.history_positions[buffer_length - 1] = self.Pose(target_x, target_y, target_yaw)
+
     def step(self):
+        # time from last prediction
         diff = rospy.Time.now() - self.last_correction
         # time is rounded up 0.5 s
+        position_time = self.rounding(rospy.Time.now())
         rounded_time = self.rounding(diff)
         buffer_length = len(self.history_positions)
         # add new data
@@ -400,37 +409,42 @@ class TargetPursuer(object):
                              trans.transform.rotation.z, trans.transform.rotation.w]
             (_, _, target_yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
             # add new position
-            self.history_positions.append(self.Pose(target_x, target_y, target_yaw))
+            self.add_position_to_history(target_x, target_y, target_yaw, position_time, buffer_length)
         else:
+            # tracking timeout -> start search
             if rospy.Time.now() - self.last_seen > self.track_timeout:
                 return None
             else:
+                # add predicted value
                 if self.pmaps is not None:
-                    (x_map, y_map, x_map_next, y_map_next) = self.current_next_positions(rounded_time)
+                    (x_map, y_map, x_map_next, y_map_next) = self.current_next_predicted_poses(rounded_time)
                     angle = 0
                     if x_map != x_map_next and y_map != y_map_next:
                         angle = self.get_predicted_yaw(x_map, y_map, x_map_next, y_map_next)
-                    self.history_positions.append(self.Pose(x_map, y_map, angle))
+                    self.add_position_to_history(x_map, y_map, angle, position_time, buffer_length)
+                # add last position
                 elif buffer_length > 0:
-                    self.history_positions.append(self.history_positions[buffer_length - 1])
+                    pose = self.history_positions[buffer_length - 1]
+                    self.add_position_to_history(pose.x, pose.y, pose.yaw, position_time, buffer_length)
+                # try to add position of drone
                 else:
                     try:
                         trans = self.tfBuffer.lookup_transform(self.params["map"], self.params['base_link'],
                                                                rospy.Time())
-                        self.history_positions.append(
-                            self.Pose(trans.transform.translation.x, trans.transform.translation.y, 0))
+                        self.add_position_to_history(trans.transform.translation.x, trans.transform.translation.y, 0,
+                                                     position_time, buffer_length)
                     except:
-                        self.history_positions.append(self.Pose(0, 0, 0))
+                        self.add_position_to_history(0, 0, 0, position_time, buffer_length)
 
         # enough data to perform prediction
         if buffer_length > self.history_query_length:
             # time from last predition correction
             replaning = False
             if self.pmaps is not None:
-                (x_map, y_map, x_map_next, y_map_next) = self.current_next_positions(rounded_time)
+                pose = self.history_positions[buffer_length - 1]
+                (x_map, y_map, x_map_next, y_map_next) = self.current_next_predicted_poses(rounded_time)
                 # is target in neighbourhood from prediction
-                replaning = self.need_replanning(x_map, y_map, x_map_next, y_map_next, target_x, target_y,
-                                                 target_yaw)
+                replaning = self.need_replanning(x_map, y_map, x_map_next, y_map_next, pose.x, pose.y, pose.yaw)
             if self.plan is None or self.pmaps is None or diff > self.correction_timeout or replaning:
                 self.get_new_probability_maps(buffer_length)
                 replaning = True
@@ -449,10 +463,12 @@ class TargetPursuer(object):
             t_image = self.get_cmd_vel_image()
             return self.choose_right_vel(t_dronet, t_image, t_plan)
 
+        self.last_position_time = position_time
+
 
 if __name__ == "__main__":
     tp = TargetPursuer()
     rate = rospy.Rate(20)
     while not rospy.is_shutdown():
         tp.step()
-    rate.sleep()
+        rate.sleep()

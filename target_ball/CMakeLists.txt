@@ -10,6 +10,14 @@ project(target_ball)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  tf
+  tf2_ros
+  geometry_msgs
+  std_msgs
+  moveit_msgs
+  shape_msgs
+  moveit_commander
+  gazebo_msgs
 )
 
 ## System dependencies are found with CMake's conventions

@@ -30,6 +30,7 @@ class RenEnviroment(object):
         self.overlimit_const = -0.15  # 15 percent per meter
         self.pub_set_model = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
         self.side_max_shift = self.max_shift / np.sqrt(2)
+        self.config = rospy.get_param("environment_config")
 
     def step(self, actions):
         if not self.initialized:
@@ -231,9 +232,11 @@ class RenEnviroment(object):
                 gazebo_nodes.append(nodes[i])
         for node in gazebo_nodes:
             os.system("rosnode kill " + node)
-        os.system(
-            "roslaunch velocity_controller bebop_cmd_vel.launch extra_localization:=false\
-             world_name:=box_world world_path:=$(find inputs_generator)/worlds")
+        restart_command = "roslaunch velocity_controller bebop_cmd_vel.launch"
+        restart_command += " extra_localization:=" + self.config["extra_localization"]
+        restart_command += " world_name:=" + self.config["world_name"]
+        restart_command += " world_path:=" + self.config["world_path"]
+        os.system(restart_command)
 
     def find_random_place(self):
         max_distance = 14

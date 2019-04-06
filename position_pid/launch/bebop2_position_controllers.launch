@@ -1,0 +1,16 @@
+<launch>
+    <rosparam file="$(find pesat_resources/config/position_pid_config/hardware.yaml" command="load"/>
+    <rosparam file="$(find pesat_resources/config/position_pid_config/controllers.yaml" command="load"/>
+    <rosparam file="$(find pesat_resources/config/position_pid_config/joint_limits.yaml" command="load"/>
+    <node name="pid_controller" pkg="position_pid" type="bebop2_hardware_interface_node" output="screen"/>
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/"
+        args="
+            /bebop2/controller/state
+            /bebop2/controller/position/X_AXIS
+            /bebop2/controller/position/Y_AXIS
+            /bebop2/controller/position/Z_AXIS
+            /bebop2/controller/position/YAW_ANGLE
+            /bebop2/controller/position/HORIZONTAL_ANGLE
+            /bebop2/controller/position/VERTICAL_ANGLE
+        "/>
+</launch>

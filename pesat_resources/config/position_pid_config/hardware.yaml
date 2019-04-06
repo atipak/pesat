@@ -1,0 +1,10 @@
+Bebop2:
+  hardware_interface:
+     loop_hz: 10 # hz
+     joints:
+       - X_AXIS
+       - Y_AXIS
+       - Z_AXIS
+       - YAW_ANGLE
+       - HORIZONTAL_ANGLE
+       - VERTICAL_ANGLE

@@ -1,0 +1,31 @@
+joint_limits:
+  X_AXIS:
+    has_velocity_limits: true
+    max_velocity: 1.0 # 17.0
+    has_acceleration_limits: true
+    max_acceleration: 0.0102 # 0.1735
+  Y_AXIS:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 0.0102
+  Z_AXIS:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 0.0103
+  YAW_ANGLE:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 0.012
+  HORIZONTAL_ANGLE:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 0.012
+  VERTICAL_ANGLE:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 0.012

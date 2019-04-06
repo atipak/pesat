@@ -6,7 +6,7 @@ from collections import namedtuple
 box = namedtuple("box", ["center_x", "center_y", "width", "length", "height", "orientation"])
 loaded_box = None
 world_name = "box_world.world"
-path = "/home/patik/Diplomka/dp_ws/src/inputs_generator/worlds/"
+path = "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/"
 world_path = path + world_name
 
 
@@ -126,7 +126,7 @@ def read_box(box_file_name, name, x_pose, y_pose, z_pose, r_orient, p_orient, y_
 
 
 def generate_map(sc_factor=2, world_name="box_world.world",
-                 path="/home/patik/Diplomka/dp_ws/src/inputs_generator/worlds/"):
+                 path="/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/"):
     world_path = path + world_name
     width = int(1000 / sc_factor)
     height = int(1000 / sc_factor)
@@ -185,8 +185,8 @@ def generate_map(sc_factor=2, world_name="box_world.world",
     scale = 1 / 1
     index = 0
     boxes = []
-    box_path = "/home/patik/Diplomka/dp_ws/src/py_scripts/box"
-    skeleton_path = "/home/patik/Diplomka/dp_ws/src/py_scripts/skeleton"
+    box_path = "/home/patik/Diplomka/dp_ws/src/pesat_resouces/texts/box"
+    skeleton_path = "/home/patik/Diplomka/dp_ws/src/pesat_resources/texts/skeleton"
     boxes_string = ""
     for object in objects:
         for o in object:
@@ -212,13 +212,13 @@ def generate_map(sc_factor=2, world_name="box_world.world",
     with open(world_path, "w") as f:
         f.write(skeleton)
 
-    with open('map_data.json', 'w') as outfile:
+    with open('/home/patik/Diplomka/dp_ws/src/pesat_resouces/maps/map_data.json', 'w') as outfile:
         json.dump(boxes, outfile, indent=4)
 
     M = cv2.getRotationMatrix2D((width / 2, height / 2), -90, 1)
     map = cv2.warpAffine(map, M, (width, height))
     # map = cv2.flip(map, 0 )
-    cv2.imwrite("map.bmp", map)
+    cv2.imwrite("/home/patik/Diplomka/dp_ws/src/pesat_resouces/maps/map.bmp", map)
     return map
 
 

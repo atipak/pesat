@@ -1,0 +1,8 @@
+geometry_msgs/Vector3 center
+float64 direction
+float64 camera_range
+float64 radius
+float64 mi
+float64 sigma
+---
+int64 camera_id

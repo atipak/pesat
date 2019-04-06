@@ -11,18 +11,16 @@ from cv_bridge import CvBridge, CvBridgeError
 import tensorflow as tf
 from pesat_msgs.msg import ImageTargetInfo
 
-
 lowerBound0 = np.array([0, 100, 90])
 upperBound0 = np.array([10, 255, 255])
 lowerBound1 = np.array([160, 100, 90])
 upperBound1 = np.array([179, 255, 255])
-#np.set_printoptions(threshold=np.nan)
+# np.set_printoptions(threshold=np.nan)
 
 kernelOpen = np.ones((5, 5))
 kernelClose = np.ones((20, 20))
 
 font = cv2.FONT_HERSHEY_SIMPLEX
-
 
 
 class Network:
@@ -89,12 +87,25 @@ class Network:
         self.saver.restore(self.session, path)
 
 
+# notes
+# FOV_Horizontal = 2 * atan(W/2/f) = 2 * atan2(W/2, f)  radians
+# FOV_Vertical   = 2 * atan(H/2/f) = 2 * atan2(H/2, f)  radians
+# FOV_Diagonal   = 2 * atan2(sqrt(W^2 + H^2)/2, f)
+
+
 class TargetLocalisation(object):
 
     def __init__(self):
         super(TargetLocalisation, self).__init__()
         rospy.init_node('vision', anonymous=False)
-        self.focal_length = 381
+        self.hfov = 1.7
+        self.image_height = 480
+        self.image_width = 856
+        self.focal_length = self.image_width / (2.0 * np.tan(self.hfov / 2.0))
+        self.vfov = 2 * np.arctan2(self.image_height / 2, self.focal_length)
+        self.dfov = 2 * np.arctan2(np.sqrt(self.image_width ^ 2 + self.image_height ^ 2) / 2, self.focal_length)
+        self.vangle_per_pixel = self.vfov / 480
+        self.hangle_per_pixel = self.hfov / 856
         self.bridge = CvBridge()
         self.image = None
         self.pub_target_info = rospy.Publisher('/target/information', ImageTargetInfo, queue_size=10)
@@ -103,6 +114,7 @@ class TargetLocalisation(object):
         self.tfBuffer = tf2_ros.Buffer()
         self.tfListener = tf2_ros.TransformListener(self.tfBuffer)
         self.lock = False
+        self.last_position = None
         self.network = Network(1)
         self.network.construct()
         rospack = rospkg.RosPack()
@@ -132,6 +144,71 @@ class TargetLocalisation(object):
                 vector[1],
                 -vector[0] * np.sin(angle) + vector[2] * np.cos(angle)]
 
+    def get_circles(self, mask):
+        edges = cv2.Canny(mask, 100, 10)
+        cv2.imwrite("m.bmp", mask)
+        cv2.imwrite("edges.bmp", edges)
+        rows = mask.shape[0]
+        columns = mask.shape[1]
+        circles = cv2.HoughCircles(edges, cv2.HOUGH_GRADIENT, 1, rows / 8, param1=50, param2=15, minRadius=1,
+                                   maxRadius=columns)
+        return circles
+
+    def check_hough_and_net(self, circles, values, labels):
+        if circles is not None and len(circles) > 0 and labels == 0:
+            for circle in circles:
+                if abs(circle[2] - values[2]) < 4 and abs(circle[1] - values[1]) < 4 and abs(
+                        circle[0] - values[0]) < 4:
+                    return [(circle[0] + values[0]) / 2, (circle[1] + values[1]) / 2,
+                            (circle[2] + values[2]) / 2]
+        return None
+
+    def real_object_from_circle(self, circle, maskFinal, image, trans, roll, pitch, yaw):
+        # object presented in the image
+        center = (int(circle[0]), int(circle[1]))
+        radius = int(circle[2])
+        # create mask with locality of circle
+        circle_mask = np.zeros(self.image.shape[0:2], dtype='uint8')
+        cv2.circle(circle_mask, center, radius, 255, -1)
+        # how much are red color and circle overlapping
+        and_image = cv2.bitwise_and(maskFinal, circle_mask)
+        area = int(np.pi * radius * radius)
+        area = min(area, cv2.countNonZero(maskFinal))
+        nzCount = cv2.countNonZero(and_image)
+        quotient = 0
+        x = 0
+        y = 0
+        z = 0
+        if area > 0:
+            quotient = float(nzCount) / float(area)
+        if quotient > 0.8:
+            # distance from focal length and average
+            distance = self.focal_length / radius
+            # image axis
+            centerX = image.shape[1] / 2  # cols
+            centerY = image.shape[0] / 2  # rows
+            # shift of target in image from image axis
+            diffX = np.abs(centerX - center[0])
+            diffY = np.abs(centerY - center[1])
+            # sign for shift of camera
+            signX = np.sign(centerX - center[0])
+            signY = np.sign(centerY - center[1])
+            # shift angle of target in image for camera
+            angleX = np.arctan2(diffX, self.focal_length) * signX * -1
+            angleY = np.arctan2(diffY, self.focal_length) * signY * -1
+            angleX1 = diffX * signX * self.hangle_per_pixel
+            angleY1 = diffY * signY * self.vangle_per_pixel
+            # direction of camera in drone_position frame
+            # direction of camera
+            m = tf_ros.transformations.euler_matrix(roll - angleY, pitch, yaw - angleX)
+            vector = m.dot([0.0,0.0,1.0,1.0])
+            vector_distance = np.sqrt(
+                np.power(distance, 2) + np.power(np.tan(angleX) * distance, 2) + np.power(np.tan(angleY) * distance, 2))
+            z = trans.transform.translation.z + vector_distance * vector[2]
+            x = trans.transform.translation.x + vector_distance * vector[0]
+            y = trans.transform.translation.y + vector_distance * vector[1]
+        return {"q": quotient, "x": x, "y": y, "z": z}
+
     def launch(self):
         rate = rospy.Rate(1)
         while not rospy.is_shutdown():
@@ -155,78 +232,91 @@ class TargetLocalisation(object):
                 maskFinal = maskClose
 
                 # predict
-                transposed_image = np.transpose(self.image, (1,0,2))
-                print(transposed_image.shape)
-                resized_image = cv2.resize(cv2.cvtColor(transposed_image, cv2.COLOR_RGB2BGR), (Network.WIDTH, Network.HEIGHT))
+                transposed_image = np.transpose(self.image, (1, 0, 2))
+                resized_image = cv2.resize(cv2.cvtColor(transposed_image, cv2.COLOR_RGB2BGR),
+                                           (Network.WIDTH, Network.HEIGHT))
                 labels, values = self.network.predict([resized_image])
                 values = values[0]
                 labels = labels[0]
-                print(values, labels)
-                if labels == 0:
-                    # object presented in teh image
-                    center = (values[0], values[1])
-                    radius = values[2] / 2
-                    # create mask with locality of circle
-                    circle_mask = np.zeros(self.image.shape[0:2], dtype='uint8')
-                    cv2.circle(circle_mask, center, radius, 255, -1)
-                    # how much are red color and circle overlapping
-                    and_image = cv2.bitwise_and(maskFinal, circle_mask)
-                    print(cv2.countNonZero(maskFinal))
-                    print(cv2.countNonZero(circle_mask))
-                    cv2.imwrite("mask.bmp", maskFinal)
-                    cv2.imwrite("circle.bmp", circle_mask)
-                    cv2.imwrite("image.bmp", self.image)
-                    area = int(np.pi * radius * radius)
-                    nzCount = cv2.countNonZero(and_image)
-                    quotient = 0
-                    if nzCount > 0:
-                        quotient = area / nzCount
-                    if quotient == 0: #> 0.1:
-                        # distance from focal length and average
-                        distance = self.focal_length / (2 * radius)
-                        # image axis
-                        centerX = resized_image.shape[1] / 2  # cols
-                        centerY = resized_image.shape[0] / 2  # rows
-                        # shift of target in image from image axis
-                        diffX = np.abs(centerX - center[0])
-                        diffY = np.abs(centerY - center[1])
-                        # sign for shift of camera
-                        signX = np.sign(diffX)
-                        signY = np.sign(diffY)
-                        # shift angle of target in image for camera
-                        angleX = np.arctan2(diffX, self.focal_length)
-                        angleY = np.arctan2(diffY, self.focal_length)
-                        # direction of camera in drone_position frame
-                        try:
-                            trans = self.tfBuffer.lookup_transform("map", 'bebop2/camera_base_optical_link',
-                                                                   rospy.Time())
-                            explicit_quat = [trans.transform.rotation.x, trans.transform.rotation.y,
-                                             trans.transform.rotation.z, trans.transform.rotation.w]
-                            (r, p, y) = tf_ros.transformations.euler_from_quaternion(explicit_quat)
-                            vector = [0, 0, 1]
-                            # direction of camera
-                            vector = self.rotateY(vector, y + signY * angleY)
-                            vector = self.rotateX(vector, p + signX * angleX)
-                            z = trans.transform.translation.z + distance * vector[2]
-                            x = trans.transform.translation.x + distance * vector[0]
-                            y = trans.transform.translation.y + distance * vector[1]
-                            t = TransformStamped()
-                            t.header.stamp = rospy.Time.now()
-                            t.header.frame_id = "map"
-                            t.child_frame_id = "tarloc/target"
-                            t.transform.translation.x = x
-                            t.transform.translation.y = y
-                            t.transform.translation.z = z
-                            t.transform.rotation.w = 1
-                            self.br.sendTransform(t)
-                            information.quotient = quotient
-                            information.centerX = center[0]
-                            information.centerY = center[1]
-                            information.radius = radius
-                        except (
-                                tf2_ros.LookupException, tf2_ros.ConnectivityException,
-                                tf2_ros.ExtrapolationException):
-                            rospy.loginfo("No map -> camera_optical_link transformation!")
+                circles = self.get_circles(maskFinal)
+                if circles is not None:
+                    circles = circles[0]
+                else:
+                    circles = []
+                correct_circle = None
+                correct_values = None
+                if len(circles) > 0 or labels == 0:
+                    try:
+                        trans = self.tfBuffer.lookup_transform("map", 'bebop2/camera_base_optical_link',
+                                                               rospy.Time())
+                        explicit_quat = [trans.transform.rotation.x, trans.transform.rotation.y,
+                                         trans.transform.rotation.z, trans.transform.rotation.w]
+                        (roll, pitch, yaw) = tf_ros.transformations.euler_from_quaternion(explicit_quat)
+                        # network and one circle from hough transform are similar
+                        correct_circle = self.check_hough_and_net(circles, values, labels)
+                        if correct_circle is not None:
+                            correct_values = self.real_object_from_circle(correct_circle, maskFinal, resized_image,
+                                                                          trans, roll, pitch, yaw)
+                        # choose one circle from circles
+                        if correct_circle is None:
+                            distance = 0
+                            dist = 0
+                            # check if predicted circle from net is usable, add it
+                            if labels == 0:
+                                if len(circles) == 0:
+                                    circles = [[values[0], values[1], values[2] / 2]]
+                                else:
+                                    circles = np.append(circles, [[values[0], values[1], values[2] / 2]], axis=0)
+                            if len(circles) > 0:
+                                for circle in circles:
+                                    circle_values = self.real_object_from_circle(circle, maskFinal, resized_image,
+                                                                                 trans, roll, pitch, yaw)
+                                    # circle is at least from 80% determined correct
+                                    if circle_values["q"] > 0.8:
+                                        if self.last_position is not None:
+                                            # euclidian distance
+                                            dist = np.linalg.norm(self.last_position - np.array(
+                                                [circle_values["x"], circle_values["y"], circle_values["z"]]))
+                                        if correct_circle is None:
+                                            correct_circle = circle
+                                            correct_values = circle_values
+                                            distance = dist
+                                        else:
+                                            if self.last_position is not None:
+                                                if dist < distance:
+                                                    correct_circle = circle
+                                                    correct_values = circle_values
+                                                    distance = dist
+                                            else:
+                                                if circle[2] > correct_circle[
+                                                    2]:  # and circle_values["q"] > correct_values["q"]:
+                                                    correct_circle = circle
+                                                    correct_values = circle_values
+                    except (tf2_ros.LookupException, tf2_ros.ConnectivityException,
+                            tf2_ros.ExtrapolationException) as e:
+                        rospy.loginfo("No map -> camera_optical_link transformation!")
+                        rospy.loginfo(e)
+                if correct_circle is not None:
+                    t = TransformStamped()
+                    t.header.stamp = rospy.Time.now()
+                    t.header.frame_id = "map"
+                    t.child_frame_id = "tarloc/target"
+                    t.transform.translation.x = correct_values["x"]
+                    t.transform.translation.y = correct_values["y"]
+                    t.transform.translation.z = correct_values["z"]
+                    t.transform.rotation.w = 1
+                    self.br.sendTransform(t)
+                    information.quotient = correct_values["q"]
+                    information.centerX = correct_circle[0]
+                    information.centerY = correct_circle[1]
+                    information.radius = correct_circle[2]
+                    #print(correct_circle)
+                    #print(correct_values)
+                    #circle_mask = np.zeros(self.image.shape[0:2], dtype='uint8')
+                    #cv2.circle(circle_mask, (int(correct_circle[0]), int(correct_circle[1])), int(correct_circle[2]),
+                    #           255, -1)
+                    #cv2.imwrite("circle_mask.bmp", circle_mask)
+                    self.last_position = np.array([correct_values["x"], correct_values["y"], correct_values["z"]])
             self.pub_target_info.publish(information)
             self.image = None
             self.lock = False
