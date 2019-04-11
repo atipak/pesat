@@ -9,6 +9,8 @@ from geometry_msgs.msg import Quaternion, PoseStamped
 from gazebo_msgs.msg import ModelState
 from pesat_msgs.msg import ImageTargetInfo
 import helper_pkg.building_blocks as bb
+import helper_pkg.utils as utils
+
 
 class RenEnviroment(object):
     def __init__(self):
@@ -23,7 +25,7 @@ class RenEnviroment(object):
         self.sequential_number = 0
         self.initialized = False
         self.max_shift = 12
-        self.map = None
+        self.map = utils.Map([])
         self.maps = []
         self.width = 640
         self.battery_const = -0.02  # two percents per meter
@@ -45,7 +47,7 @@ class RenEnviroment(object):
         gazebo_state = self.to_gazebo_state(next_drone_pose)
         self.pub_set_model.publish(gazebo_state)
         gazebo_set_time = rospy.Time.now()
-        if self.map[int(next_drone_pose.pose.position.x), int(next_drone_pose.pose.position.y)] == 255:
+        if self.map.is_free(int(next_drone_pose.pose.position.x), int(next_drone_pose.pose.position.y)):
             # reward is given by drone's position
             d = rospy.Duration(0.1, 0)
             rospy.sleep(d)
@@ -69,13 +71,13 @@ class RenEnviroment(object):
         # generate init conditions
         # create map with building_blocks
         map = bb.generate_map()
-        self.map = cv2.resize(map, (map.shape[0] * 2, map.shape[1] * 2))
+        self.map = utils.Map(cv2.resize(map, (map.shape[0] * 2, map.shape[1] * 2)))
         self.maps.append(self.map)
         # restart enviroment with new map
         self.restart_simulation()
         # create first frame_history actions from random start
         # place for target is randomly chosen
-        target_x, target_y, drone_x, drone_y = self.find_random_place()
+        target_x, target_y, drone_x, drone_y = self.map.random_place_target_drone(max_distance=14, min_distance=4)
         # drone is in position where see target and its given with perfect information
         drone_positions = [[drone_x, drone_y]]
         target_positions = [[target_x, target_y]]
@@ -87,12 +89,12 @@ class RenEnviroment(object):
             if target_shift_x != 0 or target_shift_y != 0:
                 sign_x = np.sign(target_shift_x)
                 sign_y = np.sign(target_shift_y)
-                next_drone_x, next_drone_y = self.free_place_in_field(
+                next_drone_x, next_drone_y = self.map.free_place_in_field(
                     drone_x + sign_x * int(self.side_max_shift * np.abs(target_shift_x / self.max_shift)),
                     drone_y + sign_y * int(self.side_max_shift * np.abs(target_shift_y / self.max_shift)), 0,
                     self.side_max_shift)
                 if next_drone_x is None:
-                    next_drone_x, next_drone_y = self.free_place_in_field(drone_x, drone_y, 0, self.side_max_shift)
+                    next_drone_x, next_drone_y = self.map.free_place_in_field(drone_x, drone_y, 0, self.side_max_shift)
                 if next_drone_x is None:
                     return self.reset()
                 drone_x, drone_y, target_x, target_y = next_drone_x, next_drone_y, next_target_x, next_target_y
@@ -116,17 +118,17 @@ class RenEnviroment(object):
         if min_x < 0:
             min_x = 0
             map_center[0] = 320
-        if max_x > self.map.shape[0]:
-            max_x = self.map.shape[0]
-            map_center[0] = self.map.shape[0] - 320
-        min_y = self.map.shape[1] - 320
-        max_y = self.map.shape[1] + 320
+        if max_x > self.map.width:
+            max_x = self.map.width
+            map_center[0] = self.map.width - 320
+        min_y = self.map.height - 320
+        max_y = self.map.height + 320
         if min_y < 0:
             min_y = 0
             map_center[1] = 320
-        if max_y > self.map.shape[1]:
-            max_y = self.map.shape[1]
-            map_center[1] = self.map.shape[1] - 320
+        if max_y > self.map.height:
+            max_y = self.map.height
+            map_center[1] = self.map.height - 320
         index = 0
         for s in target:
             shift_x = map_center[0] - s[0]
@@ -166,7 +168,7 @@ class RenEnviroment(object):
                         y_index = self.width
                     tranformed_state[x_index, y_index, index] = 1 / 9
             index += 1
-        tranformed_state[:, :, 16] = self.map[min_x:max_x, min_y, max_y]
+        tranformed_state[:, :, 16] = self.map.map[min_x:max_x, min_y, max_y]
         # get state from step/another package and creates input for network
         # state [frame_history * position of target, frame_history * position of drone, id of map]
         # returns images 640 * 640 representing position of given values
@@ -238,50 +240,6 @@ class RenEnviroment(object):
         restart_command += " world_path:=" + self.config["world_path"]
         os.system(restart_command)
 
-    def find_random_place(self):
-        max_distance = 14
-        min_distance = 4
-        while True:
-            x = np.random.random_integers(0, self.map.shape[0])
-            y = np.random.random_integers(0, self.map.shape[1])
-            if self.map[x, y] == 255:
-                i, j = self.free_place_in_field(x, y, min_distance, max_distance)
-                if i is not None:
-                    return x, y, i, j
-
-    def free_place_in_field(self, x, y, min_distance, max_distance):
-        min_x = x - max_distance
-        if min_x < 0:
-            min_x = 0
-        max_x = x + max_distance
-        if max_x > self.map.shape[0]:
-            max_x = self.map.shape[0]
-        min_y = y - max_distance
-        if min_y < 0:
-            min_y = 0
-        max_y = y + max_distance
-        if max_y > self.map.shape[1]:
-            max_y = self.map.shape[1]
-
-        min_xs = x - min_distance
-        if min_xs < 0:
-            min_xs = 0
-        max_xs = x + min_distance
-        if max_xs > self.map.shape[0]:
-            max_xs = self.map.shape[0]
-        min_ys = y - min_distance
-        if min_ys < 0:
-            min_ys = 0
-        max_ys = y + min_distance
-        if max_ys > self.map.shape[1]:
-            max_ys = self.map.shape[1]
-        range_x = range(min_x, min_xs) + range(max_xs, max_x)
-        range_y = range(min_y, min_ys) + range(max_ys, max_y)
-        for i in range_x:
-            for j in range_y:
-                if self.map[i, j] == 255:
-                    return i, j
-        return None, None
 
 
 env = RenEnviroment()

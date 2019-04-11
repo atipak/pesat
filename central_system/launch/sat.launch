@@ -7,6 +7,10 @@
 	<arg name="targetloc" default="false" />
 	<arg name="target" default="true" />
 	<arg name="tracking" default="false" />
+	<arg name="dynamic_avoidance" default="false" />
+	<arg name="planning" default="false" />
+	<arg name="cctv" default="false" />
+	<arg name="pid_controller" default="false" />
 
 	<!-- Gazebo -->
 	<include file="$(find velocity_controller)/launch/bebop_cmd_vel.launch">
@@ -15,16 +19,20 @@
 		<!--<arg name="world_name" value="box_world"/>-->
 		<arg name="world_path" value="$(find pesat_resources)/worlds"/>
 	</include>
+
 	<!-- Robot localization package -->
 	<group if="$(arg extra_localization)">
 		<include file="$(find central_system)/launch/localization.launch"/>
 	</group>
+
 	<!-- Moveit -->
 	<include file="$(find central_system)/launch/moveit.launch" if="$(arg moveit)"/>
+
 	<!-- SLAM -->
 	<include file="$(find central_system)/launch/orb_slam2_gazebo_mono.launch" if="$(arg slam)">
 	    <arg name="namespace" value="bebop2" />
 	</include>
+
 	<!-- Dronet -->
 	<include file="$(find central_system)/launch/full_perception_launch.launch" if="$(arg dronet)">
 		<arg name="bebop_launch" value="false" />
@@ -33,14 +41,33 @@
 	<include file="$(find central_system)/launch/deep_navigation.launch" if="$(arg dronet)">
 		<arg name="namespace" value="bebop2" />
 	</include>
+
 	<!-- Target localization -->
 	<include file="$(find target_localization)/launch/target_loc.launch" if="$(arg targetloc)">
 		<!--<arg name="image_topic" value="/bebop2/camera_base/image_raw"/>-->
 	</include>
+
 	<!-- Target ball -->
 	<include file="$(find target_ball)/launch/target.launch" if="$(arg target)">
 	</include>
+
 	<!-- Central tracking system -->
     <include file="$(find centracksys)/launch/tracksys.launch" if="$(arg tracking)">
+	</include>
+
+	<!-- Dynamic avoidance algoritmus and system -->
+    <include file="$(find dynamic_avoidance)/launch/dynamic_avoidance.launch" if="$(arg dynamic_avoidance)">
+	</include>
+
+	<!-- Search planner for drone -->
+    <include file="$(find drone_planning)/launch/drone_planner.launch" if="$(arg planning)">
+	</include>
+
+	<!-- CCTV cameras for filling database of drone, support for searching -->
+    <include file="$(find cctv_system)/launch/cctv_system.launch" if="$(arg cctv)">
+	</include>
+
+	<!-- 6 DOF PID for drone -->
+    <include file="$(find position_pid)/launch/bebop2_position_controllers.launch" if="$(arg pid_controller)">
 	</include>
 </launch>

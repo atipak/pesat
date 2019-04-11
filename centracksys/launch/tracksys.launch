@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
-    <rosparam command="load" file="$(find pesat_resources)/config/track_config" />
+    <rosparam command="load" file="$(find pesat_resources)/config/track_config.yaml" />
     <node name="track_system" pkg="centracksys" type="track_object.py" output="screen"/>
 </launch>

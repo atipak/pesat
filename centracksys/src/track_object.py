@@ -7,7 +7,7 @@ import tf
 import tf2_ros
 import numpy as np
 from geometry_msgs.msg import Pose, Twist
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Float32
 from moveit_msgs.msg import AttachedCollisionObject, PlanningScene
 from shape_msgs.msg import SolidPrimitive
 import moveit_commander
@@ -15,6 +15,7 @@ import sys
 from pesat_msgs.srv import PredictionMaps, PositionPrediction
 import dronet_perception.msg as dronet_perception
 from pesat_msgs.msg import ImageTargetInfo
+import helper_pkg.utils as utils
 
 
 class TargetPursuer(object):
@@ -42,12 +43,21 @@ class TargetPursuer(object):
         self.init_dronet()
 
     def init_dronet(self):
-        self.pub_dronet = rospy.Publisher(self.params['state_change_topic'], Bool, queue_size=10)
-        self.dronet_cmd_vel = None
-        self.dronet_prediction = None
-        rospy.Subscriber(self.params["dronet_cmd_vel_topic"], Twist, self.callback_dronet_vel)
-        rospy.Subscriber(self.params["cnn_prediction_topic"], dronet_perception.CNN_out,
-                         self.callback_dronet_prediction)
+        davoidence_switch_topic = "/dynamic_avoidance/switch"
+        davoidence_alert_topic = "/dynamic_avoidance/alert"
+        davoidence_collision_topic = "/dynamic_avoidance/collision"
+        davoidence_is_avoiding_topic = "/dynamic_avoidance/is_avoiding"
+        davoidence_centering_topic = "/dynamic_avoidance/is_avoiding"
+        self._pub_da_switch = rospy.Publisher(davoidence_switch_topic, Bool, queue_size=10)
+        self._pub_da_alert = rospy.Publisher(davoidence_alert_topic, Bool, queue_size=10)
+        rospy.Subscriber(davoidence_is_avoiding_topic, Bool, self.callback_da_avoiding)
+        rospy.Subscriber(davoidence_collision_topic, Float32, self.callback_da_collision)
+        rospy.Subscriber(davoidence_centering_topic, Twist, self.callback_da_centering)
+        self._da_is_avoiding = False
+        self._da_collision = 0.0
+        self._da_centering = None
+        self._pub_da_alert.publish(True)
+
 
     def init_target_localization(self):
         rospy.Subscriber(self.params["target_information_topic"], ImageTargetInfo, self.callback_target_information)
@@ -96,27 +106,20 @@ class TargetPursuer(object):
     def reset(self):
         self.history_positions.clear()
 
-    def rounding(self, value):
-        diff = value - int(value)
-        if diff < 0.25:
-            r = 0.0
-        elif diff < 0.75:
-            r = 0.5
-        else:
-            r = 1
-        return int(value) + r
-
     # callbacks
     def callback_target_information(self, data):
         self.target_information = data
         if data:
             self.target_seen_time = rospy.Time().now()
 
-    def callback_dronet_vel(self, data):
-        self.dronet_cmd_vel = data
+    def callback_da_avoiding(self, data):
+        self._da_is_avoiding = data
 
-    def callback_dronet_prediction(self, data):
-        self.dronet_prediction = data
+    def callback_da_centering(self, data):
+        self._da_centering = data
+
+    def callback_da_collision(self, data):
+        self._da_collision = data
 
     def get_coord_on_map(self, field):
         x_map = self.pmap_center[0] + (field % self.pmap_size - self.pmap_size / 2.0)
@@ -246,6 +249,7 @@ class TargetPursuer(object):
         return (x_map, y_map, x_map_next, y_map_next)
 
     def get_cmd_vel_dronet(self):
+
         if self.dronet_prediction.collision_prob > 1:
             return self.dronet_cmd_vel
         twist = Twist()
@@ -396,15 +400,15 @@ class TargetPursuer(object):
         # time from last prediction
         diff = rospy.Time.now() - self.last_correction
         # time is rounded up 0.5 s
-        position_time = self.rounding(rospy.Time.now())
-        rounded_time = self.rounding(diff)
+        position_time = utils.rounding(rospy.Time.now())
+        rounded_time = utils.rounding(diff)
         buffer_length = len(self.history_positions)
         # add new data
         if self.target_information.quotient > 0:
             # data from camera
             trans = self.tfBuffer.lookup_transform(self.params["map"], self.params['target_position'], rospy.Time())
-            target_x = self.rounding(trans.transform.translation.x)
-            target_y = self.rounding(trans.transform.translation.y)
+            target_x = utils.rounding(trans.transform.translation.x)
+            target_y = utils.rounding(trans.transform.translation.y)
             explicit_quat = [trans.transform.rotation.x, trans.transform.rotation.y,
                              trans.transform.rotation.z, trans.transform.rotation.w]
             (_, _, target_yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
@@ -458,6 +462,7 @@ class TargetPursuer(object):
                     self.set_new_plan()
         # path following
         if self.plan is not None:
+            # TODO change dronet a dynamical collision avoidance
             t_dronet = self.get_cmd_vel_dronet()
             t_plan = self.get_cmd_vel_plan()
             t_image = self.get_cmd_vel_image()

@@ -1,18 +1,16 @@
 #!/usr/bin/env python
 import rospy
-from collections import deque, namedtuple
+from collections import namedtuple
 import threading
-import tf
 import tf2_ros
 import numpy as np
 from std_msgs.msg import Empty
-from geometry_msgs.msg import TransformStamped, Vector3
+import helper_pkg.utils as utils
 
 from pesat_msgs.msg import Notification, CameraShot, CameraUpdate
 from pesat_msgs.srv import CameraRegistration
 
 cam = namedtuple("Camera", ["center", "end", "start", "radius_squared", "mi", "sigma", "id", "default"])
-point = namedtuple("Point", ["x", "y"])
 active_cam = namedtuple("ActiveCamera", ["last_position", "serial_number", "likelihood"])
 
 
@@ -28,7 +26,7 @@ class Cctv():
         rospy.Subscriber("/cctv/shot", CameraShot, self.callback_shot)
         rospy.Subscriber("/cctv/update", CameraUpdate, self.callback_update)
         self._tfBuffer = tf2_ros.Buffer()
-        self._tfListener = tf2_ros.TransformListener(self.tfBuffer)
+        self._tfListener = tf2_ros.TransformListener(self._tfBuffer)
         self._s = rospy.Service('/cctv/registration', CameraRegistration, self.camera_registration)
         self._sn_lock = threading.Lock()
         self._id_lock = threading.Lock()
@@ -52,10 +50,10 @@ class Cctv():
         self._pub_notify.publish(notification)
 
     def callback_update(self, data):
-        default = point(data.default.x, data.default.y)
-        center = point(data.center.x, data.center.y)
-        start = point(data.start.x, data.start.y)
-        end = point(data.end.x, data.end.y)
+        default = utils.Math.Point(data.default.x, data.default.y)
+        center = utils.Math.Point(data.center.x, data.center.y)
+        start = utils.Math.Point(data.start.x, data.start.y)
+        end = utils.Math.Point(data.end.x, data.end.y)
         radius_squared = data.radius * data.radius
         self._cameras[data.camera_id] = cam(center, end, start, radius_squared, data.mi,
                                             data.sigma, data.camera_id, default)
@@ -71,34 +69,20 @@ class Cctv():
             camera_id = len(self._cameras)
         return camera_id
 
-    def isWithinRadius(self, p, radiusSquared):
-        return p.x * p.x + p.y * p.y <= radiusSquared
-
-    def areClockwise(self, p1, p2):
-        return -p1.x * p2.y + p1.y * p2.x > 0;
-
-    def is_inside_sector(self, p, camera):
-        rel_p = point(p.x - camera.center.x, p.y - camera.center.y)
-        return not self.areClockwise(camera.start, rel_p) and self.areClockwise(camera.end, rel_p) and \
-               self.isWithinRadius(rel_p, camera.radius_squared)
-
-    def cartesian_coor(self, angle, radius):
-        return point(np.cos(angle) * radius, np.sin(angle) * radius)
-
     def add_camera(self, camera):
         x, y, direction, camera_range, radius, mi, sigma = camera[0], camera[1], camera[2], camera[3], camera[4], \
                                                            camera[5], camera[6]
         end_angle = direction + camera_range / 2.0
         start_angle = direction - camera_range / 2.0
-        v1 = self.cartesian_coor(end_angle, radius)
-        v2 = self.cartesian_coor(start_angle, radius)
-        if self.areClockwise(v1, v2):
+        v1 = utils.Math.cartesian_coor(end_angle, radius)
+        v2 = utils.Math.cartesian_coor(start_angle, radius)
+        if utils.Math.areClockwise(v1, v2):
             end_arm, start_arm = v1, v2
         else:
             end_arm, start_arm = v2, v1
-        default = self.cartesian_coor(direction, radius / 2.0)
+        default = utils.Math.cartesian_coor(direction, radius / 2.0)
         camera_id = self.save_camera_id()
-        c = cam(point(x, y), end_arm, start_arm, radius * radius, mi, sigma, camera_id, default)
+        c = cam(utils.Math.Point(x, y), end_arm, start_arm, radius * radius, mi, sigma, camera_id, default)
         self._cameras.append(c)
         return camera_id
 
@@ -123,11 +107,11 @@ class Cctv():
     def check_cameras(self):
         if self._switched:
             try:
-                trans = self.tfBuffer.lookup_transform("map", 'target/base_link', rospy.Time())
-                target = point(trans.transform.translation.x, trans.transform.translation.y)
+                trans = self._tfBuffer.lookup_transform("map", 'target/base_link', rospy.Time())
+                target = utils.Math.Point(trans.transform.translation.x, trans.transform.translation.y)
                 activated = {}
                 for camera in self._cameras:
-                    if self.is_inside_sector(target, camera):
+                    if utils.Math.is_inside_sector(target, camera):
                         if camera.id in self._active_cameras:
                             notification = Notification()
                             ac = self._active_cameras[camera.id]
@@ -138,12 +122,12 @@ class Cctv():
                             notification.velocity_x = target.x - ac.last_position.x
                             notification.velocity_y = target.y - ac.last_position.y
                             self._pub_notify.publish(notification)
-                            self._active_cameras[camera.id] = active_cam(point(target.x, target.y),
+                            self._active_cameras[camera.id] = active_cam(utils.Math.Point(target.x, target.y),
                                                                          ac.serial_number, ac.likelihood)
                         else:
                             sn = self.save_serial_number()
                             lik = np.random.normal(camera.mi, camera.sigma)
-                            self._active_cameras[camera.id] = active_cam(point(target.x, target.y), sn, lik)
+                            self._active_cameras[camera.id] = active_cam(utils.Math.Point(target.x, target.y), sn, lik)
                         activated[camera.id] = True
                 self.clear_active_cameras(activated)
             except Exception as e:

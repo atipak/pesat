@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+    <rosparam command="load" file="$(find pesat_resources)/config/planner_config.yaml" />
+    <node name="drone_planner" pkg="drone_planning" type="drone_planner.py" output="screen"/>
+</launch>

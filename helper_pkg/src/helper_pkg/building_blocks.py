@@ -1,7 +1,8 @@
-import cv2
-import numpy as np
 import json
 from collections import namedtuple
+
+import cv2
+import numpy as np
 
 box = namedtuple("box", ["center_x", "center_y", "width", "length", "height", "orientation"])
 loaded_box = None
