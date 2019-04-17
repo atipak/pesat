@@ -10,27 +10,10 @@ drone_planner:
         maximal_time: 300
     watch_point_planner:
         drone_place_planner_srv_name: ""
-        drone_speed: 17
     move_planner:
-        target_information_topic: ""
-        cmd_vel_topic: ""
-        desired_pos_topic: ""
-        current_pos_topic: ""
-        current_vel_topic: ""
-        update_velocities_topic: ""
-        davoidence_switch_topic: "/dynamic_avoidance/switch"
-        davoidence_alert_topic: "/dynamic_avoidance/alert"
-        davoidence_collision_topic: "/dynamic_avoidance/collision"
-        davoidence_is_avoiding_topic: "/dynamic_avoidance/is_avoiding"
-        db_camera_shot_topic: "/cctv/shot"
-        db_camera_registration_service: "/cctv/registration"
-        db_camera_update_topic: "/cctv/update"
         maximal_approaching_distance: 5  # meters
         low_collision_limit: 0.8
         max_height: 22
         min_height: 5
-        hfov: 1.7
-        image_height: 480
-        image_width: 856
         max_time_from_last_seen_approaching: 0.5  # seconds
 

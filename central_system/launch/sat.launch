@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
 	<arg name="extra_localization" default="false" />
-	<arg name="dronet" default="false" />
 	<arg name="slam" default="false" />
 	<arg name="moveit" default="false" />
 	<arg name="targetloc" default="false" />
@@ -21,9 +20,7 @@
 	</include>
 
 	<!-- Robot localization package -->
-	<group if="$(arg extra_localization)">
-		<include file="$(find central_system)/launch/localization.launch"/>
-	</group>
+	<include file="$(find central_system)/launch/localization.launch" if="$(arg extra_localization)"/>
 
 	<!-- Moveit -->
 	<include file="$(find central_system)/launch/moveit.launch" if="$(arg moveit)"/>
@@ -31,15 +28,6 @@
 	<!-- SLAM -->
 	<include file="$(find central_system)/launch/orb_slam2_gazebo_mono.launch" if="$(arg slam)">
 	    <arg name="namespace" value="bebop2" />
-	</include>
-
-	<!-- Dronet -->
-	<include file="$(find central_system)/launch/full_perception_launch.launch" if="$(arg dronet)">
-		<arg name="bebop_launch" value="false" />
-		<arg name="namespace" value="bebop2" />
-	</include>
-	<include file="$(find central_system)/launch/deep_navigation.launch" if="$(arg dronet)">
-		<arg name="namespace" value="bebop2" />
 	</include>
 
 	<!-- Target localization -->
@@ -55,9 +43,21 @@
     <include file="$(find centracksys)/launch/tracksys.launch" if="$(arg tracking)">
 	</include>
 
-	<!-- Dynamic avoidance algoritmus and system -->
-    <include file="$(find dynamic_avoidance)/launch/dynamic_avoidance.launch" if="$(arg dynamic_avoidance)">
-	</include>
+	<!-- Dynamic avoidance algorithm and system -->
+	<group if="$(arg dynamic_avoidance)">
+        <!-- Dynamic avoidance algorithm -->
+        <include file="$(find dynamic_avoidance)/launch/dynamic_avoidance.launch">
+        </include>
+
+        <!-- Dronet -->
+        <include file="$(find central_system)/launch/full_perception_launch.launch">
+            <arg name="bebop_launch" value="false" />
+            <arg name="namespace" value="bebop2" />
+        </include>
+        <include file="$(find central_system)/launch/deep_navigation.launch">
+            <arg name="namespace" value="bebop2" />
+        </include>
+    </group>
 
 	<!-- Search planner for drone -->
     <include file="$(find drone_planning)/launch/drone_planner.launch" if="$(arg planning)">

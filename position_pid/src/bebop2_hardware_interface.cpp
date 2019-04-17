@@ -48,8 +48,8 @@ namespace bebop2_hardware_interface
             // Create position joint interface
             JointHandle jointPositionHandle(jointStateHandle, &joint_position_command_[i]);
             JointLimits limits;
-                SoftJointLimits softLimits;
-            getJointLimits(joint_names_[i], nh_, limits)
+            SoftJointLimits softLimits;
+            getJointLimits(joint_names_[i], nh_, limits);
             PositionJointSoftLimitsHandle jointLimitsHandle(jointPositionHandle, limits, softLimits);
             positionJointSoftLimitsInterface.registerHandle(jointLimitsHandle);
             position_joint_interface_.registerHandle(jointPositionHandle);
@@ -64,9 +64,9 @@ namespace bebop2_hardware_interface
         }
 
         // create topic for publishing commands
-        pub_ = nh.advertise<pesat_msgs::JointStates>("/bebop2/current_commands", 5);
-        joints_positions_sub_ = nh.subscribe("/bebop2/current_positions", 1, callback_positions);
-        joints_velocities_sub_ = nh.subscribe("/bebop2/current_velocities", 1, callback_velocities);
+        pub_ = nh_.advertise<pesat_msgs::JointStates>("/bebop2/current_commands", 5);
+        joints_positions_sub_ = nh_.subscribe("/bebop2/current_positions", 1, &Bebop2HardwareInterface::callback_positions, this);
+        joints_velocities_sub_ = nh_.subscribe("/bebop2/current_velocities", 1, &Bebop2HardwareInterface::callback_velocities, this);
 
         registerInterface(&joint_state_interface_);
         registerInterface(&position_joint_interface_);
@@ -84,8 +84,8 @@ namespace bebop2_hardware_interface
 
     void Bebop2HardwareInterface::read() {
         for (int i = 0; i < num_joints_; i++) {
-            joint_position_[i] = current_values_[i];
-            joint_velocity_[i] = current_velocities_[i];
+            joint_position_[i] = current_positions_.values[i];
+            joint_velocity_[i] = current_velocities_.values[i];
         }
     }
 
@@ -98,14 +98,14 @@ namespace bebop2_hardware_interface
         pub_.publish(joints_states);
     }
 
-    void callback_positions(const pesat_msgs::JointStatesConstPtr& joints)
+    void Bebop2HardwareInterface::callback_positions(const pesat_msgs::JointStatesConstPtr& joints)
     {
-        current_positions_ = joints.values;
+        current_positions_ = *joints;
     }
 
-    void callback_velocities(const pesat_msgs::JointStatesConstPtr& joints)
+    void Bebop2HardwareInterface::callback_velocities(const pesat_msgs::JointStatesConstPtr& joints)
     {
-        current_velocities_ = joints.values;
+        current_velocities_ = *joints;
     }
 
 }

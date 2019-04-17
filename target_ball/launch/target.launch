@@ -2,7 +2,7 @@
 
 <launch>
     <group ns="target">
-        <include file="$(find target_ball)/launch/spawn_target_from_urdf.launch">
-        </include>
+        <include file="$(find target_ball)/launch/spawn_target_from_urdf.launch"></include>
+        <node name="target_node" pkg="target_ball" type="target.py" output="screen"/>
     </group>
 </launch>

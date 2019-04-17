@@ -24,7 +24,7 @@
 
     <!-- DroNet -->
 
-    <node pkg="dronet_perception" name="dronet_perception" type="dronet_node.py" output="screen" launch-prefix="xterm -e" >   
+    <node pkg="dronet_perception" name="dronet_perception" type="dronet_node.py" output="screen" launch-prefix="xterm -e" >
         <remap from="cnn_predictions" to="/cnn_out/predictions"/>
         <remap from="state_change" to="$(arg namespace)/dronet/state_change"/>
 	<!-- rotors_simulator camera topic -->

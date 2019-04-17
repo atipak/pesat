@@ -1,0 +1,7 @@
+cctv:
+    target_base_link: target/base_link
+    map: map
+    cameras_file: .
+    camera_shot_topic: "/cctv/shot"
+    camera_registration_service: "/cctv/registration"
+    camera_update_topic: "/cctv/update"

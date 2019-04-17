@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+import os
 from collections import namedtuple
 import threading
 import tf2_ros
@@ -16,11 +17,13 @@ active_cam = namedtuple("ActiveCamera", ["last_position", "serial_number", "like
 
 class Cctv():
     def __init__(self):
+        rospy.init_node('cctv', anonymous=False)
         self._cameras = []
         self._switched = True
         self._rate = rospy.Rate(10)
         self._active_cameras = {}
         self._serial_number = 0
+        self._params = rospy.get_param("cctv")
         self._pub_notify = rospy.Publisher("/cctv/notifications", Notification, queue_size=10)
         rospy.Subscriber("/cctv/switch", Empty, self.callback_switch)
         rospy.Subscriber("/cctv/shot", CameraShot, self.callback_shot)
@@ -87,16 +90,17 @@ class Cctv():
         return camera_id
 
     def read_cameras_from_file(self, file_path):
-        with open(file_path, "r") as f:
-            for line in f:
-                self.add_camera(line.split(","))
+        if os.path.isfile(file_path):
+            with open(file_path, "r") as f:
+                for line in f:
+                    self.add_camera(line.split(","))
 
     def callback_switch(self, _):
         if self._switched:
-            self.rate = rospy.Rate(0.02)
+            self._rate = rospy.Rate(0.02)
             self._switched = False
         else:
-            self.rate = rospy.Rate(10)
+            self._rate = rospy.Rate(10)
             self._switched = True
 
     def clear_active_cameras(self, current_active):
@@ -107,7 +111,7 @@ class Cctv():
     def check_cameras(self):
         if self._switched:
             try:
-                trans = self._tfBuffer.lookup_transform("map", 'target/base_link', rospy.Time())
+                trans = self._tfBuffer.lookup_transform(self._params["map"], self._params['target_base_link'], rospy.Time())
                 target = utils.Math.Point(trans.transform.translation.x, trans.transform.translation.y)
                 activated = {}
                 for camera in self._cameras:
@@ -134,10 +138,10 @@ class Cctv():
                 print(e)
 
     def main(self):
-        self.read_cameras_from_file(".")
+        self.read_cameras_from_file(self._params["cameras_file"])
         while not rospy.is_shutdown():
             self.check_cameras()
-            self.rate.sleep()
+            self._rate.sleep()
 
 if __name__ == '__main__':
     cctv = Cctv()

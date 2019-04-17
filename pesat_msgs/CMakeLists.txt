@@ -56,6 +56,8 @@ add_message_files(
   ImageTargetInfo.msg
   JointStates.msg
   Notification.msg
+  CameraShot.msg
+  CameraUpdate.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -64,6 +66,7 @@ add_service_files(
   PointHeight.srv
   PositionPrediction.srv
   PredictionMaps.srv
+  CameraRegistration.srv
 )
 
 ## Generate actions in the 'action' folder

@@ -1,7 +1,7 @@
 <launch>
-    <rosparam file="$(find pesat_resources/config/position_pid_config/hardware.yaml" command="load"/>
-    <rosparam file="$(find pesat_resources/config/position_pid_config/controllers.yaml" command="load"/>
-    <rosparam file="$(find pesat_resources/config/position_pid_config/joint_limits.yaml" command="load"/>
+    <rosparam file="$(find pesat_resources)/config/position_pid_config/hardware.yaml" command="load"/>
+    <rosparam file="$(find pesat_resources)/config/position_pid_config/controllers.yaml" command="load"/>
+    <rosparam file="$(find pesat_resources)/config/position_pid_config/joint_limits.yaml" command="load"/>
     <node name="pid_controller" pkg="position_pid" type="bebop2_hardware_interface_node" output="screen"/>
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/"
         args="

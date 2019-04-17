@@ -1,0 +1,12 @@
+drone_bebop2:
+  drone:
+    camera_base_link: bebop2/camera_base_link
+    camera_optical_link: bebop2/camera_base_optical_link
+    base_link: bebop2/base_link
+    cmd_vel_topic: bebop2/cmd_vel
+    max_speed: 17
+  camera:
+    hfov: 1.7
+    image_height: 480
+    image_width: 856
+    image_channel: /bebop2/camera_base/image_raw
