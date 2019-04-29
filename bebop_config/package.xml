@@ -28,8 +28,8 @@
   <run_depend>xacro</run_depend>
   <!-- This package is referenced in the warehouse launch files, but does not build out of the box at the moment. Commented the dependency until this works. -->
   <!-- <run_depend>warehouse_ros_mongo</run_depend> -->
-  <build_depend>velocity_controller</build_depend>
-  <run_depend>velocity_controller</run_depend>
+  <build_depend>pesat_resources</build_depend>
+  <run_depend>pesat_resources</run_depend>
 
 
 </package>

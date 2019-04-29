@@ -6,6 +6,6 @@ int main(int argc, char** argv)
     ros::AsyncSpinner spinner(1);
     spinner.start();
     bebop2_hardware_interface::Bebop2HardwareInterface ROBOT(nh);
-    ros::spin();
+    ros::waitForShutdown();
     return 0;
 }

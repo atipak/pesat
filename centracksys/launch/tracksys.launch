@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
     <rosparam command="load" file="$(find pesat_resources)/config/track_config.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/drone_bebop2.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/environs.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/target_localization.yaml" />
     <node name="track_system" pkg="centracksys" type="track_object.py" output="screen"/>
 </launch>

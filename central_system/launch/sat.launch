@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
+	<arg name="central_system" default="true" />
 	<arg name="extra_localization" default="false" />
 	<arg name="slam" default="false" />
 	<arg name="moveit" default="false" />
 	<arg name="targetloc" default="false" />
 	<arg name="target" default="true" />
 	<arg name="tracking" default="false" />
-	<arg name="dynamic_avoidance" default="false" />
+	<arg name="dynamic_avoidance" default="true" />
 	<arg name="planning" default="false" />
 	<arg name="cctv" default="false" />
 	<arg name="pid_controller" default="false" />
+	<arg name="standalone_pid_controllers" default="false" />
 
 	<!-- Gazebo -->
 	<include file="$(find velocity_controller)/launch/bebop_cmd_vel.launch">
@@ -21,6 +23,9 @@
 
 	<!-- Robot localization package -->
 	<include file="$(find central_system)/launch/localization.launch" if="$(arg extra_localization)"/>
+
+    <!-- Central system -->
+	<include file="$(find central_system)/launch/central_system.launch" if="$(arg central_system)"/>
 
 	<!-- Moveit -->
 	<include file="$(find central_system)/launch/moveit.launch" if="$(arg moveit)"/>
@@ -69,5 +74,9 @@
 
 	<!-- 6 DOF PID for drone -->
     <include file="$(find position_pid)/launch/bebop2_position_controllers.launch" if="$(arg pid_controller)">
+	</include>
+
+	<!-- 6x standalone PIDs for drone -->
+    <include file="$(find central_system)/launch/standalone_pid_controllers.launch" if="$(arg standalone_pid_controllers)">
 	</include>
 </launch>

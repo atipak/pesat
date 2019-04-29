@@ -1,4 +1,4 @@
 controller_list:
   - name: fake_Bebop2_controller
     joints:
-      - Bebop2_joint
+      - virtual_joint

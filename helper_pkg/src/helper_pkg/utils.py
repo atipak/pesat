@@ -1,8 +1,18 @@
 import numpy as np
-from collections import namedtuple
+from collections import namedtuple, deque
+import itertools
+
+class DataStructures():
+    class SliceableDeque(deque):
+        def __getitem__(self, index):
+            if isinstance(index, slice):
+                return type(self)(itertools.islice(self, index.start,
+                                                   index.stop, index.step))
+            return deque.__getitem__(self, index)
 
 class Math():
     Point = namedtuple("Point", ["x", "y"])
+
     @staticmethod
     def rounding(value):
         diff = value - int(value)
@@ -38,8 +48,6 @@ class Math():
             return True
         else:
             return False
-
-
 
     @staticmethod
     def are_clockwise(p1, p2):
@@ -79,6 +87,8 @@ class Map():
         return self._height
 
     def is_free(self, x, y, min_value=255):
+        if not 0 <= x <= self.width or not 0 <= y <= self.height:
+            return False
         return self._map[x, y] >= min_value
 
     def random_place_target_drone(self, min_distance, max_distance):
@@ -123,3 +133,21 @@ class Map():
                 if self.is_free(i, j):
                     return i, j
         return None, None
+
+    def crop_map(self, center, width, height):
+        center = [center[0], center[1]]
+        if width > self.width:
+            width = self.width
+        if height > self.height:
+            height = self.height
+        half_width = width / 2
+        half_height = height / 2
+        if center[0] - half_width < 0:
+            center[0] = half_width
+        if center[0] + half_width > self.width:
+            center[0] = self.width - half_width
+        if center[1] - half_height < 0:
+            center[1] = half_height
+        if center[1] + half_height > self.height:
+            center[1] = self.height - half_height
+        return self.map[center[0] - half_width:center[0] + half_width, center[1] - half_height:center[1] + half_height]

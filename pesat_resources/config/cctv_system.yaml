@@ -5,3 +5,5 @@ cctv:
     camera_shot_topic: "/cctv/shot"
     camera_registration_service: "/cctv/registration"
     camera_update_topic: "/cctv/update"
+    camera_notification_topic: "/cctv/notifications"
+    camera_switch_topic: "/cctv/switch"

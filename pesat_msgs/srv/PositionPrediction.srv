@@ -1,5 +1,5 @@
 # probabilistic maps
-sensor_msgs/Image[] maps
+pesat_msgs/FloatArray[] maps
 ---
 # target position
-geometry_msgs/Pose[] target
+geometry_msgs/Pose target

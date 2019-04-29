@@ -13,7 +13,7 @@ from moveit_msgs.msg import AttachedCollisionObject, PlanningScene
 from shape_msgs.msg import SolidPrimitive
 import moveit_commander
 from pesat_msgs.msg import Notification, ImageTargetInfo, JointStates, CameraShot, CameraUpdate
-from pesat_msgs.srv import PredictionMaps, PositionPrediction, CameraRegistration
+from pesat_msgs.srv import PredictionMaps, PositionPrediction, CameraRegistration, GoalState
 import helper_pkg.utils as utils
 
 noti = namedtuple("Notification", ["serial_number", "time", "likelihood", "x", "y", "dx", "dy"])
@@ -29,7 +29,8 @@ class Database(object):
         self._earlest_notification = 0
         self._maximum_length = maximum_length
         self._maximal_time = maximal_time  # secs
-        rospy.Subscriber("/cctv/notifications", Notification, self.callback_notify)
+        _cctv_system_config = rospy.get_param("cctv")
+        rospy.Subscriber(_cctv_system_config["camera_notification_topic"], Notification, self.callback_notify)
 
     @property
     def notifications(self):
@@ -69,9 +70,12 @@ class Database(object):
 
 class MeetingPointPlanner(object):
     def __init__(self):
-        self._params = rospy.get_param("drone_planner")["planner"]
+        self._params = rospy.get_param("drone_planner")["meet_point_planner"]
         prediction_service_name = self._params["prediction_service_name"]
-        self._srv_prediction = rospy.ServiceProxy(prediction_service_name, PredictionMaps)
+        try:
+            self._srv_prediction = rospy.ServiceProxy(prediction_service_name, PredictionMaps)
+        except rospy.ServiceException as e:
+            print("Service call failed: %s", e)
         self._tfBuffer = tf2_ros.Buffer()
         self._tfListener = tf2_ros.TransformListener(self._tfBuffer)
         self._database = Database(self._params["maximum_length"], self._params["maximal_time"])
@@ -205,25 +209,18 @@ class MovePlanner(object):
         _cctv_configuration = rospy.get_param("cctv")
         _target_localization_configuration = rospy.get_param("target_localization")
         # subscribers
-        rospy.Subscriber(_da_configuration["is_avoiding_topic"], Bool, self.callback_da_avoiding)
-        rospy.Subscriber(_da_configuration["collision_topic"], Float32, self.callback_da_collision)
         rospy.Subscriber(_params["target_information"], ImageTargetInfo, self.callback_target_information)
-        rospy.Subscriber(_drone_configuration["cmd_vel_topic"], TwistWithCovariance, self.callback_velocities)
-        rospy.Subscriber(_pid_configuration["update_velocities_topic"], JointStates, self.callback_update)
-        rospy.Subscriber(_da_configuration["recommended_altitude_topic"], Float32,self.callback_recommended_altitude)
+
         # publishers
-        self._pub_da_switch = rospy.Publisher(_da_configuration["switch_topic"], Bool, queue_size=10)
-        self._pub_da_alert = rospy.Publisher(_da_configuration["alert_topic"], Bool, queue_size=10)
         self._pub_camera_shot = rospy.Publisher(_cctv_configuration["camera_shot_topic"], CameraShot, queue_size=10)
-        self._pub_camera_update = rospy.Publisher(_cctv_configuration["camera_update_topic"], CameraUpdate, queue_size=10)
-        self._pub_cmd_vel = rospy.Publisher(_drone_configuration["cmd_vel_topic"], TwistWithCovariance, queue_size=10)
-        self._pub_desired_pos = rospy.Publisher(_pid_configuration["desired_pos_topic"], JointStates, queue_size=10)
-        self._pub_current_pos = rospy.Publisher(_pid_configuration["current_pos_topic"], JointStates, queue_size=10)
-        self._pub_current_vel = rospy.Publisher(_pid_configuration["current_vel_topic"], JointStates, queue_size=10)
+        self._pub_camera_update = rospy.Publisher(_cctv_configuration["camera_update_topic"], CameraUpdate,
+                                                  queue_size=10)
+
         # services
         rospy.wait_for_service(_cctv_configuration["camera_registration_service"])
         try:
-            cam_registration = rospy.ServiceProxy(_cctv_configuration["camera_registration_service"], CameraRegistration)
+            cam_registration = rospy.ServiceProxy(_cctv_configuration["camera_registration_service"],
+                                                  CameraRegistration)
             self._camera_id = cam_registration(Vector3(0, 0, 0), 1, 1, 1, 0, 1)
         except rospy.ServiceException as e:
             print("Service call failed: %s", e)
@@ -233,29 +230,23 @@ class MovePlanner(object):
         # TODO choose right limit for antiaproaching
         self._max_time_from_last_seen_approaching = _params["max_time_from_last_seen_approaching"]  # seconds
         self._maximal_approaching_distance = _params["maximal_approaching_distance"]  # meters
-        self._low_collision_limit = _params["low_collision_limit"]
         self._max_height = _params["max_height"]
         self._min_height = _params["min_height"]
         self._hfov = _camera_configuration["hfov"]
         self._image_height = _camera_configuration["image_height"]
         self._image_width = _camera_configuration["image_width"]
         self._focal_length = self._image_width / (2.0 * np.tan(self._hfov / 2.0))
-        self._max_vertical_angle = np.arctan2(self._image_height / 2, self._focal_length)
+        self._max_vertical_angle = np.arctan2(self._image_height / 2, self._focal_length) #vfov
         self._watch_point_planner = watch_point_planner
         self._map_frame = _environment_configuration["map"]
         self._target_location_frame = _target_localization_configuration["location_frame"]
         # variables
         self._target_information = None
-        self._current_velocities = None
         self._seen = False
         self._index = 0
         self._watch_points = None
-        self._vel_update = False
         self._approaching_result = False
         self._is_approaching = False
-        self._collision_probability = 0.0
-        self._is_avoiding = False
-        self._dynamical_avoiding_process_on = False
         self._found = False
         self._approaching_trajectory_save = None
         self._approaching_index_save = 0
@@ -263,29 +254,10 @@ class MovePlanner(object):
         self._time_limit_exhausted = False
         self._reset = False
         self._interruption = False
-        self._recommended_altitude = -1
-        # init
-        self._pub_da_alert.publish(True)
 
     # callbacks
-    def callback_da_collision(self, data):
-        self._collision_probability = data
-
-    def callback_da_avoiding(self, data):
-        self._is_avoiding = data
-
     def callback_target_information(self, data):
         self._target_information = data
-
-    def callback_velocities(self, data):
-        self._current_velocities = data
-
-    def callback_update(self, data):
-        if self._vel_update:
-            self.publish_cmd_velocity([x for x in data.values])
-
-    def callback_recommended_altitude(self, data):
-        self._recommended_altitude = data
 
     def next(self, watch_points):
         if watch_point is None:
@@ -293,16 +265,11 @@ class MovePlanner(object):
             return False
         self._watch_points = watch_points
         self._target_information = None
-        self._current_velocities = None
         self._seen = False
         self._index = 0
         self._watch_points = None
-        self._vel_update = False
         self._approaching_result = False
         self._is_approaching = False
-        self._collision_probability = 0.0
-        self._is_avoiding = False
-        self._dynamical_avoiding_process_on = False
         self._found = False
         self._approaching_trajectory_save = None
         self._approaching_index_save = 0
@@ -311,37 +278,33 @@ class MovePlanner(object):
         self._reset = False
         return True
 
-    def make_move(self, drone_position, horizontal_camera_turn, vertical_camera_turn):
-        if self._reset:
-            return
-        # planner is in dynamical avoiding state
-        if self._dynamical_avoiding_process_on:
-            if self._is_avoiding:
-                return
-            elif self._recommended_altitude == -1:
-                    self._pub_da_switch.publish(False)
-                    self._dynamical_avoiding_process_on = False
-                    index = self.find_closest_watch_point(drone_position)
-                    # index is out of length of array watch_points
-                    # index + 1 because we don't want to return back -> index point can be inside dynamical obstacle
-                    if index == -1 or index + 1 >= len(self._watch_points):
-                        self.reset()
-                    else:
-                        self._index = index
-        # there is a obstacle in front of drone
-        if self._collision_probability > self._low_collision_limit:
-            self._pub_da_switch.publish(True)
-            self._dynamical_avoiding_process_on = True
-            return
-        # move drone by given points
+    def interruption(self):
+        if self._interruption:
+            self._interruption = False
+            return True
+        if self._time_limit_exhausted or self._approaching_result or self._watch_points is None:
+            return True
+        return False
+
+    def next_point(self, drone_position, close_enough):
+        if rospy.Time.now() - self._moving_start > self._watch_points[self._index].delay:
+            self._time_limit_exhausted = True
+            return None
+            # move drone by given points
         if self._watch_points is not None:
-            self.fly_drone(drone_position, horizontal_camera_turn, vertical_camera_turn)
+            if close_enough:
+                self._index += 1
+                if self._index >= len(self._watch_points):
+                    self.reset()
+                    return None
+            return self._watch_points[self._index]
         else:
             # two branches
             # drone is in state approaching
             if self._is_approaching:
                 try:
-                    trans = self._tfBuffer.lookup_transform(self._map_frame, self._target_location_frame, rospy.Time())
+                    trans = self._tfBuffer.lookup_transform(self._map_frame, self._target_location_frame,
+                                                            rospy.Time())
                     if trans.header.stamp < rospy.Time.now() - self._max_time_from_last_seen_approaching:
                         self.antiapproaching()
                     else:
@@ -353,8 +316,8 @@ class MovePlanner(object):
                         else:
                             self._approaching_result = False
                             self.approaching(reapproaching=True)
-                except:
-                    pass
+                except Exception as e:
+                    print(e)
             # drone is in classical state
             else:
                 self._found = False
@@ -363,54 +326,7 @@ class MovePlanner(object):
                 self.approaching()
             if not self._is_approaching and self._approaching_result:
                 self._found = True
-
-    def interruption(self):
-        if self._interruption:
-            self._interruption = False
-            return True
-        if self._time_limit_exhausted or self._approaching_result or self._watch_points is None:
-            return True
-        return False
-
-    def fly_drone(self, drone_position, horizontal_camera_turn, vertical_camera_turn):
-        if rospy.Time.now() - self._moving_start > self._watch_points[self._index].delay:
-            self._time_limit_exhausted = True
-            return
-        # current position
-        x_drone = drone_position.transform.translation.x
-        y_drone = drone_position.transform.translation.y
-        z_drone = drone_position.transform.translation.z
-        (_, _, yaw_drone) = tf.transformations.euler_from_quaternion(drone_position.transform.rotation)
-        # goal position
-        x_point = self._watch_points[self._index].position.x
-        y_point = self._watch_points[self._index].position.y
-        if self._recommended_altitude == -1:
-            z_point = self._watch_points[self._index].position.z
-        else:
-            z_point = self._recommended_altitude
-        yaw_point = self._watch_points[self._index].yaw
-        horizontal_camera_turn_point = 0.0
-        verical_camera_turn_point = self._watch_points[self._index].verical_camera_turn
-        current_positions = [x_drone, y_drone, z_drone, horizontal_camera_turn, vertical_camera_turn, yaw_drone]
-        desired_positions = [x_point, y_point, z_point, horizontal_camera_turn_point,
-                             verical_camera_turn_point, yaw_point]
-        if self._current_velocities is not None:
-            current_velocities = [self._current_velocities.twist.linear.x,
-                                  self._current_velocities.twist.linear.y,
-                                  self._current_velocities.twist.linear.z,
-                                  self._current_velocities.twist.angular.x,
-                                  self._current_velocities.twist.angular.y,
-                                  self._current_velocities.twist.angular.z]
-        else:
-            current_velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self._pub_desired_pos.publish(desired_positions)
-        self._pub_current_pos.publish(current_positions)
-        self._pub_current_vel.publish(current_velocities)
-        is_close = np.isclose(desired_positions, current_positions)
-        if np.nonzero(is_close) == 6:
-            self._index += 1
-            if self._index >= len(self._watch_points):
-                self.reset()
+        return None
 
     def find_closest_watch_point(self, drone_position):
         i = self._index
@@ -428,20 +344,6 @@ class MovePlanner(object):
 
     def reset(self):
         self._reset = True
-        if self._dynamical_avoiding_process_on:
-            self._pub_da_switch.publish(False)
-            self._dynamical_avoiding_process_on = False
-        self.publish_cmd_velocity([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-
-    def publish_cmd_velocity(self, vel_command):
-        twist = TwistWithCovariance()
-        twist.twist.linear.x = vel_command[0]
-        twist.twist.linear.y = vel_command[1]
-        twist.twist.linear.z = vel_command[2]
-        twist.twist.angular.x = vel_command[3]
-        twist.twist.angular.y = vel_command[4]
-        twist.twist.angular.z = vel_command[5]
-        self._pub_cmd_vel.publish(twist)
 
     @property
     def found(self):
@@ -546,7 +448,8 @@ class MovePlanner(object):
             update.sigma = 0
             update.camera_id = self._camera_id
             self._pub_camera_update.publish(update)
-            trans_older = self._tfBuffer.lookup_transform(self._map_frame, self._target_location_frame, rospy.Time() - 0.2)
+            trans_older = self._tfBuffer.lookup_transform(self._map_frame, self._target_location_frame,
+                                                          rospy.Time() - 0.2)
             velocity_x = trans.transform.translation.x - trans_older.transform.translation.x
             velocity_y = trans.transform.translation.y - trans_older.transform.translation.y
             shot = CameraShot()
@@ -574,6 +477,7 @@ class Planner():
         rospy.init_node('planner', anonymous=False)
         _drone_configuration = rospy.get_param("drone_bebop2")["drone"]
         _environment_configuration = rospy.get_param("environment")
+        _params = rospy.get_param("drone_planner")["planner"]
         self._tfBuffer = tf2_ros.Buffer()
         self._tfListener = tf2_ros.TransformListener(self._tfBuffer)
         self._meeting_planner = MeetingPointPlanner()
@@ -587,6 +491,33 @@ class Planner():
         self._probability_map = None
         self._map_frame = _environment_configuration["map"]
         self._base_link_frame = _drone_configuration["base_link"]
+        self._s = rospy.Service(_params["next_position_service"], GoalState, self.next_position_callback)
+        rospy.Subscriber(_params["launch_topic"], Bool, self.init_reset_callback)
+        self._launched = False
+
+    # callbacks
+    def next_position_callback(self, data):
+        goal_state_msg = GoalState()
+        pose = Pose()
+        point = self._move_planner.next_point(data.drone_position, data.last_point_reached)
+        if point is not None:
+            pose.position.x = point.position.x
+            pose.position.y = point.position.y
+            pose.position.z = point.position.z
+            pose.orientation.z = point.yaw
+            pose.orientation.y = point.vertical_camera_turn
+            pose.orientation.x = 0.0
+            goal_state_msg.goal_pose = pose
+        else:
+            goal_state_msg.goal_pose = None
+        goal_state_msg.change_state = self.found
+        return goal_state_msg
+
+    def init_reset_callback(self, data):
+        if not self._launched and data:
+            self.start()
+        elif not data and self._launched:
+            self.stop()
 
     @property
     def found(self):
@@ -598,9 +529,19 @@ class Planner():
             self.save_change_state(trans)
         except Exception as e:
             print("Exception:", e)
-            self._meeting_planner.reset()
-            self._watch_planner.reset()
-            self._move_planner.reset()
+            self.reset()
+
+    def start(self):
+        self._launched = True
+
+    def stop(self):
+        self._launched = False
+        self.reset()
+
+    def reset(self):
+        self._meeting_planner.reset()
+        self._watch_planner.reset()
+        self._move_planner.reset()
 
     def save_change_state(self, drone_position):
         def change_state_zero(interrupt, true_value, false_value):
@@ -658,3 +599,11 @@ class Planner():
             else:
                 self._move_planner.next(self._watch_points)
                 change_state_four(self._move_planner.interruption())
+
+
+if __name__ == '__main__':
+    planner = Planner()
+    rate = rospy.Rate(20)
+    while not rospy.is_shutdown():
+        planner.step()
+        rate.sleep()

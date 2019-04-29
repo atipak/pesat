@@ -1,11 +1,13 @@
 drone_planner:
-    planer:
+    planner:
         group_name: 'Bebop2'
         namespace: ''
         eef_step: 0.01
         jump_threshold: 0.0
+        next_position_service: "planner/next_position"
+        launch_topic: "planner/launch"
     meet_point_planner:
-        prediction_service_name: ""
+        prediction_service_name: "target_position_predictions"
         maximum_length: 400
         maximal_time: 300
     watch_point_planner:

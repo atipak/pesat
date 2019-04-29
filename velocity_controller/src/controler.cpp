@@ -17,6 +17,7 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/TwistWithCovariance.h>
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
 
 //#include <eigen_conversions/eigen_msg.h>
 
@@ -27,7 +28,7 @@
 
 tf::TransformListener* listener;
 tf::TransformBroadcaster* br;
-ros::Publisher trajectory_pub, control_state_pub;
+ros::Publisher trajectory_pub, control_state_pub, horizontal_camera_controller_pub, vertical_camera_controller_pub;
 ros::Subscriber vel_sub, take_off_sub;
 
 
@@ -47,18 +48,14 @@ double max_vel, max_yawrate, max_camerarate, max_camera_angle;
 
 void send_state_message();
 bool init_transforms();
-bool move_camera();
 float clip(float n, float lower, float upper);
 float get_minimum_in_point(float x, float y, ros::ServiceClient mapClient);
 bool renew_velocities();
 bool renew_positions();
 bool renew_sim_frames();
 bool set_sim_position_baselink_transform(float x, float y, float z, float roll, float pitch, float yaw);
-bool set_sim_position_camera_transform(float x, float y, float z, float roll, float pitch, float yaw);
 bool set_final_velocity_base_link_transform(float x, float y, float z, float roll, float pitch, float yaw);
-bool set_final_velocity_camera_transform(float x, float y, float z, float roll, float pitch, float yaw);
 bool reset_baselink_position();
-bool reset_camera_position();
 bool reset_velocities_frames();
 bool update_sim_base_link_position(float x, float y, float z, float yaw);
 bool real_to_sim();
@@ -77,16 +74,15 @@ tf::StampedTransform stampedTransformBaseLink;
 tf::StampedTransform stampedTransform;
 // simulation baselink -> velocity frame
 tf::Transform final_base_link_velocity_transform;
-tf::Transform final_camera_velocity_transform;
 // world -> simulation baselink
 tf::Transform base_link_position_transform;
-tf::Transform camera_position_transform;
-// simulation baselink -> camera -> velocity
 tf::Vector3 origin;
 tf::Quaternion rotation;
 
 float dt = 0.0;
 double yaw = 0.0;
+float current_horizontal = 0.0;
+float current_vertical = 0.0;
 const double pi_half = M_PI / 2;
 
 int main(int argc, char** argv) {
@@ -109,6 +105,8 @@ int main(int argc, char** argv) {
                     mav_msgs::default_topics::COMMAND_TRAJECTORY, 10);
 
   control_state_pub = nh.advertise<pesat_msgs::ControllerState>("controllerState", 10);
+  horizontal_camera_controller_pub = nh.advertise<std_msgs::Float64>("/bebop2/camera_base_controller/command", 10);
+  vertical_camera_controller_pub = nh.advertise<std_msgs::Float64>("/bebop2/rotator_controller/command", 10);
   // Subscribe to bebop velocity commands messages
   vel_sub = nh.subscribe("/bebop2/cmd_vel", 10, &twist_callback);
   take_off_sub = nh.subscribe("/bebop2/takeoff", 10, &take_off_callback);
@@ -197,10 +195,10 @@ void send_state_message() {
 	else {
         if (final_base_link_velocity_transform.getOrigin().x() != 0 || final_base_link_velocity_transform.getOrigin().y() != 0 ||
         final_base_link_velocity_transform.getOrigin().z() != 0 || final_base_link_velocity_transform.getRotation().getW() != 1 ||
-        final_camera_velocity_transform.getRotation().getW() != 1) {
-            state_msg.twist.linear.x = final_base_link_velocity_transform.getOrigin().x();
-            state_msg.twist.linear.y = final_base_link_velocity_transform.getOrigin().y();
-            state_msg.twist.linear.z = final_base_link_velocity_transform.getOrigin().z();
+        current_vertical != 0 || current_horizontal != 0) {
+            state_msg.twist.linear.x = twist_msg.twist.linear.x;
+            state_msg.twist.linear.y = twist_msg.twist.linear.y;
+            state_msg.twist.linear.z = twist_msg.twist.linear.z;
             state_msg.twist.angular.x = twist_msg.twist.angular.x;
             state_msg.twist.angular.y = twist_msg.twist.angular.y;
             state_msg.twist.angular.z = twist_msg.twist.angular.z;
@@ -232,7 +230,7 @@ float get_minimum_in_point(float x, float y, ros::ServiceClient mapClient) {
 // TF package communications
 // init transforms
 bool init_transforms() {
-    if (reset_baselink_position() && reset_camera_position()) {
+    if (reset_baselink_position()) {
         return true;
     }
     else {
@@ -243,12 +241,10 @@ bool init_transforms() {
 // sends simulation velocity frames into tf package
 bool renew_velocities() {
   	br->sendTransform(tf::StampedTransform(final_base_link_velocity_transform, ros::Time::now(), "bebop2/simulation/position/base_link", "bebop2/simulation/velocity/base_link"));
-  	br->sendTransform(tf::StampedTransform(final_camera_velocity_transform, ros::Time::now(), "bebop2/simulation/position/camera_base_link", "bebop2/simulation/velocity/camera_base_link"));
 }
 // sends simulation position frames into tf package
 bool renew_positions() {
   	br->sendTransform(tf::StampedTransform(base_link_position_transform, ros::Time::now(), "world", "bebop2/simulation/position/base_link"));
-  	br->sendTransform(tf::StampedTransform(camera_position_transform, ros::Time::now(), "bebop2/simulation/position/base_link", "bebop2/simulation/position/camera_base_link"));
 }
 // sends simulation velocity and position frames into tf package
 bool renew_sim_frames() {
@@ -264,25 +260,11 @@ bool set_sim_position_baselink_transform(float x, float y, float z, float roll, 
   	base_link_position_transform.setRotation( rotation );
 }
 
-bool set_sim_position_camera_transform(float x, float y, float z, float roll, float pitch, float yaw) {
-	tf::Vector3 origin = tf::Vector3(x, y, z);
-	tf::Quaternion rotation = tf::createQuaternionFromRPY(roll, pitch, yaw);
-  	camera_position_transform.setOrigin( origin );
-  	camera_position_transform.setRotation( rotation );
-}
-
 bool set_final_velocity_base_link_transform(float x, float y, float z, float roll, float pitch, float yaw) {
 	tf::Vector3 origin = tf::Vector3(x, y, z);
 	tf::Quaternion rotation = tf::createQuaternionFromYaw(yaw);
   	final_base_link_velocity_transform.setOrigin( origin );
   	final_base_link_velocity_transform.setRotation( rotation );
-}
-
-bool set_final_velocity_camera_transform(float x, float y, float z, float roll, float pitch, float yaw) {
-	tf::Vector3 origin = tf::Vector3(x, y, z);
-	tf::Quaternion rotation = tf::createQuaternionFromRPY(roll, pitch, yaw);
-  	final_camera_velocity_transform.setOrigin( origin );
-  	final_camera_velocity_transform.setRotation( rotation );
 }
 
 bool reset_baselink_position() {
@@ -298,23 +280,10 @@ bool reset_baselink_position() {
 	return false;
 }
 
-bool reset_camera_position() {
-	if (listener->canTransform ("/bebop2/base_link", "/bebop2/camera_base_link", ros::Time(0))) {
-		     // simulated base_link
-		     listener->lookupTransform("/bebop2/base_link", "/bebop2/camera_base_link", ros::Time(0), stampedTransformBaseLink);
-		     double roll, pitch, yaw;
-             stampedTransformBaseLink.getBasis().getRPY(roll, pitch, yaw);
-		     set_sim_position_camera_transform(stampedTransformBaseLink.getOrigin().x(),  stampedTransformBaseLink.getOrigin().y(),
-		     stampedTransformBaseLink.getOrigin().z(), roll, pitch, yaw);
-		     if (!reset_velocities_frames()) {return false;}
-		     return true;
-	}
-	return false;
-}
-
 bool reset_velocities_frames() {
 	set_final_velocity_base_link_transform(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-	set_final_velocity_camera_transform(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+	current_horizontal = 0.0;
+	current_vertical = 0.0;
 	return true;
 }
 
@@ -392,29 +361,13 @@ bool move_drone(float x, float y, float z, float yaw) {
 
 // camera
 bool apply_velocity_to_camera() {
-    if (listener->canTransform ("bebop2/simulation/position/base_link", "bebop2/simulation/velocity/camera_base_link", ros::Time(0))) {
-	      listener->lookupTransform("bebop2/simulation/position/base_link", "bebop2/simulation/velocity/camera_base_link", ros::Time(0), stampedTransformBaseLink);
-          double roll, pitch, yaw;
-          stampedTransformBaseLink.getBasis().getRPY(roll, pitch, yaw);
-		  float x = stampedTransformBaseLink.getOrigin().x();
-		  float y = stampedTransformBaseLink.getOrigin().y();
-		  float z = stampedTransformBaseLink.getOrigin().z();
-		  double clipped_yaw = clip(yaw, -max_camera_angle, max_camera_angle);
-		  double clipped_roll = clip(roll, -max_camera_angle, max_camera_angle);
-		  set_sim_position_camera_transform(x, y, z, clipped_roll, 0,clipped_yaw);
-		  move_camera();
-		  return true;
-	}
-	else {
-		ROS_INFO("Can't transform world -> base_link or world -> sim/base_link.");
-		return false;
-	}
+    std_msgs::Float64 vertical;
+    vertical.data = current_vertical;
+    std_msgs::Float64 horizontal;
+    horizontal.data = current_horizontal;
+    vertical_camera_controller_pub.publish(vertical);
+    horizontal_camera_controller_pub.publish(horizontal);
 }
-
-bool move_camera() {
-    br->sendTransform(tf::StampedTransform(camera_position_transform, ros::Time::now(), "bebop2/base_link", "bebop2/camera_base_link"));
-}
-
 
 // params setting
 void set_takeoff_params(ros::ServiceClient mapClient) {
@@ -468,11 +421,10 @@ void twist_callback(const geometry_msgs::TwistWithCovarianceConstPtr& msg){
   	// scaling by time
   	temp_origin = temp_origin * max_vel * dt;
   	temp_yaw = temp_yaw * max_yawrate * dt;
-  	temp_horizontal = temp_horizontal * max_camerarate * dt;
-  	temp_vertical = temp_vertical * max_camerarate * dt;
+  	current_horizontal = temp_horizontal * max_camerarate;
+  	current_vertical = temp_vertical * max_camerarate;
   	// setting
   	set_final_velocity_base_link_transform(temp_origin.x(), temp_origin.y(), temp_origin.z(), 0.0, 0.0, temp_yaw);
-  	set_final_velocity_camera_transform(0.0, 0.0, 0.0, temp_horizontal, temp_vertical, 0.0);
 }
 
 void take_off_callback(const std_msgs::EmptyConstPtr& msg) {

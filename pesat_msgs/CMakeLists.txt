@@ -58,11 +58,13 @@ add_message_files(
   Notification.msg
   CameraShot.msg
   CameraUpdate.msg
+  FloatArray.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
+  GoalState.srv
   PointHeight.srv
   PositionPrediction.srv
   PredictionMaps.srv

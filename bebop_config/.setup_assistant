@@ -1,6 +1,6 @@
 moveit_setup_assistant_config:
   URDF:
-    package: velocity_controller
+    package: pesat_resources
     relative_path: urdf/bebop2.urdf
     xacro_args: ""
   SRDF:
@@ -8,4 +8,4 @@ moveit_setup_assistant_config:
   CONFIG:
     author_name: Vladimír Patík
     author_email: v.p@seznam.cz
-    generated_timestamp: 1550676103
+    generated_timestamp: 1556399866

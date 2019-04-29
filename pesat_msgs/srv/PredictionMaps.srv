@@ -1,7 +1,9 @@
 # target position
-geometry_msgs/Pose[] target
+pesat_msgs/FloatArray[] target_poses
 # drone position
-geometry_msgs/Pose[] drone
+pesat_msgs/FloatArray[] drone_poses
+# map
+pesat_msgs/FloatArray environment_map
 ---
-# probabilistic maps
-sensor_msgs/Image[] maps
+# probabilistic map
+pesat_msgs/FloatArray probabilistic_map

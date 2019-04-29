@@ -1,0 +1,87 @@
+<launch>
+    <!-- direction forward-->
+    <node name="controller" pkg="pid" type="controller" ns="forward" output="screen" >
+      <param name="Kp" value="5.0" />
+      <param name="Ki" value="0.0" />
+      <param name="Kd" value="0.1" />
+      <param name="upper_limit" value="17" />
+      <param name="lower_limit" value="-17" />
+      <param name="windup_limit" value="10" />
+      <param name="max_loop_frequency" value="30.0" />
+      <param name="min_loop_frequency" value="30.0" />
+      <param name="topic_from_controller" value="speed" />
+      <param name="topic_from_plant" value="position" />
+      <param name="setpoint_topic" value="target_position" />
+     </node>
+    <!-- direction left-->
+    <node name="controller" pkg="pid" type="controller" ns="left" output="screen" >
+      <param name="Kp" value="5.0" />
+      <param name="Ki" value="0.0" />
+      <param name="Kd" value="0.1" />
+      <param name="upper_limit" value="17" />
+      <param name="lower_limit" value="-17" />
+      <param name="windup_limit" value="10" />
+      <param name="max_loop_frequency" value="30.0" />
+      <param name="min_loop_frequency" value="30.0" />
+      <param name="topic_from_controller" value="speed" />
+      <param name="topic_from_plant" value="position" />
+      <param name="setpoint_topic" value="target_position" />
+     </node>
+     <!-- direction up-->
+    <node name="controller" pkg="pid" type="controller" ns="up" output="screen" >
+      <param name="Kp" value="5.0" />
+      <param name="Ki" value="0.0" />
+      <param name="Kd" value="0.1" />
+      <param name="upper_limit" value="17" />
+      <param name="lower_limit" value="-17" />
+      <param name="windup_limit" value="10" />
+      <param name="max_loop_frequency" value="30.0" />
+      <param name="min_loop_frequency" value="30.0" />
+      <param name="topic_from_controller" value="speed" />
+      <param name="topic_from_plant" value="position" />
+      <param name="setpoint_topic" value="target_position" />
+     </node>
+     <!-- direction horizontal camera-->
+    <node name="controller" pkg="pid" type="controller" ns="hcamera" output="screen" >
+      <param name="Kp" value="0.2" />
+      <param name="Ki" value="0.0" />
+      <param name="Kd" value="0.1" />
+      <param name="upper_limit" value="0.02" />
+      <param name="lower_limit" value="-0.02" />
+      <param name="windup_limit" value="0.1" />
+      <param name="max_loop_frequency" value="30.0" />
+      <param name="min_loop_frequency" value="30.0" />
+      <param name="topic_from_controller" value="speed" />
+      <param name="topic_from_plant" value="position" />
+      <param name="setpoint_topic" value="target_position" />
+     </node>
+     <!-- direction vertical camera-->
+    <node name="controller" pkg="pid" type="controller" ns="vcamera" output="screen" >
+      <param name="Kp" value="0.2" />
+      <param name="Ki" value="0.0" />
+      <param name="Kd" value="0.1" />
+      <param name="upper_limit" value="0.02" />
+      <param name="lower_limit" value="-0.02" />
+      <param name="windup_limit" value="0.1" />
+      <param name="max_loop_frequency" value="30.0" />
+      <param name="min_loop_frequency" value="30.0" />
+      <param name="topic_from_controller" value="speed" />
+      <param name="topic_from_plant" value="position" />
+      <param name="setpoint_topic" value="target_position" />
+     </node>
+     <!-- direction yaw-->
+    <node name="controller" pkg="pid" type="controller" ns="yaw" output="screen" >
+      <param name="Kp" value="0.4" />
+      <param name="Ki" value="0.0" />
+      <param name="Kd" value="0.25" />
+      <param name="upper_limit" value="0.7" />
+      <param name="lower_limit" value="-0.7" />
+      <param name="windup_limit" value="0.5" />
+      <param name="max_loop_frequency" value="30.0" />
+      <param name="min_loop_frequency" value="30.0" />
+      <param name="topic_from_controller" value="speed" />
+      <param name="topic_from_plant" value="position" />
+      <param name="setpoint_topic" value="target_position" />
+     </node>
+
+</launch>

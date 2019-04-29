@@ -36,6 +36,7 @@ namespace bebop2_hardware_interface
             void update(const ros::TimerEvent& e);
             void read();
             void callback_positions(const pesat_msgs::JointStatesConstPtr& joints);
+            void callback_desired(const pesat_msgs::JointStatesConstPtr& joints);
             void callback_velocities(const pesat_msgs::JointStatesConstPtr& joints);
             void write(ros::Duration elapsed_time);
 
@@ -52,9 +53,14 @@ namespace bebop2_hardware_interface
             ros::Publisher pub_;
             ros::Subscriber joints_positions_sub_;
             ros::Subscriber joints_velocities_sub_;
+            ros::Subscriber joints_desired_positions_sub_;
             vector<float> updates_positions_;
             pesat_msgs::JointStates current_positions_;
+            pesat_msgs::JointStates desired_positions_;
             pesat_msgs::JointStates current_velocities_;
+            bool positions_message_ready_;
+            bool velocities_message_ready_;
+            bool desires_message_ready_;
     };
 
 }

@@ -98,9 +98,11 @@ class TargetLocalisation(object):
     def __init__(self):
         super(TargetLocalisation, self).__init__()
         rospy.init_node('vision', anonymous=False)
-        self.hfov = 1.7
-        self.image_height = 480
-        self.image_width = 856
+        _camera_configuration = rospy.get_param("drone_bebop2")["camera"]
+        _vision_configuration = rospy.get_param("target_localization")
+        self.hfov = _camera_configuration["hfov"]
+        self.image_height = _camera_configuration["image_height"]
+        self.image_width = _camera_configuration["image_width"]
         self.focal_length = self.image_width / (2.0 * np.tan(self.hfov / 2.0))
         self.vfov = 2 * np.arctan2(self.image_height / 2, self.focal_length)
         self.dfov = 2 * np.arctan2(np.sqrt(self.image_width ^ 2 + self.image_height ^ 2) / 2, self.focal_length)
@@ -108,8 +110,8 @@ class TargetLocalisation(object):
         self.hangle_per_pixel = self.hfov / 856
         self.bridge = CvBridge()
         self.image = None
-        self.pub_target_info = rospy.Publisher('/target/information', ImageTargetInfo, queue_size=10)
-        rospy.Subscriber("/bebop2/camera_base/image_raw", Image, self.callback_image)
+        self.pub_target_info = rospy.Publisher(_vision_configuration["target_information"], ImageTargetInfo, queue_size=10)
+        rospy.Subscriber(_camera_configuration["image_channel"], Image, self.callback_image)
         self.br = tf2_ros.TransformBroadcaster()
         self.tfBuffer = tf2_ros.Buffer()
         self.tfListener = tf2_ros.TransformListener(self.tfBuffer)

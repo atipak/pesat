@@ -2,7 +2,7 @@
 # Specific joint properties can be changed with the keys [max_position, min_position, max_velocity, max_acceleration]
 # Joint limits can be turned off with [has_velocity_limits, has_acceleration_limits]
 joint_limits:
-  Bebop2_joint:
+  virtual_joint:
     has_velocity_limits: true
     max_velocity: 0.2
     has_acceleration_limits: true

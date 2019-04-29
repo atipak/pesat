@@ -10,3 +10,4 @@ drone_bebop2:
     image_height: 480
     image_width: 856
     image_channel: /bebop2/camera_base/image_raw
+    max_speed: 0.02

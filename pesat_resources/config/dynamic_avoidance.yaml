@@ -1,15 +1,17 @@
 dynamic_avoidance:
-    camera_base_link: bebop2/camera_base_link
-    camera_optical_link: bebop2/camera_base_optical_link
-    base_link: bebop2/base_link
-    map: map
-    cmd_vel_topic: bebop2/cmd_vel
+    camera_base_link: "bebop2/camera_base_link"
+    camera_optical_link: "bebop2/camera_base_optical_link"
+    base_link: "bebop2/base_link"
+    map: "map"
+    cmd_vel_topic: "bebop2/cmd_vel"
     switch_topic: "/dynamic_avoidance/switch"
     alert_topic: "/dynamic_avoidance/alert"
     collision_topic: "/dynamic_avoidance/collision"
     is_avoiding_topic: "/dynamic_avoidance/is_avoiding"
     recommended_altitude_topic: "/dynamic_avoidance/recommended_altitude"
-    state_change_topic: /bebop2/dronet/state_change
-    dronet_cmd_vel_topic: /bebop2/dronet/cmd_vel
-    cnn_prediction_topic: /cnn_out/predictions
+    centering_topic: "/dynamic_avoidance/centering"
+    state_change_topic: "/bebop2/dronet/state_change"
+    dronet_cmd_vel_topic: "/bebop2/dronet/cmd_vel"
+    cnn_prediction_topic: "/cnn_out/predictions"
     low_bound: 0.7
+    next_position_service: "/dynamic_avoidance/next_point"

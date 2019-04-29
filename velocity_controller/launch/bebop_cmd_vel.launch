@@ -31,6 +31,7 @@
   <node pkg="tf" type="static_transform_publisher" name="map_publisher" args="0 0 0 0 0 0 world map 10" />
 
   <group ns="$(arg mav_name)">
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="rotator_controller camera_base_controller joint_state_controller"/>
     <include file="$(find velocity_controller)/launch/spawn_mav_from_urdf.launch">
       <arg name="mav_name" value="$(arg mav_name)" />
       <arg name="model" value="$(find pesat_resources)/urdf/$(arg mav_name).urdf" />

@@ -1,0 +1,5 @@
+geometry_msgs/TransformStamped drone_position
+bool last_point_reached
+---
+geometry_msgs/Pose goal_pose
+bool change_state

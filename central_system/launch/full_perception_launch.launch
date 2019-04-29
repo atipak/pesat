@@ -33,7 +33,7 @@
         <param name="json_model_path" value="$(find dronet_perception)/models/model_struct.json"/>
         <param name="weights_path" value="$(find dronet_perception)/models/model_weights_59.h5"/>
         <param name="onboard_images_folder" value="$(find dronet_perception)/onboard_images"/>
-        <param name="target_size" value="320,240"/>
+        <param name="target_size" value="428,240"/> <!-- new input = 856x480 insted of 640x480 -->
         <param name="crop_size" value="200,200"/>
 
     </node>`

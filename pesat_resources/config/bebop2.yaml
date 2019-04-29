@@ -3,3 +3,17 @@ publish_default_positions:
    - 'bebop2/imugt_joint'
    - 'bebop2/odometry_sensor1_joint'
    - 'bebop2/odometry_sensorgt_joint'
+bebop2:
+   joint_state_controller:
+      type: joint_state_controller/JointStateController
+      publish_rate: 20
+
+   rotator_controller:
+      type: velocity_controllers/JointPositionController
+      joint: bebop2/camera_rotator_base_joint
+      pid: {p: 1.0, i: 1.0, d: 0.0}
+
+   camera_base_controller:
+      type: velocity_controllers/JointPositionController
+      joint: bebop2/camera_base_joint
+      pid: {p: 1.0, i: 1.0, d: 0.0}
