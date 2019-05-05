@@ -36,7 +36,6 @@ class TargetPursuer(object):
         self.tfListener = tf2_ros.TransformListener(self.tfBuffer)
         self.track_timeout = _track_configuration["track_timeout"]  # seconds
         self.current_waypoint_index = 0
-        self.center_target_limit = _track_configuration["center_target_limit"]  # pixels
         self.init_target_localization(_vision_configuration)
         self.init_prediction(_track_configuration)
         self.init_move_it(_track_configuration)
@@ -50,9 +49,8 @@ class TargetPursuer(object):
         self._focal_length = self._image_width / (2.0 * np.tan(self._hfov / 2.0))
         self._vfov = np.arctan2(self._image_height / 2, self._focal_length)
         self._dronet_crop = 200
-        self._s = rospy.Service(_track_configuration["next_position_service"], GoalState, self.next_position_callback)
-        rospy.Subscriber(_track_configuration["launch_topic"], Bool, self.init_reset_callback)
         self._launched = True
+        self._workspace_size = 40
         self._is_checkpoint_reached = False
         self._current_pose = None
         self._change_state_to_searching = False
@@ -69,6 +67,8 @@ class TargetPursuer(object):
         self.map = utils.Map(ar)
         self.init_deep(_track_configuration)
         self.init_reactive()
+        self._s = rospy.Service(_track_configuration["next_position_service"], GoalState, self.next_position_callback)
+        rospy.Subscriber(_track_configuration["launch_topic"], Bool, self.init_reset_callback)
 
     def init_target_localization(self, _vision_configuration):
         rospy.Subscriber(_vision_configuration["target_information"], ImageTargetInfo, self.callback_target_information)
@@ -217,11 +217,12 @@ class TargetPursuer(object):
     def pose_fitness(self, pose):
         return pose
 
-    def transform_from_drone_to_map(self, point):
+    def transform_from_frame_to_map(self, point, frame):
         try:
+            trans_map_drone = self.tfBuffer.lookup_transform(frame, self._map_frame, rospy.Time())
             point_stamped = PointStamped()
-            point_stamped.header.stamp = rospy.Time.from_seconds(rospy.Time.now().to_sec() - 0.03)
-            point_stamped.header.frame_id = self._drone_base_link_frame
+            point_stamped.header.stamp = trans_map_drone.header.stamp
+            point_stamped.header.frame_id = frame
             point_stamped.point.x = point.x
             point_stamped.point.y = point.y
             point_stamped.point.z = point.z
@@ -290,15 +291,13 @@ class TargetPursuer(object):
             diffX = np.abs(self._image_width / 2 - self.target_information.centerX)
             diffY = np.abs(self._image_height / 2 - self.target_information.centerY)
             d = np.sqrt(np.square(diffX) + np.square(diffY))
-            # is the distance of target from center in the image too long
-            if d > self.center_target_limit:
-                # sign for shift of camera
-                signX = np.sign(diffX)
-                signY = np.sign(diffY)
-                # shift angle of target in image for camera
-                angleX = signX * np.arctan2(diffX, self._focal_length)
-                angleY = signY * np.arctan2(diffY, self._focal_length)
-                return angleX, angleY
+            # sign for shift of camera
+            signX = np.sign(diffX)
+            signY = np.sign(diffY)
+            # shift angle of target in image for camera
+            angleX = signX * np.arctan2(diffX, self._focal_length)
+            angleY = signY * np.arctan2(diffY, self._focal_length)
+            return angleX, angleY
         return 0, 0
 
     def compare_react_deep_fitness(self, react_pose, deep_pose):
@@ -326,9 +325,12 @@ class TargetPursuer(object):
     def get_altitude_limits(self, recommended_dist):
         min_altitude = 3
         max_altitude = 15
-        max_v = recommended_dist / np.cos(self._min_dist_alt_angle)
-        min_v = recommended_dist / np.cos(self._max_dist_alt_angle)
-        return np.clip(min_v, min_altitude, max_altitude), np.clip(max_v, min_altitude, max_altitude)
+        max_v = recommended_dist * np.cos(self._min_dist_alt_angle)
+        #print("Min_dist_alt, max_dist_alt", self._min_dist_alt_angle, self._max_dist_alt_angle)
+        min_v = recommended_dist * np.cos(self._max_dist_alt_angle)
+        max_v = np.clip(max_v, min_altitude, max_altitude)
+        min_v = np.clip(min_v, min_altitude, max_v)
+        return min_v, max_v
 
     def recommended_altitude(self, recommended_dist, min_v, max_v):
         ratio = (recommended_dist - self._min_dist) / (self._max_dist - self._min_dist)
@@ -337,8 +339,9 @@ class TargetPursuer(object):
 
     def recommended_ground_dist_alt(self, recommended_dist):
         min_v, max_v = self.get_altitude_limits(recommended_dist)
+        #print("Min_v, max_v", min_v, max_v)
         alt = self.recommended_altitude(recommended_dist, min_v, max_v)
-        ground_dist = np.sqrt(np.square(recommended_dist) + np.square(alt))
+        ground_dist = np.sqrt(np.square(recommended_dist) - np.square(alt))
         return ground_dist, alt
 
     def recommended_vcamera(self, ground_dist, alt):
@@ -351,6 +354,7 @@ class TargetPursuer(object):
             trans_drone_map = self.tfBuffer.lookup_transform(self._map_frame,
                                                              self._drone_base_link_frame, rospy.Time())
             angleX, _ = self.image_target_center_dist()
+            #print("Angle x:", angleX)
             explicit_quat = [trans_camera_drone.transform.rotation.x, trans_camera_drone.transform.rotation.y,
                              trans_camera_drone.transform.rotation.z, trans_camera_drone.transform.rotation.w]
             (_, _, camera_yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
@@ -359,7 +363,11 @@ class TargetPursuer(object):
             (_, _, drone_yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
             yaw = drone_yaw
             angleX += camera_yaw
-            if abs(angleX) > self._yaw_camera_limit:
+            #print("Angle x + camera yaw, yaw:", angleX, yaw)
+            angle_x_sign = np.sign(angleX)
+            yaw_sign = np.sign(yaw)
+            if (angle_x_sign != 0 and yaw_sign != 0 and angle_x_sign != yaw_sign) or \
+                    abs(angleX) > self._yaw_camera_limit:
                 yaw += angleX
                 angleX = 0
             return yaw, angleX
@@ -397,18 +405,22 @@ class TargetPursuer(object):
 
     def recommended_start_position(self, r_ground_dist):
         try:
-            trans_target_drone = self.tfBuffer.lookup_transform(self._drone_base_link_frame,
-                                                                self._target_location_frame, rospy.Time())
-            d = np.hypot(trans_target_drone.transform.translation.x, trans_target_drone.transform.translation.y)
+            trans_target_map = self.tfBuffer.lookup_transform(self._map_frame, self._target_location_frame,
+                                                             rospy.Time())
+            explicit_quat = [trans_target_map.transform.rotation.x, trans_target_map.transform.rotation.y,
+                             trans_target_map.transform.rotation.z, trans_target_map.transform.rotation.w]
+            (_, _, target_yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
             p = Point()
-            p.x = r_ground_dist - d
+            p.x = -r_ground_dist
             p.y = 0
             p.z = 0
-            transformed = self.transform_from_drone_to_map(p)
-            return transformed
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-            rospy.loginfo("No target -> drone -> map transformation!")
-            return PointStamped()
+            #print("Point before transformation:", p)
+            transformed = self.transform_from_frame_to_map(p, self._target_location_frame)
+            #print("Point after transformation:", transformed)
+            return transformed, target_yaw
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            rospy.loginfo("No target -> drone -> map transformation!: " + str(e))
+            return PointStamped(), 0
 
     def recommended_next_pose(self, current_target_speed, time):
         r_dist = self.recommended_dist(current_target_speed)
@@ -416,28 +428,31 @@ class TargetPursuer(object):
         r_yaw, r_hcamera = self.recommended_yaw_hcamera()
         r_vcamera = self.recommended_vcamera(r_ground_dist, r_alt)
         r_speed = self.recommended_speed(r_yaw, r_hcamera, current_target_speed)
-        r_start_position = self.recommended_start_position(r_ground_dist)
-        p = Point()
-        p.x = r_start_position.point.x + time * r_speed.x
-        p.y = r_start_position.point.y + time * r_speed.y
-        p.z = r_speed.z
-        transformed_point = self.transform_from_drone_to_map(p)
+        r_start_position, r_start_yaw = self.recommended_start_position(r_ground_dist)
+        #print("Distance:", r_dist, ",Ground distance:", r_ground_dist, ", altitude:", r_alt, ", yaw:", r_yaw)
+        #print("Hcamera:", r_hcamera, ",vcamera:", r_vcamera, ", speed:", r_speed, ", start:", r_start_position)
+        #print("Start yaw:", r_start_yaw)
+        p = None
+        if r_start_position is not None:
+            p = Point()
+            p.x = r_start_position.point.x + time * r_speed.x
+            p.y = r_start_position.point.y + time * r_speed.y
+            p.z = r_speed.z
+        # transformed_point = self.transform_from_frame_to_map(p, self._drone_base_link_frame)
         pose = Pose()
-        if transformed_point is not None:
-            pose.position.x = transformed_point.point.x
-            pose.position.y = transformed_point.point.y
+        if p is not None:
+            pose.position.x = p.x
+            pose.position.y = p.y
             pose.position.z = r_alt
             pose.orientation.x = r_hcamera
             pose.orientation.y = r_vcamera
-            pose.orientation.z = r_yaw
+            pose.orientation.z = r_yaw + r_start_yaw
             return pose
         return pose
 
     def check_reactive_plan(self, time, target_speed):
         if (time % 0.5) < self._time_epsilon:
-            print("Check_time")
             if (time % 3) < self._time_epsilon:
-                print("Replanning")
                 if not self._set_new_reactive_plan:
                     self._set_new_reactive_plan = True
                     self._reactive_time = time
@@ -452,7 +467,6 @@ class TargetPursuer(object):
             else:
                 next_estimated_pose = self._estimated_reactive_poses[next_estimated_pose_time_index]
             if not self.compare_poses(next_pose, next_estimated_pose):
-                print("Repplna")
                 start_index = int((time % 3) / 0.5)
                 self.react_replanning(start_index, time, target_speed)
 
@@ -460,7 +474,7 @@ class TargetPursuer(object):
         for t in range(start_index, 6):
             pose_time = (t + 1 - start_index) * 0.5
             self._estimated_reactive_poses[t] = self.recommended_next_pose(target_speed, pose_time)
-        self._reactive_plan = self.get_plan_from_poses(0, [self._estimated_reactive_poses[5]])
+        # self._reactive_plan = self.get_plan_from_poses(0, [self._estimated_reactive_poses[5]])
 
     def compare_poses(self, pose1, pose2):
         if pose1 is None or pose2 is None:
@@ -496,7 +510,9 @@ class TargetPursuer(object):
             pose = collection[t]
             q = tf.transformations.quaternion_from_euler(0.0, 0.0, pose.orientation.z)
             target_joints = [pose.position.x, pose.position.y, pose.position.z, q[0], q[1], q[2], q[3]]
-            self.move_group.set_workspace([-10, -10, -10, 10, 10, 10])
+            self.move_group.set_workspace(
+                [-self._workspace_size, -self._workspace_size, -self._workspace_size, self._workspace_size,
+                 self._workspace_size, self._workspace_size])
             self.move_group.set_joint_value_target(target_joints)
             self.move_group.set_start_state(c_state)
             plan = self.move_group.plan()
@@ -507,22 +523,16 @@ class TargetPursuer(object):
 
     def next_react_pose(self, time, is_close):
         start_index = int((time % 3) / 0.5)
-        if self._reactive_plan is None or self._estimated_reactive_poses is None or len(
-                self._reactive_plan) <= self._react_index or len(self._estimated_reactive_poses) <= start_index:
+        if self._estimated_reactive_poses is None or len(self._estimated_reactive_poses) <= start_index:
             return None, None
-        if is_close:
-            self._react_index += 1
-        return self._estimated_reactive_poses[start_index], self._reactive_plan[0][self._react_index]
+        return self._estimated_reactive_poses[start_index]
 
     # probabilistic and network planning
     def next_deep_pose(self, time, is_close):
         start_index = int((time % 3) / 0.5)
-        if self._deep_plan is None or self._estimated_deep_poses is None or len(self._deep_plan) <= self._deep_index or \
-                len(self._estimated_deep_poses) <= start_index:
+        if self._estimated_deep_poses is None or len(self._estimated_deep_poses) <= start_index:
             return None, None
-        if is_close:
-            self._deep_index += 1
-        return self._estimated_deep_poses[start_index], self._deep_plan[self._deep_index]
+        return self._estimated_deep_poses[start_index]
 
     def reset_positions_probability_maps(self, count):
         try:
@@ -642,7 +652,7 @@ class TargetPursuer(object):
                                                           pose.yaw)
             if self._deep_plan is None or self.pmaps is None or diff > self.correction_timeout or replaning:
                 self.reset_positions_probability_maps(buffer_length)
-                self._deep_plan = self.get_plan_from_poses(0, self._estimated_deep_poses)
+                # self._deep_plan = self.get_plan_from_poses(0, self._estimated_deep_poses)
                 self._deep_index = 0
 
     def get_target_speed(self):
@@ -663,13 +673,13 @@ class TargetPursuer(object):
 
     def next_drone_pose(self, is_close, rounded_time, diff):
         # calculate time, calculate speed of target
-        self._use_deep_points = False # WARNING set FALSE
+        self._use_deep_points = False  # WARNING set FALSE
         time = rospy.Time.now().to_sec()
         target_speed = self.get_target_speed()
         self.check_reactive_plan(time, target_speed)
         self.check_deep_plan(rounded_time, diff)
-        deep_pose, deep_plan_pose = self.next_deep_pose(time, is_close)
-        react_pose, react_plan_pose = self.next_react_pose(time, is_close)
+        deep_pose = self.next_deep_pose(time, is_close)
+        react_pose = self.next_react_pose(time, is_close)
         use_deep_point = False
         if self._use_deep_points:
             start_index = int((time % 3) / 0.5)
@@ -689,34 +699,26 @@ class TargetPursuer(object):
             else:
                 use_deep_point = False
         if use_deep_point:
-            if deep_plan_pose is None or deep_pose is None:
+            if deep_pose is None:
                 return None
-            explicit_quat = [deep_plan_pose.rotation.x, deep_plan_pose.rotation.y, deep_plan_pose.rotation.z,
-                             deep_plan_pose.rotation.w]
-            (_, _, yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
             pose = Pose()
-            pose.position.x = deep_plan_pose.translation.x
-            pose.position.y = deep_plan_pose.translation.y
-            pose.position.z = deep_plan_pose.translation.z
+            pose.position.x = deep_pose.position.x
+            pose.position.y = deep_pose.position.y
+            pose.position.z = deep_pose.position.z
             pose.orientation.x = deep_pose.orientation.x
             pose.orientation.x = deep_pose.orientation.y
-            pose.orientation.z = yaw
+            pose.orientation.z = deep_pose.orientation.z
             return pose
         else:
-            if react_plan_pose is None or react_pose is None:
-                print("None")
+            if react_pose is None:
                 return None
-            print("React")
-            explicit_quat = [react_plan_pose.rotation.x, react_plan_pose.rotation.y, react_plan_pose.rotation.z,
-                             react_plan_pose.rotation.w]
-            (_, _, yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
             pose = Pose()
-            pose.position.x = react_plan_pose.translation.x
-            pose.position.y = react_plan_pose.translation.y
-            pose.position.z = react_plan_pose.translation.z
+            pose.position.x = react_pose.position.x
+            pose.position.y = react_pose.position.y
+            pose.position.z = react_pose.position.z
             pose.orientation.x = react_pose.orientation.x
             pose.orientation.x = react_pose.orientation.y
-            pose.orientation.z = yaw
+            pose.orientation.z = react_pose.orientation.z
             return pose
 
     def step(self):

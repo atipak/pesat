@@ -25,7 +25,7 @@ class DynamicAvoider(object):
         rospy.Subscriber(_da_configuration["alert_topic"], Bool, self.callback_alert)
         self._pub_is_avoiding = rospy.Publisher(_da_configuration["is_avoiding_topic"], Bool, queue_size=10)
         self._pub_collision = rospy.Publisher(_da_configuration["collision_topic"], Float32, queue_size=10)
-        self._pub_centering = rospy.Publisher(_da_configuration["centering_topic"], Twist, queue_size=10)
+        # self._pub_centering = rospy.Publisher(_da_configuration["centering_topic"], Twist, queue_size=10)
         self._pub_recommended_altitude = rospy.Publisher(_da_configuration["recommended_altitude_topic"], Float32,
                                                          queue_size=10)
         self._s = rospy.Service(_da_configuration["next_position_service"], GoalState, self.next_position_callback)
@@ -46,10 +46,9 @@ class DynamicAvoider(object):
         self._state = self._enum.free_move
         self._still_avoiding = False
         self._is_checkpoint_reached = False
-        self._current_pose = None
         self._drone_position = None
 
-    def init_dronet(self, da_config):
+    def init_dronet(self):
         self.pub_dronet = rospy.Publisher(self._params['state_change_topic'], Bool, queue_size=10)
         self.dronet_cmd_vel = None
         self.dronet_prediction = None
@@ -62,7 +61,7 @@ class DynamicAvoider(object):
     def next_position_callback(self, data):
         self._is_checkpoint_reached = data.last_point_reached
         self._drone_position = data.drone_position
-        return [self._current_pose, False]
+        return [self._next_position, False]
 
     def callback_dronet_vel(self, data):
         self.dronet_cmd_vel = data
@@ -85,7 +84,6 @@ class DynamicAvoider(object):
             self.pub_dronet.publish(False)
         self._alert = data
 
-
     def centering(self):
         twist = Twist()
         try:
@@ -104,58 +102,62 @@ class DynamicAvoider(object):
             # drone centering
             trans_last = self._tfBuffer.lookup_transform(self._params["map"], self._params['base_link'], rospy.Time())
             trans = self._tfBuffer.lookup_transform(self._params["map"], self._params['base_link'],
-                                                    trans.header.stamp - 0.01)
+                                                    trans.header.stamp.to_sec() - 0.01)
             vel_x = trans_last.transform.translation.x - trans.transform.translation.x
             vel_y = trans_last.transform.translation.y - trans.transform.translation.y
             angle = np.arctan2(vel_y / vel_x)
             twist.angular.z = angle
         except Exception as e:
-            print("Exception:", e)
+            print("Exception in center calculation:", e)
         return twist
 
     def next_position(self, stay_on_place=False, camera_reset=False, camera_down=False, camera_back=False):
         next_pose = Pose()
-        next_pose.position.x = self._drone_position.transform.translation.x
-        next_pose.position.y = self._drone_position.transform.translation.y
-        next_pose.position.z = self._drone_position.transform.translation.z
-        next_pose.orientation.x = self._drone_position.transform.rotation.x
-        next_pose.orientation.y = self._drone_position.transform.rotation.y
-        next_pose.orientation.z = self._drone_position.transform.rotation.z
-        if stay_on_place:
-            return next_pose
-        if camera_reset:
-            next_pose.orientation.x = 0.0
-            next_pose.orientation.y = 0.0
-            return next_pose
-        if camera_down:
-            next_pose.orientation.x = 0.0
-            next_pose.orientation.y = -self._maximum_camera_angle
-            return next_pose
-        if camera_back:
-            next_pose.orientation.x = self._saved_horizontal
-            next_pose.orientation.y = self._saved_vertical
-            return next_pose
-        if self.dronet_prediction is not None:
-            rospy.loginfo_once("Dynamical avoidance predicts.")
-            next_pose.position.z += 0.2
-            return next_pose
+        if self._drone_position is not None:
+            next_pose.position.x = self._drone_position.transform.translation.x
+            next_pose.position.y = self._drone_position.transform.translation.y
+            next_pose.position.z = self._drone_position.transform.translation.z
+            next_pose.orientation.x = self._drone_position.transform.rotation.x
+            next_pose.orientation.y = self._drone_position.transform.rotation.y
+            next_pose.orientation.z = self._drone_position.transform.rotation.z
+            if stay_on_place:
+                return next_pose
+            if camera_reset:
+                next_pose.orientation.x = 0.0
+                next_pose.orientation.y = 0.0
+                return next_pose
+            if camera_down:
+                next_pose.orientation.x = 0.0
+                next_pose.orientation.y = -self._maximum_camera_angle
+                return next_pose
+            if camera_back:
+                next_pose.orientation.x = self._saved_horizontal
+                next_pose.orientation.y = self._saved_vertical
+                return next_pose
+            if self.dronet_prediction is not None:
+                rospy.loginfo_once("Dynamical avoidance predicts.")
+                next_pose.position.z += 1
+                return next_pose
+            else:
+                rospy.logwarn_once("No dronet prediction. Dynamical avoidance doesn't work.")
+                return next_pose
         else:
-            rospy.logwarn_once("No dronet prediction. Dynamical avoidance doesn't work.")
-            return next_pose
+            return None
 
     def step(self):
         self._avg_prob = np.average(self._last_collision_predictions)
         if self._alert:
-            self._pub_centering.publish(self.centering())
-            if self._avg_prob > self._low_bound:
-                self._pub_collision.publish(self._avg_prob)
+            # self._pub_centering.publish(self.centering())
+            self._pub_collision.publish(self._avg_prob)
         if self._ison:
             try:
                 trans = self._tfBuffer.lookup_transform(self._params["map"], self._params['base_link'],
                                                         rospy.Time())
                 camera_rotation = self._tfBuffer.lookup_transform(self._params["base_link"],
                                                                   self._params['camera_base_link'], rospy.Time())
-                (_, vertical, horizontal) = tf.transformations.euler_from_quaternion(camera_rotation.transform.rotation)
+                explicit_quat = [camera_rotation.transform.rotation.x, camera_rotation.transform.rotation.y,
+                                 camera_rotation.transform.rotation.z, camera_rotation.transform.rotation.w]
+                (_, vertical, horizontal) = tf.transformations.euler_from_quaternion(explicit_quat)
                 is_avoiding = self._avg_prob > self._low_bound
                 is_avoiding_constraint = False
                 # free move ... no obstacle was recognised
@@ -221,10 +223,13 @@ class DynamicAvoider(object):
                     self._pub_recommended_altitude.publish(trans.transform.translation.z)
                 else:
                     self._pub_recommended_altitude.publish(-1)
+                # print("State", self._state)
+                # print("Is avoiding constr", is_avoiding_constraint)
+                # print("position", self._next_position)
                 self._pub_is_avoiding.publish(is_avoiding_constraint)
 
             except Exception as e:
-                print("Exception:", e)
+                print("Exception in updating dynamical avoidence:", e)
                 self._pub_is_avoiding.publish(False)
 
 

@@ -10,6 +10,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import tensorflow as tf
 from pesat_msgs.msg import ImageTargetInfo
+import helper_pkg.utils as utils
 
 lowerBound0 = np.array([0, 100, 90])
 upperBound0 = np.array([10, 255, 255])
@@ -110,7 +111,8 @@ class TargetLocalisation(object):
         self.hangle_per_pixel = self.hfov / 856
         self.bridge = CvBridge()
         self.image = None
-        self.pub_target_info = rospy.Publisher(_vision_configuration["target_information"], ImageTargetInfo, queue_size=10)
+        self.pub_target_info = rospy.Publisher(_vision_configuration["target_information"], ImageTargetInfo,
+                                               queue_size=10)
         rospy.Subscriber(_camera_configuration["image_channel"], Image, self.callback_image)
         self.br = tf2_ros.TransformBroadcaster()
         self.tfBuffer = tf2_ros.Buffer()
@@ -122,6 +124,10 @@ class TargetLocalisation(object):
         rospack = rospkg.RosPack()
         model_path = rospack.get_path('pesat_resources') + "/models/target_localization/ball_recognition"
         self.network.restore(model_path)
+        self._point_memory = 5
+        self._localization_times = 0
+        self._localization_points = None
+        self._last_remembered_yaw = 0
         # self.focal_length = rospy.get_param("focal_length")
 
     def callback_image(self, data):
@@ -203,7 +209,7 @@ class TargetLocalisation(object):
             # direction of camera in drone_position frame
             # direction of camera
             m = tf_ros.transformations.euler_matrix(roll - angleY, pitch, yaw - angleX)
-            vector = m.dot([0.0,0.0,1.0,1.0])
+            vector = m.dot([0.0, 0.0, 1.0, 1.0])
             vector_distance = np.sqrt(
                 np.power(distance, 2) + np.power(np.tan(angleX) * distance, 2) + np.power(np.tan(angleY) * distance, 2))
             z = trans.transform.translation.z + vector_distance * vector[2]
@@ -212,7 +218,7 @@ class TargetLocalisation(object):
         return {"q": quotient, "x": x, "y": y, "z": z}
 
     def launch(self):
-        rate = rospy.Rate(1)
+        rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.lock = True
             information = ImageTargetInfo()
@@ -306,18 +312,32 @@ class TargetLocalisation(object):
                     t.transform.translation.x = correct_values["x"]
                     t.transform.translation.y = correct_values["y"]
                     t.transform.translation.z = correct_values["z"]
-                    t.transform.rotation.w = 1
+                    if self._localization_points is not None and t.header.stamp.to_sec() - self._localization_times < 1:
+                        v2 = [1, 0]
+                        v1 = [t.transform.translation.x - self._localization_points[0],
+                              t.transform.translation.y - self._localization_points[1]]
+                        v1 = utils.Math.normalize(v1)
+                        angle = np.arctan2(v2[1], v2[0]) - np.arctan2(v1[0], v1[1])
+                    else:
+                        angle = self._last_remembered_yaw
+                    qt = tf_ros.transformations.quaternion_from_euler(0.0, 0.0, angle)
+                    t.transform.rotation.x = qt[0]
+                    t.transform.rotation.y = qt[1]
+                    t.transform.rotation.z = qt[2]
+                    t.transform.rotation.w = qt[3]
+                    self._localization_points = [t.transform.translation.x, t.transform.translation.y]
+                    self._localization_times = t.header.stamp.to_sec()
                     self.br.sendTransform(t)
                     information.quotient = correct_values["q"]
                     information.centerX = correct_circle[0]
                     information.centerY = correct_circle[1]
                     information.radius = correct_circle[2]
-                    #print(correct_circle)
-                    #print(correct_values)
-                    #circle_mask = np.zeros(self.image.shape[0:2], dtype='uint8')
-                    #cv2.circle(circle_mask, (int(correct_circle[0]), int(correct_circle[1])), int(correct_circle[2]),
+                    # print(correct_circle)
+                    # print(correct_values)
+                    # circle_mask = np.zeros(self.image.shape[0:2], dtype='uint8')
+                    # cv2.circle(circle_mask, (int(correct_circle[0]), int(correct_circle[1])), int(correct_circle[2]),
                     #           255, -1)
-                    #cv2.imwrite("circle_mask.bmp", circle_mask)
+                    # cv2.imwrite("circle_mask.bmp", circle_mask)
                     self.last_position = np.array([correct_values["x"], correct_values["y"], correct_values["z"]])
             self.pub_target_info.publish(information)
             self.image = None

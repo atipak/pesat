@@ -43,6 +43,8 @@ class CenralSystem(object):
         self._max_speed = _drone_configuration["max_speed"]
         self._last_state = self._state
         self._last_go_to_next = self._go_to_next
+        self._distance_limit = 0.01
+        self._rotation_limit = np.pi / 360
 
         rospy.Subscriber(_pid_configuration["update_velocities_topic"], JointStates, self.callback_update)
         rospy.Subscriber(_da_configuration["recommended_altitude_topic"], Float32, self.callback_recommended_altitude)
@@ -105,17 +107,17 @@ class CenralSystem(object):
             self._tracker_next_point_srv = rospy.ServiceProxy(_tracker_config["next_position_service"], GoalState)
             self._da_next_point_srv = rospy.ServiceProxy(_da_configuration["next_position_service"], GoalState)
         except rospy.ServiceException as e:
-            print("Service call failed: %s", e)
+            rospy.loginfo_once("Service call failed: " + str(e))
 
-        # init
-        self._pub_da_alert.publish(True)
+
+
 
     # callbacks
     def callback_da_collision(self, data):
-        self._collision_probability = data
+        self._collision_probability = data.data
 
     def callback_da_avoiding(self, data):
-        self._is_avoiding = data
+        self._is_avoiding = data.data
 
     def callback_up_speed(self, data):
         self._up_speed = data.data
@@ -136,25 +138,25 @@ class CenralSystem(object):
         self._yaw_speed = data.data
 
     def callback_update(self, data):
-        print(data.values)
         if self._vel_update:
             pass
             # self.publish_cmd_velocity([x for x in data.values])
 
     def callback_recommended_altitude(self, data):
-        self._recommended_altitude = data
+        self._recommended_altitude = data.data
 
     def make_move(self, next_point, drone_position):
         if self._reset:
             return
         # there is a obstacle in front of drone
-        if (
-                self._collision_probability > self._low_collision_limit or self._is_avoiding) and self._state != self._states.avoiding:
+        if (self._collision_probability > self._low_collision_limit or self._is_avoiding) and \
+                self._state != self._states.avoiding:
             self._pub_da_switch.publish(True)
             self._last_state = self._state
             self._last_go_to_next = self._go_to_next
             self._state = self._states.avoiding
             self._go_to_next = False
+            #print("Reset to avoiding")
             return
         if next_point is not None:
             return self.fly_to_next_point(next_point, drone_position)
@@ -172,33 +174,42 @@ class CenralSystem(object):
         # goal position
         x_point = next_pose.position.x
         y_point = next_pose.position.y
-        if self._recommended_altitude == -1:
+        if self._recommended_altitude == -1 or self._is_avoiding:
             z_point = next_pose.position.z
         else:
             z_point = self._recommended_altitude
         yaw_point = next_pose.orientation.z
-        horizontal_camera_turn_point = next_pose.position.x
-        verical_camera_turn_point = next_pose.position.y
+        horizontal_camera_turn_point = next_pose.orientation.x
+        verical_camera_turn_point = next_pose.orientation.y
         current_positions = [x_drone, y_drone, z_drone, horizontal_camera_turn, vertical_camera_turn, yaw_drone]
         desired_positions = [x_point, y_point, z_point, horizontal_camera_turn_point,
                              verical_camera_turn_point, yaw_point]
-        if self._current_velocities is not None:
-            current_velocities = [self._current_velocities.twist.linear.x,
-                                  self._current_velocities.twist.linear.y,
-                                  self._current_velocities.twist.linear.z,
-                                  self._current_velocities.twist.angular.x,
-                                  self._current_velocities.twist.angular.y,
-                                  self._current_velocities.twist.angular.z]
-        else:
-            current_velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self._pub_desired_pos.publish(desired_positions)
-        self._pub_current_pos.publish(current_positions)
-        self._pub_current_vel.publish(current_velocities)
-        is_close = np.isclose(desired_positions, current_positions)
-        if np.nonzero(is_close) == 6:
+        vel = self.ask_for_vel(current_positions, desired_positions)
+        self.publish_cmd_velocity(vel)
+        #print(vel)
+        #print(current_positions)
+        if self.are_poses_close(desired_positions, current_positions):
             return True
         else:
             return False
+
+    def are_poses_close(self, pose1, pose2):
+        if abs(pose1[0] - pose2[0]) > self._distance_limit:
+            return False
+        if abs(pose1[1] - pose2[1]) > self._distance_limit:
+            return False
+        if abs(pose1[2] - pose2[2]) > self._distance_limit:
+            return False
+        if abs(pose1[3] - pose2[3]) > self._rotation_limit:
+            return False
+        if abs(pose1[4] - pose2[4]) > self._rotation_limit:
+            return False
+        if abs(pose1[5] - pose2[5]) > self._rotation_limit:
+            return False
+        #print("Close")
+        return True
+
+
 
     def publish_cmd_velocity(self, vel_command):
         twist = TwistWithCovariance()
@@ -227,76 +238,124 @@ class CenralSystem(object):
             self._go_to_next = self._last_go_to_next
         self.publish_cmd_velocity([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-    def step(self):
+    def get_goal_state_msg(self, drone_position):
+        if self._state == self._states.avoiding:
+            if self._is_avoiding:
+                goal_state_msg = self._da_next_point_srv(drone_position, self._go_to_next)
+            else:
+                self._state = self._last_state
+                self._go_to_next = self._last_go_to_next
+                if self._recommended_altitude == -1:
+                    self._pub_da_switch.publish(False)
+                return None
+        elif self._state == self._states.searching:
+            goal_state_msg = self._planner_next_point_srv(drone_position, self._go_to_next)
+        elif self._state == self._states.tracking:
+            goal_state_msg = self._tracker_next_point_srv(drone_position, self._go_to_next)
+        else:
+            goal_state_msg = self.emergency_state()
+        return goal_state_msg
+
+    def avoiding_test(self, drone_position):
+        if self._state == self._states.avoiding:
+            #print("state_avoiding: ", self._state)
+            if self._is_avoiding:
+                #print("Go next", self._go_to_next)
+                goal_state_msg = self._da_next_point_srv(drone_position, self._go_to_next)
+            else:
+                self._state = self._last_state
+                self._go_to_next = self._last_go_to_next
+                if self._recommended_altitude == -1:
+                    self._pub_da_switch.publish(False)
+                return None
+        else:
+            goal_state_msg = self.forward_direction(drone_position)
+        return goal_state_msg
+
+    def tracking_test(self, drone_position):
+        goal_state_msg = self._tracker_next_point_srv(drone_position, self._go_to_next)
+        return goal_state_msg
+
+    def change_state(self, change_state):
+        if self._state == self._states.searching and change_state:
+            self._state = self._states.tracking
+            self._pub_launch_tracker.publish(True)
+            self._pub_launch_planner.publish(False)
+        elif self._state == self._states.tracking and change_state:
+            self._state = self._states.searching
+            self._pub_launch_tracker.publish(False)
+            self._pub_launch_planner.publish(True)
+
+    def get_current_drone_state(self):
         try:
-            self._state = self._states.tracking  # WARNING set tracking
             drone_position = self._tfBuffer.lookup_transform(self._map_frame, self._base_link_frame, rospy.Time())
             camera_position = self._tfBuffer.lookup_transform(self._base_link_frame, self._camera_base_link_frame,
                                                               rospy.Time())
-            (_, _, yaw) = tf.transformations.euler_from_quaternion(drone_position.transform.rotation)
-            (_, camera_vertical, camera_horizontal) = tf.transformations.euler_from_quaternion(
-                camera_position.transform.rotation)
+            explicit_quat = [drone_position.transform.rotation.x, drone_position.transform.rotation.y,
+                             drone_position.transform.rotation.z, drone_position.transform.rotation.w]
+            (_, _, yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
+            explicit_quat = [camera_position.transform.rotation.x, camera_position.transform.rotation.y,
+                             camera_position.transform.rotation.z, camera_position.transform.rotation.w]
+            (_, camera_vertical, camera_horizontal) = tf.transformations.euler_from_quaternion(explicit_quat)
             drone_position.transform.rotation.x = camera_horizontal
             drone_position.transform.rotation.y = camera_vertical
             drone_position.transform.rotation.z = yaw
-            if self._state == self._states.avoiding:
-                if self._is_avoiding:
-                    goal_state_msg = self._da_next_point_srv(drone_position, self._go_to_next)
-                else:
-                    self._state = self._last_state
-                    self._go_to_next = self._last_go_to_next
-                    if self._recommended_altitude == -1:
-                        self._pub_da_switch.publish(False)
-                    return
-            elif self._state == self._states.searching:
-                goal_state_msg = self._planner_next_point_srv(drone_position, self._go_to_next)
-            elif self._state == self._states.tracking:
-                goal_state_msg = self._tracker_next_point_srv(drone_position, self._go_to_next)
-            else:
-                goal_state_msg = self.emergency_state()
+            return drone_position
+        except Exception as e:
+            print("Exception in getting drone state:", e)
+            return None
+
+    def step(self):
+        try:
+            # self._state = self._states.tracking  # WARNING set tracking
+            self._pub_da_alert.publish(True)
+            drone_state = self.get_current_drone_state()
+            if drone_state is None:
+                return
+            goal_state_msg = self.tracking_test(drone_state)
+            #print("Msg", goal_state_msg)
+            #print("State", self._state)
             if self.is_emergency():
                 self._state = self._states.emergency
                 return
+            if goal_state_msg is None:
+                return
             pose = goal_state_msg.goal_pose
             change_state = goal_state_msg.change_state = False  # WARNING set FALSE
-            if self._state == self._states.searching and change_state:
-                self._state = self._states.tracking
-                self._pub_launch_tracker.publish(True)
-                self._pub_launch_planner.publish(False)
-            elif self._state == self._states.tracking and change_state:
-                self._state = self._states.searching
-                self._pub_launch_tracker.publish(False)
-                self._pub_launch_planner.publish(True)
+            self.change_state(change_state)
             if change_state:
                 return
             if pose is not None:
-                self._go_to_next = self.make_move(pose, drone_position)
+                self._go_to_next = self.make_move(pose, drone_state)
             else:
                 self.publish_cmd_velocity([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-
-
         except Exception as e:
-            print("Exception:", e)
+            rospy.loginfo_once("Exception in updating central system: " + str(e))
+
+    def cast_to_float64(self, fl):
+        f = Float64()
+        f.data = float(fl)
+        return f
 
     def ask_for_vel(self, current_positions, desired_positions):
         # forward
-        self._pub_forward_target_position.publish(desired_positions[0])
-        self._pub_forward_position.publish(current_positions[0])
+        self._pub_forward_target_position.publish(self.cast_to_float64(desired_positions[0]))
+        self._pub_forward_position.publish(self.cast_to_float64(current_positions[0]))
         # left
-        self._pub_left_target_position.publish(desired_positions[1])
-        self._pub_left_position.publish(current_positions[1])
+        self._pub_left_target_position.publish(self.cast_to_float64(desired_positions[1]))
+        self._pub_left_position.publish(self.cast_to_float64(current_positions[1]))
         # up
-        self._pub_up_target_position.publish(desired_positions[2])
-        self._pub_up_position.publish(current_positions[2])
+        self._pub_up_target_position.publish(self.cast_to_float64(desired_positions[2]))
+        self._pub_up_position.publish(self.cast_to_float64(current_positions[2]))
         # horizontal camera
-        self._pub_hcamera_target_position.publish(desired_positions[3])
-        self._pub_hcamera_position.publish(current_positions[3])
+        self._pub_hcamera_target_position.publish(self.cast_to_float64(desired_positions[3]))
+        self._pub_hcamera_position.publish(self.cast_to_float64(current_positions[3]))
         # vertical camera
-        self._pub_vcamera_target_position.publish(desired_positions[4])
-        self._pub_vcamera_position.publish(current_positions[4])
+        self._pub_vcamera_target_position.publish(self.cast_to_float64(desired_positions[4]))
+        self._pub_vcamera_position.publish(self.cast_to_float64(current_positions[4]))
         # yaw
-        self._pub_yaw_target_position.publish(desired_positions[5])
-        self._pub_yaw_position.publish(current_positions[5])
+        self._pub_yaw_target_position.publish(self.cast_to_float64(desired_positions[5]))
+        self._pub_yaw_position.publish(self.cast_to_float64(current_positions[5]))
         return [self._forward_speed / self._max_speed,
                 self._left_speed / self._max_speed,
                 self._up_speed / self._max_speed,
@@ -306,17 +365,37 @@ class CenralSystem(object):
 
     def test(self):
         desired_positions = [5.0, 5.0, 5.0, 5.0, 5.0, -5.0]
-        current_positions = [1.16446, 0.158, 545.0, 4.0, 5.0, -3.980]
-        current_velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        print(self.ask_for_vel(current_positions, desired_positions))
-        self._pub_desired_pos.publish(desired_positions)
-        self._pub_current_pos.publish(current_positions)
-        self._pub_current_vel.publish(current_velocities)
+        drone_state = self.get_current_drone_state()
+        if drone_state is None:
+            return
+        current_positions = [drone_state.transform.translation.x,
+                             drone_state.transform.translation.y,
+                             drone_state.transform.translation.z,
+                             drone_state.transform.rotation.x,
+                             drone_state.transform.rotation.y,
+                             drone_state.transform.rotation.z]
+        # current_positions = [1.16446, 0.158, 545.0, 4.0, 5.0, -3.980]
+        # current_velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        velocity = self.ask_for_vel(current_positions, desired_positions)
+        self.publish_cmd_velocity(velocity)
+
+    def forward_direction(self, drone_state):
+        next_pose = Pose()
+        next_pose.position.x = drone_state.transform.translation.x + 2.0
+        next_pose.position.y = drone_state.transform.translation.y
+        next_pose.position.z = drone_state.transform.translation.z
+        next_pose.orientation.x = drone_state.transform.rotation.x
+        next_pose.orientation.y = drone_state.transform.rotation.y
+        next_pose.orientation.z = drone_state.transform.rotation.z
+        goal_state_msg = GoalState()
+        goal_state_msg.change_state = False
+        goal_state_msg.goal_pose = next_pose
+        return goal_state_msg
 
 
 if __name__ == '__main__':
     central_system = CenralSystem()
     rate = rospy.Rate(20)
     while not rospy.is_shutdown():
-        central_system.test()
+        central_system.step()
         rate.sleep()

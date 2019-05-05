@@ -9,7 +9,6 @@ dynamic_avoidance:
     collision_topic: "/dynamic_avoidance/collision"
     is_avoiding_topic: "/dynamic_avoidance/is_avoiding"
     recommended_altitude_topic: "/dynamic_avoidance/recommended_altitude"
-    centering_topic: "/dynamic_avoidance/centering"
     state_change_topic: "/bebop2/dronet/state_change"
     dronet_cmd_vel_topic: "/bebop2/dronet/cmd_vel"
     cnn_prediction_topic: "/cnn_out/predictions"

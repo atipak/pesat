@@ -54,6 +54,13 @@ class Math():
         return -p1.x * p2.y + p1.y * p2.x > 0
 
     @staticmethod
+    def normalize(v):
+        norm = np.linalg.norm(v)
+        if norm < 0.0001:
+            return v
+        return v / norm
+
+    @staticmethod
     def inside_ellipse(point, center, axis, rotation):
         cosa = np.cos(rotation)
         sina = np.sin(rotation)

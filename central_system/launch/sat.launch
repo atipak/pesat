@@ -3,15 +3,15 @@
 	<arg name="central_system" default="true" />
 	<arg name="extra_localization" default="false" />
 	<arg name="slam" default="false" />
-	<arg name="moveit" default="false" />
-	<arg name="targetloc" default="false" />
+	<arg name="moveit" default="true" />
+	<arg name="targetloc" default="true" />
 	<arg name="target" default="true" />
 	<arg name="tracking" default="false" />
-	<arg name="dynamic_avoidance" default="true" />
+	<arg name="dynamic_avoidance" default="false" />
 	<arg name="planning" default="false" />
 	<arg name="cctv" default="false" />
 	<arg name="pid_controller" default="false" />
-	<arg name="standalone_pid_controllers" default="false" />
+	<arg name="standalone_pid_controllers" default="true" />
 
 	<!-- Gazebo -->
 	<include file="$(find velocity_controller)/launch/bebop_cmd_vel.launch">

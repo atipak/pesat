@@ -1,6 +1,5 @@
 track:
     track_timeout: 10
-    center_target_limit: 100
     distance_limit: 0.01
     yaw_limit: 0.001
     camera_limit: 0.001

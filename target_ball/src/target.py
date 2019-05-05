@@ -12,6 +12,7 @@ from moveit_msgs.msg import AttachedCollisionObject, PlanningScene
 from shape_msgs.msg import SolidPrimitive
 import moveit_commander
 from gazebo_msgs.msg import ModelState, ModelStates
+from std_msgs.msg import Float64
 
 
 class Target():
@@ -23,7 +24,11 @@ class Target():
         self._tfListener = tf2_ros.TransformListener(self._tfBuffer)
         self._pub_set_model = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
         rospy.Subscriber("/gazebo/model_states", ModelStates, self.callback_target_state)
+        rospy.Subscriber("/target_model/move_forward", Float64, self.callback_move_forward)
+        rospy.Subscriber("/target_model/move_left", Float64, self.callback_move_left)
         self._target_state = None
+        self._speed_left = 0.0
+        self._speed_forward = 0.0
         self._index = -1
 
     def callback_target_state(self, data):
@@ -33,6 +38,12 @@ class Target():
                     self._index = i
                     break
         self._target_state = data.pose[self._index]
+
+    def callback_move_forward(self, data):
+        self._speed_forward = data.data
+
+    def callback_move_left(self, data):
+        self._speed_left = data.data
 
     def update_tf_state(self):
         if self._target_state is not None:
@@ -46,18 +57,28 @@ class Target():
             t.transform.rotation = self._target_state.orientation
             self._br.sendTransform(t)
 
-    def step(self):
-        pass
+    def step(self, frequence):
+        if self._speed_forward != 0 or self._speed_forward != 0:
+            model = ModelState()
+            model.model_name = "target"
+            model.reference_frame = "world"
+            model.pose = self._target_state
+            model.pose.position.x += self._speed_forward * frequence
+            model.pose.position.y += self._speed_left * frequence
+            self._pub_set_model.publish(model)
+
 
     def main(self):
-        rate = rospy.Rate(10)
+        r = 10.0
+        rate = rospy.Rate(r)
+        f = 1.0 / r
         last_time = rospy.Time.now()
         update_rate = rospy.Duration(0.5)
         while not rospy.is_shutdown():
             if rospy.Time.now() - last_time > update_rate:
                 self.update_tf_state()
                 last_time = rospy.Time.now()
-            self.step()
+            self.step(f)
             rate.sleep()
 
 
