@@ -41,7 +41,7 @@
       <rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />
       <remap from="odometry" to="odometry_sensor1/odometry" />
     </node>
-    <node pkg="velocity_controller" name="map_server" type="velocity_controller_map_server" />
+    <!-- ><node pkg="velocity_controller" name="map_server" type="velocity_controller_map_server" />-->
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >     
      <param name="publish_frequency" type="double" value="50.0" />
      <param name="tf_prefix" type="string" value="" />

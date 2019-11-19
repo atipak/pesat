@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <launch>
 	<arg name="namespace" default="bebop2"/>
-	<node pkg="dronet_control" name="dronet_control" type="dronet_control" output="screen"> 
-        	<remap from="cnn_predictions" to="/cnn_out/predictions"/>
-        	<remap from="state_change" to="/$(arg namespace)/dronet/state_change"/>
+	<node pkg="dronet_control" name="dronet_control" type="dronet_control" output="screen" launch-prefix="xterm -e">
+        	<remap from="cnn_predictions" to="/dronet/cnn_out/predictions"/>
+        	<remap from="state_change" to="/dronet/state_change"/>
         	<remap from="velocity" to="/$(arg namespace)/dronet/cmd_vel"/>
         	<param name="alpha_yaw" value="0.7"/>
         	<param name="alpha_velocity" value="0.4"/>

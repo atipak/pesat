@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: pesat_resources
+    relative_path: urdf/ball.urdf
+    xacro_args: ""
+  SRDF:
+    relative_path: config/simple_ball.srdf
+  CONFIG:
+    author_name: vp
+    author_email: vp@gmail.com
+    generated_timestamp: 1569501200

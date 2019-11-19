@@ -1,4 +1,0 @@
-environment_config:
-  world_path: $(find pesat_resources)/worlds
-  world_name: box_world
-  extra_localization: false

@@ -1,0 +1,33 @@
+    <model name='{face}_face_of_box_{name}'>
+      <static>true</static>
+      <pose>{x_pose} {y_pose} {z_pose} {r_orient} {p_orient} {y_orient}</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>{x_size} {y_size} {z_size}</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>{x_size} {y_size} {z_size}</size>
+            </box>
+          </geometry>
+          <material>
+            {material_block}
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>

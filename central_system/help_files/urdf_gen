@@ -1,1 +1,2 @@
-rosrun xacro xacro -o $(find pesat_resources)/urdf/b2.urdf $(find pesat_resources)/urdf/mav_generic_odometry_sensor.gazebo namespace:="bebop2" enable_mavlink_interface:="false" enable_ground_truth:="true" enable_logging:="false" mav_name:="bebop2"
+pesat_location=$(rospack find pesat_resources)
+rosrun xacro xacro -o $pesat_location/urdf/bebop2.urdf $pesat_location/urdf/mav_generic_odometry_sensor.gazebo namespace:="bebop2" enable_mavlink_interface:="false" enable_ground_truth:="true" enable_logging:="false" mav_name:="bebop2"

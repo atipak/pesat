@@ -1,0 +1,4 @@
+controller_list:
+  - name: fake_Ball_controller
+    joints:
+      - ball_virtual_joint

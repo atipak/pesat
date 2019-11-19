@@ -1,3 +1,3 @@
 int64 camera_id
-float64 velocity_x
-float64 velocity_y
+float64 likelihood
+sensor_msgs/PointCloud2 pointcloud

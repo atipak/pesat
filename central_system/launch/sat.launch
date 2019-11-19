@@ -1,21 +1,35 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
-	<arg name="central_system" default="true" />
-	<arg name="extra_localization" default="false" />
-	<arg name="slam" default="false" />
-	<arg name="moveit" default="true" />
-	<arg name="targetloc" default="true" />
+    <!-- central system section-->
+	<arg name="central_system" default="false" />
+	<arg name="standalone_pid_controllers" default="true" />
+	<arg name="drone_moveit" default="true" />
+
+	<!-- target section-->
 	<arg name="target" default="true" />
+	<arg name="targetloc" default="true" />
+
+	<!-- tracking section-->
 	<arg name="tracking" default="false" />
+
+	<!-- dynamic avoidance section-->
 	<arg name="dynamic_avoidance" default="false" />
+
+	<!-- planning section-->
 	<arg name="planning" default="false" />
 	<arg name="cctv" default="false" />
+
+	<!-- real machine section-->
 	<arg name="pid_controller" default="false" />
-	<arg name="standalone_pid_controllers" default="true" />
+	<arg name="extra_localization" default="false" />
+	<arg name="slam" default="false" />
+	<!-- tracking: pids, target, targetloc, drone_moveit, central_system, in central system tracking_test method, change world to basic -->
+	<!-- avoidance: pids, dynamic avoidance, target, central_system, in central system avoidance test, change world to avoidance -->
 
 	<!-- Gazebo -->
 	<include file="$(find velocity_controller)/launch/bebop_cmd_vel.launch">
 		<arg name="extra_localization" value="$(arg extra_localization)" />
+		<!--<arg name="world_name" value="avoidance"/>-->
 		<arg name="world_name" value="basic"/>
 		<!--<arg name="world_name" value="box_world"/>-->
 		<arg name="world_path" value="$(find pesat_resources)/worlds"/>
@@ -27,8 +41,14 @@
     <!-- Central system -->
 	<include file="$(find central_system)/launch/central_system.launch" if="$(arg central_system)"/>
 
-	<!-- Moveit -->
-	<include file="$(find central_system)/launch/moveit.launch" if="$(arg moveit)"/>
+	<group ns="/bebop2">
+        <!-- Moveit -->
+	    <include file="$(find central_system)/launch/drone_moveit.launch" if="$(arg drone_moveit)"/>
+
+	    <!-- Central tracking system -->
+        <include file="$(find centracksys)/launch/tracksys.launch" if="$(arg tracking)">
+	    </include>
+	</group>
 
 	<!-- SLAM -->
 	<include file="$(find central_system)/launch/orb_slam2_gazebo_mono.launch" if="$(arg slam)">
@@ -41,12 +61,10 @@
 	</include>
 
 	<!-- Target ball -->
-	<include file="$(find target_ball)/launch/target.launch" if="$(arg target)">
-	</include>
-
-	<!-- Central tracking system -->
-    <include file="$(find centracksys)/launch/tracksys.launch" if="$(arg tracking)">
-	</include>
+	<group if="$(arg target)">
+        <include file="$(find target_ball)/launch/target.launch" />
+        <include file="$(find central_system)/launch/target_moveit.launch" />
+    </group>
 
 	<!-- Dynamic avoidance algorithm and system -->
 	<group if="$(arg dynamic_avoidance)">

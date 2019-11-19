@@ -1,0 +1,18 @@
+environment_configuration:
+  map:
+    frame: map
+    obstacles_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/box_world/box_world.json
+    section_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/box_world/section_file.pickle
+    size: 10
+  world:
+    path: $(find pesat_resources)/worlds
+    name: box_world
+  properties:
+    extra_localization: false
+  watchdog:
+    cameras_file: .
+    camera_shot_topic: "/cctv/shot"
+    camera_registration_service: "/cctv/registration"
+    camera_update_topic: "/cctv/update"
+    camera_notification_topic: "/cctv/notifications"
+    camera_switch_topic: "/cctv/switch"

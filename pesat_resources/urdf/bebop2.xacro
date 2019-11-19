@@ -154,5 +154,24 @@
       <box size="0.001 0.001 0.001" />
       <origin xyz="0.1 0 0" rpy="0 0 0" />
   </xacro:rotable_camera_macro>
-
+ 
+  <xacro:sonar_sensor_plugin_macro
+      namespace="${namespace}"
+      parent_link="${namespace}/base_link"
+      sonar_sensor_suffix="base"
+      update_rate="50.0"
+      min_distance="0.06"
+      max_distance="50.0"
+      noise_mean="0.005"
+      enable_visual="true"
+      sonar_topic="sensors/sonar"
+      mass_sonar_sensor="1e-5"
+      range_resolution="0.02"
+      scan_resolution="1.0"
+      samples="10"
+      angle="0.14835"
+      fov="0.2967">
+      <box size="0.001 0.001 0.001" />
+      <origin xyz="0.1 0 0" rpy="0 ${pi/2} 0" />
+  </xacro:sonar_sensor_plugin_macro>
 </robot>

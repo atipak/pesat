@@ -47,7 +47,9 @@ class RenEnviroment(object):
         gazebo_state = self.to_gazebo_state(next_drone_pose)
         self.pub_set_model.publish(gazebo_state)
         gazebo_set_time = rospy.Time.now()
-        if self.map.is_free(int(next_drone_pose.pose.position.x), int(next_drone_pose.pose.position.y)):
+        map_point = self.map.map_point_from_map_coordinates(int(next_drone_pose.pose.position.x),
+                                                            int(next_drone_pose.pose.position.y))
+        if self.map.is_free(map_point):
             # reward is given by drone's position
             d = rospy.Duration(0.1, 0)
             rospy.sleep(d)
@@ -239,7 +241,6 @@ class RenEnviroment(object):
         restart_command += " world_name:=" + self.config["world_name"]
         restart_command += " world_path:=" + self.config["world_path"]
         os.system(restart_command)
-
 
 
 env = RenEnviroment()

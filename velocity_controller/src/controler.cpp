@@ -11,13 +11,15 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 
-#include <pesat_msgs/PointHeight.h>
+#include <pesat_msgs/PointFloat.h>
 #include <pesat_msgs/ControllerState.h>
 
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/TwistWithCovariance.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Point.h>
 #include <std_msgs/Float64.h>
+//#include <string>
 
 //#include <eigen_conversions/eigen_msg.h>
 
@@ -25,31 +27,11 @@
 
 #define DEG2RAD(x) ((x) / 180.0 * M_PI)
 
-
-tf::TransformListener* listener;
-tf::TransformBroadcaster* br;
-ros::Publisher trajectory_pub, control_state_pub, horizontal_camera_controller_pub, vertical_camera_controller_pub;
-ros::Subscriber vel_sub, take_off_sub;
-
-
-geometry_msgs::TwistWithCovariance twist_msg;
-bool simulated_frames_set_up = false;
-bool mutex = false;
-bool parameters_set = false;
-bool is_landing, is_takingoff, is_emergency = false;
-const int stop_state_const = 0, takeoff_state_const = 1, land_state_const = 2;
-const int emergency_state_const = 3, fly_state_const = 4;
-float limit_value = 0.1;
-
-
-int axis_direction_yaw, axis_direction_pitch, axis_direction_roll;
- 
-double max_vel, max_yawrate, max_camerarate, max_camera_angle;
-
 void send_state_message();
 bool init_transforms();
 float clip(float n, float lower, float upper);
 float get_minimum_in_point(float x, float y, ros::ServiceClient mapClient);
+float get_maximum_in_point(float x, float y);
 bool renew_velocities();
 bool renew_positions();
 bool renew_sim_frames();
@@ -68,6 +50,7 @@ void twist_callback(const geometry_msgs::TwistWithCovarianceConstPtr& msg);
 void take_off_callback(const std_msgs::EmptyConstPtr& msg);
 void land_callback(const std_msgs::EmptyConstPtr& msg);
 void emergency_callback(const std_msgs::EmptyConstPtr& msg);
+void check_twist_time();
 
 
 tf::StampedTransform stampedTransformBaseLink;  
@@ -78,12 +61,31 @@ tf::Transform final_base_link_velocity_transform;
 tf::Transform base_link_position_transform;
 tf::Vector3 origin;
 tf::Quaternion rotation;
+tf::Vector3 orientation_camera_velocity;
+tf::Vector3 orientation_camera;
 
+tf::TransformListener* listener;
+tf::TransformBroadcaster* br;
+ros::Publisher trajectory_pub, control_state_pub, horizontal_camera_controller_pub, vertical_camera_controller_pub;
+ros::Subscriber vel_sub, take_off_sub;
+
+
+geometry_msgs::TwistWithCovariance twist_msg;
+geometry_msgs::TwistWithCovariance nullified_twist_msg;
+bool simulated_frames_set_up = false;
+bool mutex = false;
+bool parameters_set = false;
+bool is_landing, is_takingoff, is_emergency = false;
+const int stop_state_const = 0, takeoff_state_const = 1, land_state_const = 2;
+const int emergency_state_const = 3, fly_state_const = 4;
+float limit_value = 0.1;
+int axis_direction_yaw, axis_direction_pitch, axis_direction_roll;
+double max_horizontal_speed, max_vertical_speed, max_yawrate, max_camerarate, max_camera_angle, max_altitude;
 float dt = 0.0;
 double yaw = 0.0;
-float current_horizontal = 0.0;
-float current_vertical = 0.0;
 const double pi_half = M_PI / 2;
+double last_message_time;
+double twist_message_timeout = 0.5;
 
 int main(int argc, char** argv) {
 
@@ -92,13 +94,15 @@ int main(int argc, char** argv) {
 
   ROS_INFO("Started velocity_control. Drone can be controlled by cmd_vel command (twist msg).");
 
-  nh.param("axis_direction_yaw_"   , axis_direction_yaw, 1);
-  nh.param("axis_direction_pitch_"   , axis_direction_pitch, 1);
-  nh.param("axis_direction_roll_"   , axis_direction_roll, 1);
-  nh.param("max_vel", max_vel, 1.0);
-  nh.param("max_yawrate", max_yawrate, DEG2RAD(45));
-  nh.param("max_camerarate", max_camerarate, DEG2RAD(45));
-  nh.param("max_camera_angle", max_camera_angle, DEG2RAD(30));
+  nh.param("drone_configuration/control/axis_direction_yaw"   , axis_direction_yaw, 1);
+  nh.param("drone_configuration/control/axis_direction_pitch"   , axis_direction_pitch, 1);
+  nh.param("drone_configuration/control/axis_direction_roll"   , axis_direction_roll, 1);
+  nh.param("drone_configuration/control/video_max_horizontal_speed", max_horizontal_speed, 1.0);
+  nh.param("drone_configuration/control/video_max_vertical_speed", max_vertical_speed, 1.0);
+  nh.param("drone_configuration/control/video_max_rotation_speed", max_yawrate, DEG2RAD(45));
+  nh.param("drone_configuration/control/video_max_camera_rotation_speed", max_camerarate, DEG2RAD(45));
+  nh.param("drone_configuration/control/max_camera_rotation", max_camera_angle, DEG2RAD(45));
+  nh.param("drone_configuration/control/max_altitude", max_altitude, 30.0);
 
   // Continuously publish waypoints.
   trajectory_pub = nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
@@ -110,7 +114,7 @@ int main(int argc, char** argv) {
   // Subscribe to bebop velocity commands messages
   vel_sub = nh.subscribe("/bebop2/cmd_vel", 10, &twist_callback);
   take_off_sub = nh.subscribe("/bebop2/takeoff", 10, &take_off_callback);
-  ros::ServiceClient mapClient = nh.serviceClient<pesat_msgs::PointHeight>("point_height", true);
+  ros::ServiceClient mapClient = nh.serviceClient<pesat_msgs::PointFloat>("/map_server/bebop2/point_height_service", true);
   listener = new (tf::TransformListener);
   br = new(tf::TransformBroadcaster);
   ros::Rate rate(10.0);
@@ -167,6 +171,7 @@ int main(int argc, char** argv) {
             is_emergency = false;
         }
     }
+    check_twist_time();
     send_state_message();
     ros::spinOnce();
     rate.sleep();
@@ -177,6 +182,13 @@ int main(int argc, char** argv) {
 // helps functions
 float clip(float n, float lower, float upper) {
   return std::max(lower, std::min(n, upper));
+}
+
+void check_twist_time() {
+    if (std::abs(ros::Time::now().toSec() - last_message_time) > twist_message_timeout) {
+        twist_msg = nullified_twist_msg;
+        reset_velocities_frames();
+    }
 }
 
 // ROS topic/service communication
@@ -195,7 +207,7 @@ void send_state_message() {
 	else {
         if (final_base_link_velocity_transform.getOrigin().x() != 0 || final_base_link_velocity_transform.getOrigin().y() != 0 ||
         final_base_link_velocity_transform.getOrigin().z() != 0 || final_base_link_velocity_transform.getRotation().getW() != 1 ||
-        current_vertical != 0 || current_horizontal != 0) {
+        orientation_camera_velocity.getX() != 0 || orientation_camera_velocity.getY() != 0) {
             state_msg.twist.linear.x = twist_msg.twist.linear.x;
             state_msg.twist.linear.y = twist_msg.twist.linear.y;
             state_msg.twist.linear.z = twist_msg.twist.linear.z;
@@ -213,19 +225,33 @@ void send_state_message() {
 }
 
 float get_minimum_in_point(float x, float y, ros::ServiceClient mapClient) {
-	  pesat_msgs::PointHeight::Request  req;
-      pesat_msgs::PointHeight::Response res;
-	  req.x = x;
-	  req.y = y;
-	  bool success = mapClient.call(req, res);
-	  float min_z;
-	  if(success) {
-	    min_z = res.z;
-	  } else {
-	    min_z = 0;
-	  }
-	  return min_z;
+	  pesat_msgs::PointFloat::Request  req;
+      pesat_msgs::PointFloat::Response res;
+      geometry_msgs::Point point;
+      point.x = x;
+      point.y = y;
+      req.point = point;
+      try {
+          bool success = mapClient.call(req, res);
+          float min_z;
+          if(success) {
+            min_z = res.value;
+          } else {
+            min_z = 0;
+          }
+          return min_z;
+      }
+      catch (...) {
+        return 0;
+      }
+
 }
+
+float get_maximum_in_point(float x, float y) {
+    return max_altitude;
+}
+
+
 
 // TF package communications
 // init transforms
@@ -282,8 +308,7 @@ bool reset_baselink_position() {
 
 bool reset_velocities_frames() {
 	set_final_velocity_base_link_transform(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-	current_horizontal = 0.0;
-	current_vertical = 0.0;
+	orientation_camera_velocity = tf::Vector3(0, 0, 0);
 	return true;
 }
 
@@ -321,7 +346,9 @@ bool apply_velocity_to_drone(ros::ServiceClient mapClient) {
         if (listener->canTransform ("/world", "/bebop2/simulation/velocity/base_link", ros::Time(0))) {
           listener->lookupTransform("/world", "/bebop2/simulation/velocity/base_link", ros::Time(0), stampedTransform);
           float min_z = get_minimum_in_point(stampedTransform.getOrigin().x(), stampedTransform.getOrigin().y(), mapClient);
+          float max_z = get_maximum_in_point(stampedTransform.getOrigin().x(), stampedTransform.getOrigin().y());
           min_z = stampedTransform.getOrigin().z() > min_z ? stampedTransform.getOrigin().z() : min_z;
+          min_z = min_z < max_z ? min_z : max_z;
           double desired_yaw = tf::getYaw(stampedTransform.getRotation());
           if (stampedTransform.getOrigin().x() != 0 || stampedTransform.getOrigin().y() != 0 || min_z != 0 || desired_yaw != 0) {
               move_drone(stampedTransform.getOrigin().x(), stampedTransform.getOrigin().y(), min_z, desired_yaw);
@@ -361,10 +388,14 @@ bool move_drone(float x, float y, float z, float yaw) {
 
 // camera
 bool apply_velocity_to_camera() {
+    float clipped_rho = clip(orientation_camera.getX() + orientation_camera_velocity.getX(), -max_camera_angle, max_camera_angle);
+    float clipped_pi = clip(orientation_camera.getY() + orientation_camera_velocity.getY(), -max_camera_angle, max_camera_angle);
+    orientation_camera.setX(clipped_rho);
+    orientation_camera.setY(clipped_pi);
     std_msgs::Float64 vertical;
-    vertical.data = current_vertical;
+    vertical.data = clipped_rho;
     std_msgs::Float64 horizontal;
-    horizontal.data = current_horizontal;
+    horizontal.data = clipped_pi;
     vertical_camera_controller_pub.publish(vertical);
     horizontal_camera_controller_pub.publish(horizontal);
 }
@@ -406,6 +437,7 @@ void set_land_params(ros::ServiceClient mapClient) {
 void twist_callback(const geometry_msgs::TwistWithCovarianceConstPtr& msg){
     if (mutex) {return;}
     twist_msg = *msg;
+    last_message_time = ros::Time::now().toSec();
   	// creation/change of the vel frame
   	double clipped_x = clip((*msg).twist.linear.x, -1, 1);
   	double clipped_y = clip((*msg).twist.linear.y, -1, 1);
@@ -413,18 +445,19 @@ void twist_callback(const geometry_msgs::TwistWithCovarianceConstPtr& msg){
   	double clipped_rho = clip((*msg).twist.angular.x, -1, 1);
   	double clipped_pi = clip((*msg).twist.angular.y, -1, 1);
   	double clipped_psi = clip((*msg).twist.angular.z, -1, 1);
-  	tf::Vector3 temp_origin = tf::Vector3((*msg).twist.linear.x, (*msg).twist.linear.y, (*msg).twist.linear.z);
-  	double temp_horizontal = (*msg).twist.angular.x * axis_direction_roll;
-  	double temp_vertical = (*msg).twist.angular.y * axis_direction_pitch;
-  	double temp_yaw = (*msg).twist.angular.z * axis_direction_yaw;
+  	tf::Vector3 temp_origin_drone = tf::Vector3(clipped_x, clipped_y, 0);
+  	double temp_horizontal = clipped_rho * axis_direction_roll;
+  	double temp_vertical = clipped_pi * axis_direction_pitch;
+  	double temp_yaw = clipped_psi * axis_direction_yaw;
+  	tf::Vector3 temp_orientation_camera = tf::Vector3(temp_horizontal, temp_vertical, 0);
 
   	// scaling by time
-  	temp_origin = temp_origin * max_vel * dt;
+  	temp_origin_drone = temp_origin_drone * max_horizontal_speed * dt;
+  	temp_origin_drone.setZ(max_vertical_speed * clipped_z * dt);
   	temp_yaw = temp_yaw * max_yawrate * dt;
-  	current_horizontal = temp_horizontal * max_camerarate;
-  	current_vertical = temp_vertical * max_camerarate;
+  	orientation_camera_velocity = temp_orientation_camera * max_camerarate * dt;
   	// setting
-  	set_final_velocity_base_link_transform(temp_origin.x(), temp_origin.y(), temp_origin.z(), 0.0, 0.0, temp_yaw);
+  	set_final_velocity_base_link_transform(temp_origin_drone.x(), temp_origin_drone.y(), temp_origin_drone.z(), 0.0, 0.0, temp_yaw);
 }
 
 void take_off_callback(const std_msgs::EmptyConstPtr& msg) {

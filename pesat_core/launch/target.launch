@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+    <!-- target section-->
+	<arg name="target" default="true" />
+	<arg name="targetloc" default="true" />
+	<arg name="cctv" default="true" />
+
+    <group ns="target">
+        <!-- Target localization -->
+        <include file="$(find target_localization)/launch/target_loc.launch" if="$(arg targetloc)">
+            <!--<arg name="image_topic" value="/bebop2/camera_base/image_raw"/>-->
+        </include>
+
+        <!-- Target ball -->
+        <group if="$(arg target)">
+            <include file="$(find target_ball)/launch/target_moveit.launch" />
+            <include file="$(find target_ball)/launch/target.launch" />
+        </group>
+
+    </group>
+    <group ns="environment">
+        <!-- CCTV cameras for filling database of drone, support for searching -->
+        <include file="$(find cctv_system)/launch/cctv_system.launch" if="$(arg cctv)">
+        </include>
+    </group>
+</launch>

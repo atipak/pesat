@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
-    <rosparam command="load" file="$(find pesat_resources)/config/planner_config.yaml" />
-    <rosparam command="load" file="$(find pesat_resources)/config/cctv_system.yaml" />
-    <rosparam command="load" file="$(find pesat_resources)/config/drone_bebop2.yaml" />
-    <rosparam command="load" file="$(find pesat_resources)/config/environs.yaml" />
-    <rosparam command="load" file="$(find pesat_resources)/config/dynamic_avoidance.yaml" />
-    <rosparam command="load" file="$(find pesat_resources)/config/position_pid.yaml" />
-    <rosparam command="load" file="$(find pesat_resources)/config/target.yaml" />
-    <rosparam command="load" file="$(find pesat_resources)/config/target_localization.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/drone_configuration.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/environment_configuration.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/target_configuration.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/logic_configuration.yaml" />
     <node name="drone_planner" pkg="drone_planning" type="drone_planner.py" output="screen"/>
 </launch>

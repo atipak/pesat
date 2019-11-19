@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+    <arg name="extra_localization" default="false" />
+	<arg name="slam" default="false" />
+
+
+    <!-- Gazebo -->
+	<include file="$(find velocity_controller)/launch/bebop_cmd_vel.launch">
+		<arg name="extra_localization" value="$(arg extra_localization)" />
+		<!--<arg name="world_name" value="avoidance"/>-->
+		<!--<arg name="world_name" value="basic"/>-->
+		<arg name="world_name" value="box_world/box_world"/>
+		<arg name="world_path" value="$(find pesat_resources)/worlds"/>
+	</include>
+
+	<!-- map server -->
+	<group ns="bebop2">
+        <!-- Moveit -->
+        <include file="$(find central_system)/launch/drone_moveit.launch"/>
+        <include file="$(find central_system)/launch/map_planning_server.launch"/>
+	</group>
+
+
+	<!-- Robot localization package -->
+	<include file="$(find central_system)/launch/localization.launch" if="$(arg extra_localization)"/>
+
+	<!-- SLAM -->
+	<include file="$(find central_system)/launch/orb_slam2_gazebo_mono.launch" if="$(arg slam)">
+	    <arg name="namespace" value="bebop2" />
+	</include>
+
+</launch>

@@ -25,11 +25,11 @@
     <!-- DroNet -->
 
     <node pkg="dronet_perception" name="dronet_perception" type="dronet_node.py" output="screen" launch-prefix="xterm -e" >
-        <remap from="cnn_predictions" to="/cnn_out/predictions"/>
-        <remap from="state_change" to="$(arg namespace)/dronet/state_change"/>
+        <remap from="cnn_predictions" to="/dronet/cnn_out/predictions"/>
+        <remap from="state_change" to="/dronet/state_change"/>
 	<!-- rotors_simulator camera topic -->
-        <remap from="camera" to="$(arg namespace)/camera_base/image_raw"/>
-        <remap from="land" to="$(arg namespace)/land"/>
+        <remap from="camera" to="/$(arg namespace)/camera_base/image_raw"/>
+        <remap from="land" to="/$(arg namespace)/land"/>
         <param name="json_model_path" value="$(find dronet_perception)/models/model_struct.json"/>
         <param name="weights_path" value="$(find dronet_perception)/models/model_weights_59.h5"/>
         <param name="onboard_images_folder" value="$(find dronet_perception)/onboard_images"/>

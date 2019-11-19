@@ -1,0 +1,5 @@
+            <script>
+                <uri>{scripts_path}</uri>
+                <uri>{textures_path}</uri>
+                <name>vrc/{face}_{name}</name>
+            </script>

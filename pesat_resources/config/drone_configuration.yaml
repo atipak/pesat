@@ -1,0 +1,57 @@
+drone_configuration:
+  move_it:
+    group_name: 'Bebop2'
+    namespace: ''
+    eef_step: 0.01
+    jump_threshold: 0.0
+    planning_scene_topic: planning_scene
+  dronet:
+    state_change_topic: "/dronet/state_change"
+    dronet_cmd_vel_topic: "/dronet/cmd_vel"
+    cnn_prediction_topic: "/dronet/cnn_out/predictions"
+    target_size:
+      x: 428
+      y: 240
+  camera:
+    base_link: bebop2/camera_base_link
+    optical_link: bebop2/camera_base_optical_link
+    hfov: 1.7
+    image_height: 480
+    image_width: 856
+    image_channel: /bebop2/camera_base/image_raw
+    max_speed: 0.02
+    camera_range: 50
+  properties:
+    base_link: bebop2/base_link
+    max_speed: 17
+    size: 0.5
+  localization:
+    position_in_time_service: /bebop2/position_in_time
+  control:
+    cmd_vel_topic: "/bebop2/cmd_vel"
+    video_max_horizontal_speed: 6.0 # m/s
+    max_horizontal_speed: 16.0 # m/s
+    video_max_vertical_speed: 4.0 # m/s
+    max_vertical_speed: 6.0 # m/s
+    max_rotation_speed: 3.491 # rad/s
+    video_max_rotation_speed: 0.349 # rad/s
+    video_max_camera_rotation_speed: 0.785 # rad/s
+    max_camera_rotation_speed: 0.785 # rad/s
+    axis_direction_yaw: 1
+    axis_direction_pitch: 1
+    axis_direction_roll: 1
+    max_altitude: 30.0 # m (real max 150 m)
+    max_camera_rotation: 0.785 # rad (real max ? rad)
+  position_pid:
+    desired_pos_topic: "/bebop2/desired_positions"
+    current_pos_topic: "/bebop2/current_positions"
+    current_vel_topic: "/bebop2/current_velocities"
+    update_velocities_topic: "/bebop2/current_commands"
+  map_server:
+    pose_planning_service: "/map_server/bebop2/pose_planning"
+    point_height_service: "/map_server/bebop2/point_height"
+    admissibility_service: "/map_server/bebop2/admissibility"
+    min_altitude: 3
+    max_altitude: 15
+  sensors:
+    sonar_topic: "/bebop2/sensors/sonar"

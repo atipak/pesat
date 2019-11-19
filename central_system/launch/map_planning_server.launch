@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+    <rosparam command="load" file="$(find pesat_resources)/config/drone_configuration.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/environment_configuration.yaml" />
+    <node name="map_planning_server" pkg="central_system" type="map_planning_server.py" output="screen"/>
+</launch>

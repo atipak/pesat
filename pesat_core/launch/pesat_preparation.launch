@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+    <!-- planning section-->
+	<arg name="section_creator" default="true" />
+
+	<include file="$(find drone_planning)/launch/section_creator.launch" if="$(arg section_creator)"/>
+
+</launch>

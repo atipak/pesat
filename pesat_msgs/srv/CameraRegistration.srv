@@ -1,8 +1,4 @@
-geometry_msgs/Vector3 center
-float64 direction
-float64 camera_range
-float64 radius
-float64 mi
-float64 sigma
+int64 camera_id # if -1 then we register a new camera else we delete the camera from list
+bool stable
 ---
 int64 camera_id

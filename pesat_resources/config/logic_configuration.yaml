@@ -1,0 +1,35 @@
+logic_configuration:
+  conditions:
+    max_height: 30
+  tracking:
+    timeout: 10
+    distance_limit: 0.01
+    yaw_limit: 0.001
+    camera_limit: 0.001
+    camera_max_angle: 30
+    history_query_length: 8
+    correction_timeout: 1
+    goal_drone_positions_service: goal_drone_positions
+    position_epsilon: 1  # meters
+    angle_epsilon: 5
+    goal_position_epsilon: 1  # meters
+    goal_angle_epsilon_divider: 9.0
+    goal_angle_camera_epsilon_divider: 9.0
+    position_in_time_service: "/tracker/position_in_time"
+  planning:
+    timeout: 10
+    position_in_time_service: "/planner/position_in_time"
+    maximum_length: 400
+    maximal_time: 300
+    drone_place_planner_srv_name: ""
+    maximal_approaching_distance: 5  # meters
+    low_collision_limit: 0.8
+    max_height: 22
+    min_height: 5
+    max_time_from_last_seen_approaching: 0.5  # seconds
+  avoiding:
+    collision_topic: "/dynamic_avoidance/collision"
+    recommended_altitude_topic: "/dynamic_avoidance/recommended_altitude"
+    low_bound: 0.7
+    position_in_time_service: "/dynamic_avoidance/next_point"
+    minimum_distance: 0.5

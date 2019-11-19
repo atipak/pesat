@@ -1,0 +1,38 @@
+target_configuration:
+  move_it:
+    namespace: "target"
+    group_name: "Ball"
+    eef_step: 0.01
+    jump_threshold: 0.0
+    planning_scene_topic: planning_scene
+  localization:
+    map_size: 680
+    map_center:
+      x: 0
+      y: 0
+    position_in_time_service: "/target/position_in_time"
+    speed_in_time_service: "/target/speed_in_time"
+    target_information: /target/information
+    target_position: tarloc/vision_target
+    target_predicted_position: tarloc/target
+    supervision_topic: "/target/supervised"
+    earliest_time_topic: "/target/earliest_time"
+    latest_time_topic: "/target/latest_time"
+    items_count_topic: "/target/items_count"
+  properties:
+    base_link: target/base_link
+    target_size: 1.0
+  strategies:
+    max_srotate_angle: 15 # degrees
+    slight_turn_dir_probability: 0.1
+    inverse_change_probability: 0.01
+    velocity_sigma: 0.5
+    vel_change_probability: 0.1
+    max_velocity: 3
+    min_velocity: 0.2
+  map_server:
+    pose_planning_service: "/map_server/target/pose_planning"
+    point_height_service: "/map_server/target/point_height"
+    admissibility_service: "/map_server/target/admissibility"
+    min_altitude: 0.5
+    max_altitude: 0.5

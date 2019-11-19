@@ -1,5 +1,0 @@
-position_pid:
-  desired_pos_topic: "/bebop2/desired_positions"
-  current_pos_topic: "/bebop2/current_positions"
-  current_vel_topic: "/bebop2/current_velocities"
-  update_velocities_topic: "/bebop2/current_commands"

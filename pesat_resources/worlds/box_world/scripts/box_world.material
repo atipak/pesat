@@ -1,0 +1,170 @@
+material vrc/minors_box_0
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.3728104504431526 0.09096140118306321
+			}
+		}
+	}
+}
+material vrc/majors_box_0
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.3586965942582269 0.09096140118306321
+			}
+		}
+	}
+}
+material vrc/minors_box_1
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.3583380075488914 0.39899598807132697
+			}
+		}
+	}
+}
+material vrc/majors_box_1
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.3247172076728069 0.39899598807132697
+			}
+		}
+	}
+}
+material vrc/minors_box_2
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.29031244339853046 0.11599435774531736
+			}
+		}
+	}
+}
+material vrc/majors_box_2
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.18294644774758964 0.11599435774531736
+			}
+		}
+	}
+}
+material vrc/minors_box_3
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture grey_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.34791978771091103 0.02378609622492368
+			}
+		}
+	}
+}
+material vrc/majors_box_3
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture grey_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.3763707782214987 0.02378609622492368
+			}
+		}
+	}
+}
+material vrc/minors_world_side
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.08333333333333334 0.04166666666666667
+			}
+		}
+	}
+}
+material vrc/majors_world_side
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.08333333333333334 0.04166666666666667
+			}
+		}
+	}
+}

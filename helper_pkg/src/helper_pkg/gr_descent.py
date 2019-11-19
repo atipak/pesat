@@ -18,8 +18,8 @@ def gradientDescent(X, y):
         #     print(cost)
     return (theta, cost)
 
-X = np.array([2.0,3.0]).reshape(-1,1)
-ones = np.ones([X.shape[0], 1])
-X = np.concatenate([ones, X],1)
-y = np.array([3.0,0.2]).reshape(-1,1)
-print(gradientDescent(X,y))
+#X = np.array([2.0,3.0]).reshape(-1,1)
+#ones = np.ones([X.shape[0], 1])
+#X = np.concatenate([ones, X],1)
+#y = np.array([3.0,0.2]).reshape(-1,1)
+#print(gradientDescent(X,y))

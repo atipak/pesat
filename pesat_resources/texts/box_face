@@ -1,0 +1,35 @@
+    <model name='{face}_plane_of_box_{name}'>
+      <static>true</static>
+      <pose>{x_pose} {y_pose} {z_pose} {r_orient} {p_orient} {y_orient}</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <plane>
+              <normal>{normal_x} {normal_y} {normal_z}</normal>
+              <size>{plane_width} {plane_length}</size>
+            </plane>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>{normal_x} {normal_y} {normal_z}</normal>
+              <size>{plane_width} {plane_length}</size>
+            </plane>
+          </geometry>
+          <material>
+            {material_block}
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>

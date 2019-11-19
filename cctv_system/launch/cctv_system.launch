@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
-    <rosparam command="load" file="$(find pesat_resources)/config/cctv_system.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/environment_configuration.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/target_configuration.yaml" />
     <node name="cctv" pkg="cctv_system" type="cctv.py" output="screen"/>
 </launch>

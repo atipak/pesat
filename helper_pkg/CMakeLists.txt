@@ -10,6 +10,8 @@ project(helper_pkg)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  tf
+  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions

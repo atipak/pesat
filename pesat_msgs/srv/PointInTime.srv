@@ -1,0 +1,3 @@
+Header header # timestamp is time which the point should be returned in
+---
+geometry_msgs/PointStamped point_stamped # point (not necessarily in required time)

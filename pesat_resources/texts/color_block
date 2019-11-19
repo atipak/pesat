@@ -1,0 +1,2 @@
+            <ambient>{red} {green} {blue} 1</ambient>
+            <diffuse>{red} {green} {blue} 1</diffuse>

@@ -1,9 +1,9 @@
 <launch>
-    <!-- direction forward-->
+    <!-- drone - direction forward-->
     <node name="controller" pkg="pid" type="controller" ns="forward" output="screen" >
       <param name="Kp" value="5.0" />
-      <param name="Ki" value="0.0" />
-      <param name="Kd" value="0.1" />
+      <param name="Ki" value="1.0" />
+      <param name="Kd" value="2.0" />
       <param name="upper_limit" value="17" />
       <param name="lower_limit" value="-17" />
       <param name="windup_limit" value="10" />
@@ -13,11 +13,11 @@
       <param name="topic_from_plant" value="position" />
       <param name="setpoint_topic" value="target_position" />
      </node>
-    <!-- direction left-->
+    <!-- drone - direction left-->
     <node name="controller" pkg="pid" type="controller" ns="left" output="screen" >
       <param name="Kp" value="5.0" />
-      <param name="Ki" value="0.0" />
-      <param name="Kd" value="0.1" />
+      <param name="Ki" value="1.0" />
+      <param name="Kd" value="2.0" />
       <param name="upper_limit" value="17" />
       <param name="lower_limit" value="-17" />
       <param name="windup_limit" value="10" />
@@ -27,11 +27,11 @@
       <param name="topic_from_plant" value="position" />
       <param name="setpoint_topic" value="target_position" />
      </node>
-     <!-- direction up-->
+     <!-- drone - direction up-->
     <node name="controller" pkg="pid" type="controller" ns="up" output="screen" >
       <param name="Kp" value="5.0" />
-      <param name="Ki" value="0.0" />
-      <param name="Kd" value="0.1" />
+      <param name="Ki" value="1.0" />
+      <param name="Kd" value="2.0" />
       <param name="upper_limit" value="17" />
       <param name="lower_limit" value="-17" />
       <param name="windup_limit" value="10" />
@@ -41,11 +41,11 @@
       <param name="topic_from_plant" value="position" />
       <param name="setpoint_topic" value="target_position" />
      </node>
-     <!-- direction horizontal camera-->
+     <!-- camera - direction horizontal-->
     <node name="controller" pkg="pid" type="controller" ns="hcamera" output="screen" >
-      <param name="Kp" value="0.2" />
+      <param name="Kp" value="2.0" />
       <param name="Ki" value="0.0" />
-      <param name="Kd" value="0.1" />
+      <param name="Kd" value="2.0" />
       <param name="upper_limit" value="0.02" />
       <param name="lower_limit" value="-0.02" />
       <param name="windup_limit" value="0.1" />
@@ -55,11 +55,11 @@
       <param name="topic_from_plant" value="position" />
       <param name="setpoint_topic" value="target_position" />
      </node>
-     <!-- direction vertical camera-->
+     <!-- camera - direction vertical -->
     <node name="controller" pkg="pid" type="controller" ns="vcamera" output="screen" >
-      <param name="Kp" value="0.2" />
+      <param name="Kp" value="2.0" />
       <param name="Ki" value="0.0" />
-      <param name="Kd" value="0.1" />
+      <param name="Kd" value="2.0" />
       <param name="upper_limit" value="0.02" />
       <param name="lower_limit" value="-0.02" />
       <param name="windup_limit" value="0.1" />
@@ -69,11 +69,11 @@
       <param name="topic_from_plant" value="position" />
       <param name="setpoint_topic" value="target_position" />
      </node>
-     <!-- direction yaw-->
+     <!-- drone - direction yaw-->
     <node name="controller" pkg="pid" type="controller" ns="yaw" output="screen" >
-      <param name="Kp" value="0.4" />
-      <param name="Ki" value="0.0" />
-      <param name="Kd" value="0.25" />
+      <param name="Kp" value="5.0" />
+      <param name="Ki" value="1.0" />
+      <param name="Kd" value="2.0" />
       <param name="upper_limit" value="0.7" />
       <param name="lower_limit" value="-0.7" />
       <param name="windup_limit" value="0.5" />

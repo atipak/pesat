@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 
 <launch>
-    <group ns="target">
-        <include file="$(find target_ball)/launch/spawn_target_from_urdf.launch"></include>
-        <node name="target_node" pkg="target_ball" type="target.py" output="screen"/>
-    </group>
+    <rosparam command="load" file="$(find pesat_resources)/config/target_configuration.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/drone_configuration.yaml" />
+    <rosparam command="load" file="$(find pesat_resources)/config/environment_configuration.yaml" />
+    <include file="$(find target_ball)/launch/spawn_target_from_urdf.launch"></include>
+    <node name="target_node" pkg="target_ball" type="target.py" output="screen"/>
+    <node name="target_odom" pkg="target_ball" type="target_odom.py" output="screen"/>
 </launch>

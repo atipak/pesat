@@ -38,6 +38,87 @@
   </xacro:macro>
 
 
+  <!-- Macro to add sonar sensor. -->
+  <xacro:macro name="sonar_sensor_plugin_macro"
+    params="namespace sonar_sensor_suffix parent_link sonar_topic
+      mass_sonar_sensor angle fov noise_mean min_distance max_distance enable_visual
+      samples update_rate scan_resolution range_resolution *geometry *origin">
+    <!-- Sonar sensor link -->
+    <link name="${namespace}/sonar_sensor_${sonar_sensor_suffix}_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <xacro:insert_block name="geometry" />
+        </geometry>
+      </collision>
+      <xacro:if value="${enable_visual}">
+        <visual>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <geometry>
+            <xacro:insert_block name="geometry" />
+          </geometry>
+          <material name="red" />
+        </visual>
+      </xacro:if>
+      <inertial>
+        <mass value="${mass_sonar_sensor}" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+      </inertial>
+    </link>
+    <!-- Sonar sensor joint -->
+    <joint name="${namespace}/sonar_sensor_${sonar_sensor_suffix}_joint" type="revolute">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent_link}" />
+      <child link="${namespace}/sonar_sensor_${sonar_sensor_suffix}_link" />
+      <limit upper="0" lower="0" effort="0" velocity="0" />
+    </joint>
+    <!-- Sonar sensor gazebo -->
+    <gazebo reference="${namespace}/sonar_sensor_${sonar_sensor_suffix}_link">        
+	   <sensor type="ray" name="sonar">
+	      <pose>0 0 0 0 0 0</pose>
+	      <visualize>${enable_visual}</visualize>
+	      <update_rate>${update_rate}</update_rate>
+	      <ray>
+		 <scan>
+		    <horizontal>
+		       <!-- default angle 10 -->
+		       <samples>${samples}</samples>
+		       <!-- default angle 1 -->
+		       <resolution>${scan_resolution}</resolution> 
+		       <!-- default angle 0.14835 -->
+		       <min_angle>-${angle}</min_angle>
+		       <max_angle>${angle}</max_angle>
+		    </horizontal>
+		    <vertical>
+		       <samples>${samples}</samples>
+		       <resolution>${scan_resolution}</resolution> 
+		       <min_angle>-${angle}</min_angle>
+		       <max_angle>${angle}</max_angle> 
+		    </vertical>
+		 </scan>
+		 <range>
+		    <min>${min_distance}</min>
+		    <max>${max_distance}</max>
+		    <resolution>${range_resolution}</resolution>
+		 </range>
+	      </ray>
+	      <plugin filename="libgazebo_ros_range.so" name="gazebo_ros_range">
+	       <!-- default 0.005 -->
+		 <gaussianNoise>${noise_mean}</gaussianNoise>
+		 <alwaysOn>true</alwaysOn>
+		 <updateRate>${update_rate}</updateRate>
+		 <topicName>${sonar_topic}</topicName>
+		 <frameName>${namespace}/sonar_sensor_${sonar_sensor_suffix}_link</frameName>
+		 <radiation>ultrasound</radiation>
+		 <fov>${fov}</fov> <!-- 0.2967 -->
+	      </plugin>
+	   </sensor>  
+   </gazebo>
+  </xacro:macro>
+  
+
+
   <!--  Macro to add a rotable camera  -->
   <!-- base_link - revolute joint -> camera_rotator_base_link - revolute joint -> camera_base_link - fixed joint -> camera_optical_base_link  -->
   <xacro:macro name="rotable_camera_macro"
@@ -98,7 +179,7 @@
       <limit lower="-${pi/6}" upper="${pi/6}" effort="0.02" velocity="0.02" /> 
     </joint>
     <joint name="${namespace}/camera_${camera_suffix}_joint" type="revolute">
-      <xacro:insert_block name="origin" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <parent link="${namespace}/camera_rotator_${camera_suffix}_link" />
       <child link="${namespace}/camera_${camera_suffix}_link" />
       <axis xyz="0 0 1"/>
@@ -155,21 +236,21 @@
     <transmission name="base_to_rotator">
       <type>transmission_interface/SimpleTransmission</type>
       <actuator name="motor_vertical">
-        <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
         <mechanicalReduction>1</mechanicalReduction>
       </actuator>
       <joint name="${namespace}/camera_rotator_${camera_suffix}_joint">
-        <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
       </joint>
     </transmission>
     <transmission name="rotator_to_camera_base">
       <type>transmission_interface/SimpleTransmission</type>
       <actuator name="motor_horizontal">
-        <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
         <mechanicalReduction>1</mechanicalReduction>
       </actuator>
       <joint name="${namespace}/camera_${camera_suffix}_joint">
-        <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
       </joint>
     </transmission>
   </xacro:macro>

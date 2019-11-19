@@ -19,6 +19,7 @@ find_package(catkin REQUIRED
 # find_package(Boost REQUIRED COMPONENTS system)
 
 
+
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -51,24 +52,28 @@ find_package(catkin REQUIRED
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  CameraShot.msg
+  #CameraUpdate.msg
   ControllerState.msg
   DroneState.msg
+  FloatArray.msg
+  FloatImageStamped.msg
   ImageTargetInfo.msg
   JointStates.msg
   Notification.msg
-  CameraShot.msg
-  CameraUpdate.msg
-  FloatArray.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  GoalState.srv
-  PointHeight.srv
-  PositionPrediction.srv
-  PredictionMaps.srv
   CameraRegistration.srv
+  GoalState.srv
+  PointFloat.srv
+  PointInTime.srv
+  PosePlan.srv
+  PositionPrediction.srv
+  PositionRequest.srv
+  PredictionMaps.srv
 )
 
 ## Generate actions in the 'action' folder

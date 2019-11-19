@@ -86,7 +86,7 @@
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
     <model name='box_0'>
-      <pose>57 -37 14.6642926238 0.0 0.0 -1.01938260432</pose>
+      <pose>11.0 98.0 10.67856067899134 0.0 0.0 -0.8694971052716423</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -102,7 +102,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>25.8643741737 48.0863026024 29.3285852476</size>
+              <size>33.5071474526018 13.437500068040059 21.35712135798268</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -122,12 +122,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>25.8643741737 48.0863026024 29.3285852476</size>
+              <size>33.5071474526018 13.437500068040059 21.35712135798268</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.18613387718 0.395889130298 0.115014059795 1</ambient>
-            <diffuse>0.18613387718 0.395889130298 0.115014059795 1</diffuse>
+            <ambient>0.3059676274096351 0.3932885663509397 0.08375341709012817 1</ambient>
+            <diffuse>0.3059676274096351 0.3932885663509397 0.08375341709012817 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -136,7 +136,7 @@
       </link>
     </model>
     <model name='box_1'>
-      <pose>153 -185 14.3569741097 0.0 0.0 -0.742137657816</pose>
+      <pose>-30.0 140.0 8.917939824284897 0.0 0.0 -2.049125349434252</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -152,7 +152,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>20.950456365 24.2384934208 28.7139482193</size>
+              <size>8.75231158337338 56.50787311186727 17.835879648569794</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -172,12 +172,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>20.950456365 24.2384934208 28.7139482193</size>
+              <size>8.75231158337338 56.50787311186727 17.835879648569794</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.000619673954723 0.564921592583 0.112603718507 1</ambient>
-            <diffuse>0.000619673954723 0.564921592583 0.112603718507 1</diffuse>
+            <ambient>0.8817718373286103 0.23068205831926336 0.06994462607282272 1</ambient>
+            <diffuse>0.8817718373286103 0.23068205831926336 0.06994462607282272 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -186,7 +186,7 @@
       </link>
     </model>
     <model name='box_2'>
-      <pose>-206 -1 5.06373602857 0.0 0.0 0.0919735137748</pose>
+      <pose>-53.0 190.0 13.626873659348835 0.0 0.0 -0.46946448745551506</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -202,7 +202,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>54.7596404344 53.1603408358 10.1274720571</size>
+              <size>41.11067537883807 29.60799992010874 27.25374731869767</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -222,12 +222,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>54.7596404344 53.1603408358 10.1274720571</size>
+              <size>41.11067537883807 29.60799992010874 27.25374731869767</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.156019172706 0.0262878001821 0.0397155766947 1</ambient>
-            <diffuse>0.156019172706 0.0262878001821 0.0397155766947 1</diffuse>
+            <ambient>0.051129619293508344 0.47694808917677767 0.10687744046548106 1</ambient>
+            <diffuse>0.051129619293508344 0.47694808917677767 0.10687744046548106 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -236,7 +236,7 @@
       </link>
     </model>
     <model name='box_3'>
-      <pose>88 -166 3.13529176576 0.0 0.0 -1.19592319901</pose>
+      <pose>200.0 -28.0 9.022767748040945 0.0 0.0 0.9989461405889835</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -252,7 +252,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>33.5214392173 34.0257640259 6.27058353152</size>
+              <size>45.36900019797469 38.38082626452342 18.04553549608189</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -272,12 +272,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>33.5214392173 34.0257640259 6.27058353152</size>
+              <size>45.36900019797469 38.38082626452342 18.04553549608189</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.726276395365 0.32095857644 0.024590523653 1</ambient>
-            <diffuse>0.726276395365 0.32095857644 0.024590523653 1</diffuse>
+            <ambient>0.18105585911303934 0.06124740286496 0.0707668058669878 1</ambient>
+            <diffuse>0.18105585911303934 0.06124740286496 0.0707668058669878 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -286,7 +286,7 @@
       </link>
     </model>
     <model name='box_4'>
-      <pose>-61 23 7.43386112072 0.0 0.0 2.40115545792</pose>
+      <pose>-54.0 -68.0 11.932399481538145 0.0 0.0 -1.3448074982335059</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -302,7 +302,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>30.4904754829 35.8949551697 14.8677222414</size>
+              <size>46.50718704877159 19.704099781383178 23.86479896307629</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -322,12 +322,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>30.4904754829 35.8949551697 14.8677222414</size>
+              <size>46.50718704877159 19.704099781383178 23.86479896307629</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.53291850701 0.528368378556 0.0583047931037 1</ambient>
-            <diffuse>0.53291850701 0.528368378556 0.0583047931037 1</diffuse>
+            <ambient>0.8671601061280931 0.6890520242899425 0.09358744691402467 1</ambient>
+            <diffuse>0.8671601061280931 0.6890520242899425 0.09358744691402467 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -336,7 +336,7 @@
       </link>
     </model>
     <model name='box_5'>
-      <pose>-139 -60 9.52731882154 0.0 0.0 -2.09427702029</pose>
+      <pose>93.0 -120.0 12.180641677544292 0.0 0.0 0.3478907333555959</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -352,7 +352,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>34.6395252068 14.4121109746 19.0546376431</size>
+              <size>14.568717129107444 48.8070347128669 24.361283355088585</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -372,12 +372,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>34.6395252068 14.4121109746 19.0546376431</size>
+              <size>14.568717129107444 48.8070347128669 24.361283355088585</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.612437622556 0.266483852639 0.0747240691886 1</ambient>
-            <diffuse>0.612437622556 0.266483852639 0.0747240691886 1</diffuse>
+            <ambient>0.1510670350167691 0.7726870333516273 0.09553444452975915 1</ambient>
+            <diffuse>0.1510670350167691 0.7726870333516273 0.09553444452975915 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -386,7 +386,7 @@
       </link>
     </model>
     <model name='box_6'>
-      <pose>-120 -233 4.29699134104 0.0 0.0 1.03746358993</pose>
+      <pose>-130.0 -201.0 12.420439109522807 0.0 0.0 2.746577244491435</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -402,7 +402,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>51.5587715772 30.060579824 8.59398268209</size>
+              <size>45.535640340912956 49.55207788775828 24.840878219045614</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -422,12 +422,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>51.5587715772 30.060579824 8.59398268209</size>
+              <size>45.535640340912956 49.55207788775828 24.840878219045614</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.114354285 0.806464056558 0.0337018928709 1</ambient>
-            <diffuse>0.114354285 0.806464056558 0.0337018928709 1</diffuse>
+            <ambient>0.6061634778335582 0.7349553700921742 0.09741520870213966 1</ambient>
+            <diffuse>0.6061634778335582 0.7349553700921742 0.09741520870213966 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -436,7 +436,7 @@
       </link>
     </model>
     <model name='box_7'>
-      <pose>-26 192 8.984983811 0.0 0.0 -1.94503984451</pose>
+      <pose>-178.0 14.0 9.835916674045993 0.0 0.0 2.831345659289908</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -452,7 +452,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>40.992921624 45.8019468019 17.969967622</size>
+              <size>51.042119715471564 41.800423260667934 19.671833348091987</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -472,12 +472,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>40.992921624 45.8019468019 17.969967622</size>
+              <size>51.042119715471564 41.800423260667934 19.671833348091987</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.398737053716 0.00223384341285 0.0704704612628 1</ambient>
-            <diffuse>0.398737053716 0.00223384341285 0.0704704612628 1</diffuse>
+            <ambient>0.41294661639301333 0.9355164949211463 0.07714444450232151 1</ambient>
+            <diffuse>0.41294661639301333 0.9355164949211463 0.07714444450232151 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -486,7 +486,7 @@
       </link>
     </model>
     <model name='box_8'>
-      <pose>215 -165 6.03987760866 0.0 0.0 -1.06613413952</pose>
+      <pose>-93.0 -120.0 11.785225408232899 0.0 0.0 -1.575943027175118</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -502,7 +502,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>12.0172526061 20.1585943674 12.0797552173</size>
+              <size>21.993526169065415 21.63359584731483 23.570450816465797</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -522,12 +522,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>12.0172526061 20.1585943674 12.0797552173</size>
+              <size>21.993526169065415 21.63359584731483 23.570450816465797</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.176295568418 0.98435748996 0.0473715890875 1</ambient>
-            <diffuse>0.176295568418 0.98435748996 0.0473715890875 1</diffuse>
+            <ambient>0.4954918938201597 0.844533946746231 0.09243314045672861 1</ambient>
+            <diffuse>0.4954918938201597 0.844533946746231 0.09243314045672861 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -536,7 +536,7 @@
       </link>
     </model>
     <model name='box_9'>
-      <pose>-138 179 10.9033422995 0.0 0.0 0.104902990708</pose>
+      <pose>-164.0 -246.0 5.328805302925539 0.0 0.0 0.8906002371310532</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -552,7 +552,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>49.1712692115 11.7585269424 21.806684599</size>
+              <size>10.84539500023051 59.44293036375359 10.657610605851078</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -572,12 +572,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>49.1712692115 11.7585269424 21.806684599</size>
+              <size>10.84539500023051 59.44293036375359 10.657610605851078</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.204513789489 0.71318448973 0.085516410192 1</ambient>
-            <diffuse>0.204513789489 0.71318448973 0.085516410192 1</diffuse>
+            <ambient>0.732964302147717 0.3321250497890862 0.04179455139549442 1</ambient>
+            <diffuse>0.732964302147717 0.3321250497890862 0.04179455139549442 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -586,7 +586,7 @@
       </link>
     </model>
     <model name='box_10'>
-      <pose>68 180 5.86753357907 0.0 0.0 -1.40524325098</pose>
+      <pose>218.0 30.0 4.36076915369778 0.0 0.0 1.7217781965595014</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -602,7 +602,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>28.8782569546 64.0152275637 11.7350671581</size>
+              <size>26.88339719535763 43.408110691959145 8.72153830739556</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -622,12 +622,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>28.8782569546 64.0152275637 11.7350671581</size>
+              <size>26.88339719535763 43.408110691959145 8.72153830739556</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.500706571244 0.528129498352 0.0460198712084 1</ambient>
-            <diffuse>0.500706571244 0.528129498352 0.0460198712084 1</diffuse>
+            <ambient>0.5631429183391052 0.9368762787943058 0.034202111009394354 1</ambient>
+            <diffuse>0.5631429183391052 0.9368762787943058 0.034202111009394354 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -636,7 +636,7 @@
       </link>
     </model>
     <model name='box_11'>
-      <pose>-203 160 8.31201065218 0.0 0.0 -2.05499096401</pose>
+      <pose>-35.0 -29.0 9.268477076665707 0.0 0.0 0.5589204189226971</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -652,7 +652,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>28.8121183234 32.0163409525 16.6240213044</size>
+              <size>20.73823721204666 55.10534166336652 18.536954153331415</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -672,12 +672,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>28.8121183234 32.0163409525 16.6240213044</size>
+              <size>20.73823721204666 55.10534166336652 18.536954153331415</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.176381991755 0.442215202143 0.0651922404093 1</ambient>
-            <diffuse>0.176381991755 0.442215202143 0.0651922404093 1</diffuse>
+            <ambient>0.33461857477396406 0.5110184405610818 0.07269393785620162 1</ambient>
+            <diffuse>0.33461857477396406 0.5110184405610818 0.07269393785620162 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -686,7 +686,7 @@
       </link>
     </model>
     <model name='box_12'>
-      <pose>-53 -31 14.3181778027 0.0 0.0 -1.23059852775</pose>
+      <pose>244.0 147.0 10.400552500799233 0.0 0.0 3.0447985492003213</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -702,7 +702,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>20.6707938608 35.6104735716 28.6363556053</size>
+              <size>38.614115217144985 42.638338753852224 20.801105001598465</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -722,12 +722,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>20.6707938608 35.6104735716 28.6363556053</size>
+              <size>38.614115217144985 42.638338753852224 20.801105001598465</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.804327561898 0.516973805136 0.112299433746 1</ambient>
-            <diffuse>0.804327561898 0.516973805136 0.112299433746 1</diffuse>
+            <ambient>0.18408507084050296 0.17183968187200183 0.08157296079058221 1</ambient>
+            <diffuse>0.18408507084050296 0.17183968187200183 0.08157296079058221 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -736,7 +736,7 @@
       </link>
     </model>
     <model name='box_13'>
-      <pose>249 -70 14.8173764806 0.0 0.0 -1.23219034971</pose>
+      <pose>-141.0 -129.0 7.3939138019333015 0.0 0.0 0.583486950459746</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -752,7 +752,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>47.5343525819 40.8981963287 29.6347529612</size>
+              <size>32.49622416145748 47.534398894730714 14.787827603866603</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -772,12 +772,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>47.5343525819 40.8981963287 29.6347529612</size>
+              <size>32.49622416145748 47.534398894730714 14.787827603866603</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0720740815491 0.334451343415 0.116214717495 1</ambient>
-            <diffuse>0.0720740815491 0.334451343415 0.116214717495 1</diffuse>
+            <ambient>0.3330033309653926 0.07084292728000297 0.05799148079947687 1</ambient>
+            <diffuse>0.3330033309653926 0.07084292728000297 0.05799148079947687 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -786,7 +786,7 @@
       </link>
     </model>
     <model name='box_14'>
-      <pose>245 -155 4.00937948635 0.0 0.0 2.19563818657</pose>
+      <pose>102.0 -174.0 12.236211449478962 0.0 0.0 -2.0681476778430423</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -802,7 +802,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>18.3102752804 21.837176117 8.01875897269</size>
+              <size>16.761458297277493 23.171178610230232 24.472422898957923</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -822,12 +822,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>18.3102752804 21.837176117 8.01875897269</size>
+              <size>16.761458297277493 23.171178610230232 24.472422898957923</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.844342478859 0.457335469991 0.0314461136184 1</ambient>
-            <diffuse>0.844342478859 0.457335469991 0.0314461136184 1</diffuse>
+            <ambient>0.38638441571702364 0.569032718956029 0.09597028587826636 1</ambient>
+            <diffuse>0.38638441571702364 0.569032718956029 0.09597028587826636 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -836,7 +836,7 @@
       </link>
     </model>
     <model name='box_15'>
-      <pose>-247 89 7.26339347623 0.0 0.0 -1.26119133853</pose>
+      <pose>-196.0 -97.0 8.17357476078345 0.0 0.0 2.758787207787016</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -852,7 +852,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>10.5097878694 49.9965673977 14.5267869525</size>
+              <size>28.291167822034396 8.949187133292341 16.3471495215669</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -872,12 +872,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>10.5097878694 49.9965673977 14.5267869525</size>
+              <size>28.291167822034396 8.949187133292341 16.3471495215669</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.633596798164 0.451905771383 0.0569677919704 1</ambient>
-            <diffuse>0.633596798164 0.451905771383 0.0569677919704 1</diffuse>
+            <ambient>0.8156770872116239 0.9296706031716788 0.06410646871202706 1</ambient>
+            <diffuse>0.8156770872116239 0.9296706031716788 0.06410646871202706 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -886,7 +886,7 @@
       </link>
     </model>
     <model name='box_16'>
-      <pose>35 -107 9.84567925173 0.0 0.0 -1.99715648227</pose>
+      <pose>12.0 -33.0 7.8999495172870144 0.0 0.0 -2.9074084649632392</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -902,7 +902,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>41.8814762718 43.470469412 19.6913585035</size>
+              <size>47.22595043230734 8.998547996909277 15.799899034574029</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -922,12 +922,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>41.8814762718 43.470469412 19.6913585035</size>
+              <size>47.22595043230734 8.998547996909277 15.799899034574029</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.317315931917 0.618150704479 0.0772210137391 1</ambient>
-            <diffuse>0.317315931917 0.618150704479 0.0772210137391 1</diffuse>
+            <ambient>0.386585925612677 0.4516583894784828 0.06196038837087854 1</ambient>
+            <diffuse>0.386585925612677 0.4516583894784828 0.06196038837087854 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -936,7 +936,7 @@
       </link>
     </model>
     <model name='box_17'>
-      <pose>-97 -80 3.41430919733 0.0 0.0 2.8223336645</pose>
+      <pose>20.0 22.0 4.452574775439398 0.0 0.0 0.2918054289695745</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -952,7 +952,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>32.4849235703 35.5285269631 6.82861839465</size>
+              <size>49.000109454054865 21.082333981721092 8.905149550878797</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -972,12 +972,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>32.4849235703 35.5285269631 6.82861839465</size>
+              <size>49.000109454054865 21.082333981721092 8.905149550878797</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.823510531063 0.674518602811 0.0267788956653 1</ambient>
-            <diffuse>0.823510531063 0.674518602811 0.0267788956653 1</diffuse>
+            <ambient>0.8293685395352113 0.29114021774623766 0.034922155101485476 1</ambient>
+            <diffuse>0.8293685395352113 0.29114021774623766 0.034922155101485476 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -986,7 +986,7 @@
       </link>
     </model>
     <model name='box_18'>
-      <pose>-53 -223 6.09025519777 0.0 0.0 -2.08095810102</pose>
+      <pose>-105.0 -51.0 3.57855578145893 0.0 0.0 1.8775600879269823</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1002,7 +1002,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>18.9994554121 38.7601055718 12.1805103955</size>
+              <size>45.590993328448384 46.32370326211496 7.15711156291786</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1022,12 +1022,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>18.9994554121 38.7601055718 12.1805103955</size>
+              <size>45.590993328448384 46.32370326211496 7.15711156291786</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0357567987075 0.909586283595 0.0477667074335 1</ambient>
-            <diffuse>0.0357567987075 0.909586283595 0.0477667074335 1</diffuse>
+            <ambient>0.3803106719996403 0.016722689660681245 0.028067104168305334 1</ambient>
+            <diffuse>0.3803106719996403 0.016722689660681245 0.028067104168305334 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1036,7 +1036,7 @@
       </link>
     </model>
     <model name='box_19'>
-      <pose>-167 107 10.5091179115 0.0 0.0 2.86376171957</pose>
+      <pose>-16.0 -95.0 10.220430348067152 0.0 0.0 -0.05964402914281683</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1052,7 +1052,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>51.247926932 2.2647190959 21.0182358231</size>
+              <size>29.72694537108584 13.459983994354998 20.440860696134305</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1072,12 +1072,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>51.247926932 2.2647190959 21.0182358231</size>
+              <size>29.72694537108584 13.459983994354998 20.440860696134305</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.864100139341 0.939432314758 0.0824244542081 1</ambient>
-            <diffuse>0.864100139341 0.939432314758 0.0824244542081 1</diffuse>
+            <ambient>0.3693755184638634 0.4395482027466472 0.0801602380240561 1</ambient>
+            <diffuse>0.3693755184638634 0.4395482027466472 0.0801602380240561 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1086,7 +1086,7 @@
       </link>
     </model>
     <model name='box_20'>
-      <pose>-16 14 10.8510162216 0.0 0.0 -1.85953047421</pose>
+      <pose>183.0 93.0 8.946816165260138 0.0 0.0 -0.34660458879755934</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1102,7 +1102,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>26.9434244231 26.912857015 21.7020324433</size>
+              <size>47.430815665113364 52.51957210905458 17.893632330520276</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1122,12 +1122,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>26.9434244231 26.912857015 21.7020324433</size>
+              <size>47.430815665113364 52.51957210905458 17.893632330520276</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0987178165235 0.830664220373 0.0851060095815 1</ambient>
-            <diffuse>0.0987178165235 0.830664220373 0.0851060095815 1</diffuse>
+            <ambient>0.6064786898915688 0.780767434220349 0.07017110717851088 1</ambient>
+            <diffuse>0.6064786898915688 0.780767434220349 0.07017110717851088 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1136,7 +1136,7 @@
       </link>
     </model>
     <model name='box_21'>
-      <pose>32 221 13.7860639489 0.0 0.0 -2.38910702554</pose>
+      <pose>68.0 145.0 5.506815892541878 0.0 0.0 1.0504982057027636</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1152,7 +1152,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>39.1715501821 26.8913561264 27.5721278979</size>
+              <size>39.91934967818939 18.945758763937253 11.013631785083756</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1172,12 +1172,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>39.1715501821 26.8913561264 27.5721278979</size>
+              <size>39.91934967818939 18.945758763937253 11.013631785083756</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0570415900074 0.723558826855 0.108125991756 1</ambient>
-            <diffuse>0.0570415900074 0.723558826855 0.108125991756 1</diffuse>
+            <ambient>0.27681154281509324 0.6641535544460366 0.0431907128826814 1</ambient>
+            <diffuse>0.27681154281509324 0.6641535544460366 0.0431907128826814 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1186,7 +1186,7 @@
       </link>
     </model>
     <model name='box_22'>
-      <pose>51 103 6.00346622259 0.0 0.0 2.01074745091</pose>
+      <pose>106.0 246.0 12.321171566801386 0.0 0.0 -0.5682716648869991</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1202,7 +1202,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>14.1489741027 14.8908813307 12.0069324452</size>
+              <size>37.347761429379275 35.48738556221239 24.642343133602772</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1222,12 +1222,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>14.1489741027 14.8908813307 12.0069324452</size>
+              <size>37.347761429379275 35.48738556221239 24.642343133602772</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0200225641726 0.816804223715 0.0470860095889 1</ambient>
-            <diffuse>0.0200225641726 0.816804223715 0.0470860095889 1</diffuse>
+            <ambient>0.8087825948908098 0.04922039290385771 0.09663663973961871 1</ambient>
+            <diffuse>0.8087825948908098 0.04922039290385771 0.09663663973961871 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1236,7 +1236,7 @@
       </link>
     </model>
     <model name='box_23'>
-      <pose>-147 -125 13.0937933684 0.0 0.0 2.9715847347</pose>
+      <pose>-199.0 -166.0 9.504518910273303 0.0 0.0 1.8939893462124235</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1252,7 +1252,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>4.58483941846 43.604264415 26.1875867367</size>
+              <size>40.95194382159373 48.951772654198074 19.009037820546606</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1272,12 +1272,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>4.58483941846 43.604264415 26.1875867367</size>
+              <size>40.95194382159373 48.951772654198074 19.009037820546606</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.843438688286 0.238540443967 0.102696418575 1</ambient>
-            <diffuse>0.843438688286 0.238540443967 0.102696418575 1</diffuse>
+            <ambient>0.38695531870469224 0.07292859815211827 0.07454524635508473 1</ambient>
+            <diffuse>0.38695531870469224 0.07292859815211827 0.07454524635508473 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1286,7 +1286,7 @@
       </link>
     </model>
     <model name='box_24'>
-      <pose>-240 -115 11.5489258855 0.0 0.0 -0.148255634352</pose>
+      <pose>-106.0 94.0 3.036187016197399 0.0 0.0 1.509970487362236</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1302,7 +1302,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>8.66542768411 38.5718214629 23.0978517709</size>
+              <size>63.77746449783848 22.556646956915394 6.072374032394798</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1322,12 +1322,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>8.66542768411 38.5718214629 23.0978517709</size>
+              <size>63.77746449783848 22.556646956915394 6.072374032394798</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.731418307032 0.355159431943 0.0905798108664 1</ambient>
-            <diffuse>0.731418307032 0.355159431943 0.0905798108664 1</diffuse>
+            <ambient>0.42595351238871304 0.8888574919655837 0.02381323149958744 1</ambient>
+            <diffuse>0.42595351238871304 0.8888574919655837 0.02381323149958744 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1336,7 +1336,7 @@
       </link>
     </model>
     <model name='box_25'>
-      <pose>149 55 7.4107102005 0.0 0.0 2.01737725542</pose>
+      <pose>-200.0 245.0 8.73518252108833 0.0 0.0 -1.2315014391945382</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1352,7 +1352,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>36.7087697783 43.2530142443 14.821420401</size>
+              <size>13.61798697724973 10.92907385401943 17.47036504217666</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1372,12 +1372,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>36.7087697783 43.2530142443 14.821420401</size>
+              <size>13.61798697724973 10.92907385401943 17.47036504217666</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.43235711405 0.42815404949 0.0581232172588 1</ambient>
-            <diffuse>0.43235711405 0.42815404949 0.0581232172588 1</diffuse>
+            <ambient>0.8027560728399181 0.9941952972409885 0.06851123545951632 1</ambient>
+            <diffuse>0.8027560728399181 0.9941952972409885 0.06851123545951632 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1386,7 +1386,7 @@
       </link>
     </model>
     <model name='box_26'>
-      <pose>14 -45 13.0462905108 0.0 0.0 -0.781945331631</pose>
+      <pose>-183.0 -29.0 7.3030311145086815 0.0 0.0 -1.6752385755741377</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1402,7 +1402,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>48.8413352365 19.3964444511 26.0925810215</size>
+              <size>7.795190501975962 42.77033790904829 14.606062229017363</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1422,12 +1422,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>48.8413352365 19.3964444511 26.0925810215</size>
+              <size>7.795190501975962 42.77033790904829 14.606062229017363</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.805337769807 0.0907645118513 0.102323847143 1</ambient>
-            <diffuse>0.805337769807 0.0907645118513 0.102323847143 1</diffuse>
+            <ambient>0.9105739579186616 0.6388018349689645 0.05727867540791123 1</ambient>
+            <diffuse>0.9105739579186616 0.6388018349689645 0.05727867540791123 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1436,7 +1436,7 @@
       </link>
     </model>
     <model name='box_27'>
-      <pose>-140 -189 9.39107557608 0.0 0.0 -2.22580396641</pose>
+      <pose>-210.0 135.0 10.913565074115308 0.0 0.0 -2.118815242038815</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1452,7 +1452,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>7.9428864772 20.6989500315 18.7821511522</size>
+              <size>53.27998433183104 24.81352422162694 21.827130148230616</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1472,12 +1472,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>7.9428864772 20.6989500315 18.7821511522</size>
+              <size>53.27998433183104 24.81352422162694 21.827130148230616</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.841097018069 0.600696712926 0.0736554947143 1</ambient>
-            <diffuse>0.841097018069 0.600696712926 0.0736554947143 1</diffuse>
+            <ambient>0.06403537618711952 0.6784265041522384 0.08559658881659064 1</ambient>
+            <diffuse>0.06403537618711952 0.6784265041522384 0.08559658881659064 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1486,7 +1486,7 @@
       </link>
     </model>
     <model name='box_28'>
-      <pose>185 -130 14.2130475607 0.0 0.0 -0.877299541896</pose>
+      <pose>-207.0 -10.0 4.231376765273415 0.0 0.0 1.3373384618519792</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1502,7 +1502,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>31.3543252741 18.9537021842 28.4260951214</size>
+              <size>12.646845841658484 33.043771107669194 8.46275353054683</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1522,12 +1522,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>31.3543252741 18.9537021842 28.4260951214</size>
+              <size>12.646845841658484 33.043771107669194 8.46275353054683</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.75764305049 0.996389779438 0.111474882829 1</ambient>
-            <diffuse>0.75764305049 0.996389779438 0.111474882829 1</diffuse>
+            <ambient>0.3685038629019862 0.5590648833946542 0.033187268747242475 1</ambient>
+            <diffuse>0.3685038629019862 0.5590648833946542 0.033187268747242475 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1536,7 +1536,7 @@
       </link>
     </model>
     <model name='box_29'>
-      <pose>138 -59 4.21293014997 0.0 0.0 0.460665801931</pose>
+      <pose>238.0 225.0 5.6548939288473345 0.0 0.0 2.419468560276357</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1552,7 +1552,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>26.792873454 49.0199925583 8.42586029993</size>
+              <size>45.80371317777055 12.001747961715667 11.309787857694669</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1572,12 +1572,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>26.792873454 49.0199925583 8.42586029993</size>
+              <size>45.80371317777055 12.001747961715667 11.309787857694669</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.468028079596 0.484187504546 0.0330425894115 1</ambient>
-            <diffuse>0.468028079596 0.484187504546 0.0330425894115 1</diffuse>
+            <ambient>0.5360395342016109 0.527621868070338 0.04435210924586145 1</ambient>
+            <diffuse>0.5360395342016109 0.527621868070338 0.04435210924586145 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1586,7 +1586,7 @@
       </link>
     </model>
     <model name='box_30'>
-      <pose>-246 132 14.095903768 0.0 0.0 -1.21087931749</pose>
+      <pose>203.0 -224.0 12.413508423237495 0.0 0.0 -0.32165454282165035</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1602,7 +1602,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>28.2012092025 25.2296065149 28.1918075359</size>
+              <size>4.813305103990317 4.957209498887963 24.82701684647499</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1622,12 +1622,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>28.2012092025 25.2296065149 28.1918075359</size>
+              <size>4.813305103990317 4.957209498887963 24.82701684647499</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.528689351968 0.0530061644541 0.110556107984 1</ambient>
-            <diffuse>0.528689351968 0.0530061644541 0.110556107984 1</diffuse>
+            <ambient>0.26171214500727047 0.13915971177775255 0.0973608503783333 1</ambient>
+            <diffuse>0.26171214500727047 0.13915971177775255 0.0973608503783333 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1636,7 +1636,7 @@
       </link>
     </model>
     <model name='box_31'>
-      <pose>197 -32 9.76179744867 0.0 0.0 -2.6727807908</pose>
+      <pose>104.0 43.0 3.1533066303083497 0.0 0.0 2.5326309119641586</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1652,7 +1652,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>10.2660661851 37.7233987752 19.5235948973</size>
+              <size>49.758344329735195 16.0046455354806 6.306613260616699</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1672,12 +1672,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>10.2660661851 37.7233987752 19.5235948973</size>
+              <size>49.758344329735195 16.0046455354806 6.306613260616699</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.19780713687 0.739120211668 0.0765631172445 1</ambient>
-            <diffuse>0.19780713687 0.739120211668 0.0765631172445 1</diffuse>
+            <ambient>0.17324673085959463 0.4304662909968965 0.024731816708300783 1</ambient>
+            <diffuse>0.17324673085959463 0.4304662909968965 0.024731816708300783 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1686,7 +1686,7 @@
       </link>
     </model>
     <model name='box_32'>
-      <pose>-219 -102 11.3426944284 0.0 0.0 0.281293622543</pose>
+      <pose>-164.0 141.0 3.691419895267824 0.0 0.0 1.7341141423958093</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1702,7 +1702,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>18.9000269176 33.246505327 22.6853888569</size>
+              <size>22.68785350090937 5.627247254712298 7.382839790535648</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1722,12 +1722,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>18.9000269176 33.246505327 22.6853888569</size>
+              <size>22.68785350090937 5.627247254712298 7.382839790535648</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.630636838058 0.11164544964 0.0889623092427 1</ambient>
-            <diffuse>0.630636838058 0.11164544964 0.0889623092427 1</diffuse>
+            <ambient>0.9849376547672133 0.06906106926839817 0.028952312904061365 1</ambient>
+            <diffuse>0.9849376547672133 0.06906106926839817 0.028952312904061365 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1736,7 +1736,7 @@
       </link>
     </model>
     <model name='box_33'>
-      <pose>-181 -155 12.6153737788 0.0 0.0 2.74514484424</pose>
+      <pose>22.0 68.0 14.940747189062463 0.0 0.0 2.7642369392400856</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1752,7 +1752,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.87668727509 45.615818617 25.2307475576</size>
+              <size>15.324194474235277 22.052505184348746 29.881494378124927</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1772,12 +1772,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>2.87668727509 45.615818617 25.2307475576</size>
+              <size>15.324194474235277 22.052505184348746 29.881494378124927</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.924677690705 0.837521514107 0.0989441080692 1</ambient>
-            <diffuse>0.924677690705 0.837521514107 0.0989441080692 1</diffuse>
+            <ambient>0.03579773283249821 0.7024033259504372 0.11718233089460756 1</ambient>
+            <diffuse>0.03579773283249821 0.7024033259504372 0.11718233089460756 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1786,7 +1786,7 @@
       </link>
     </model>
     <model name='box_34'>
-      <pose>-139 54 10.8623809829 0.0 0.0 -1.92005071383</pose>
+      <pose>175.0 -136.0 11.733812268122243 0.0 0.0 1.814076239464659</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1802,7 +1802,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>13.6314626047 11.9362131867 21.7247619659</size>
+              <size>22.131204064604418 44.93614656815169 23.467624536244486</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1822,12 +1822,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>13.6314626047 11.9362131867 21.7247619659</size>
+              <size>22.131204064604418 44.93614656815169 23.467624536244486</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.60663463385 0.139587941805 0.0851951449642 1</ambient>
-            <diffuse>0.60663463385 0.139587941805 0.0851951449642 1</diffuse>
+            <ambient>0.5309834691382032 0.29794252185444836 0.09202990014213525 1</ambient>
+            <diffuse>0.5309834691382032 0.29794252185444836 0.09202990014213525 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1836,7 +1836,7 @@
       </link>
     </model>
     <model name='box_35'>
-      <pose>194 77 8.09123965402 0.0 0.0 1.21597870436</pose>
+      <pose>213.0 -74.0 8.339446234318029 0.0 0.0 2.4051965561209148</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1852,7 +1852,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>24.3830493798 16.2502398336 16.182479308</size>
+              <size>26.93304693015524 24.496622838593844 16.678892468636057</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1872,12 +1872,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>24.3830493798 16.2502398336 16.182479308</size>
+              <size>26.93304693015524 24.496622838593844 16.678892468636057</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.112230873366 0.256505925553 0.0634607031688 1</ambient>
-            <diffuse>0.112230873366 0.256505925553 0.0634607031688 1</diffuse>
+            <ambient>0.6058172867635624 0.2563903896120543 0.0654074214456316 1</ambient>
+            <diffuse>0.6058172867635624 0.2563903896120543 0.0654074214456316 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1886,7 +1886,7 @@
       </link>
     </model>
     <model name='box_36'>
-      <pose>-11 -226 7.43458270473 0.0 0.0 2.04980472016</pose>
+      <pose>-220.0 183.0 13.85566010464334 0.0 0.0 -0.7361736802384703</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1902,7 +1902,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>11.270292007 25.9741781269 14.8691654095</size>
+              <size>24.57046278570646 31.705417849427754 27.71132020928668</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1922,12 +1922,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>11.270292007 25.9741781269 14.8691654095</size>
+              <size>24.57046278570646 31.705417849427754 27.71132020928668</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.4353230387 0.799219734185 0.0583104525861 1</ambient>
-            <diffuse>0.4353230387 0.799219734185 0.0583104525861 1</diffuse>
+            <ambient>0.7728028657001005 0.0753444868944394 0.10867184395798697 1</ambient>
+            <diffuse>0.7728028657001005 0.0753444868944394 0.10867184395798697 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1936,7 +1936,7 @@
       </link>
     </model>
     <model name='box_37'>
-      <pose>59 -224 5.65673928742 0.0 0.0 0.701978202665</pose>
+      <pose>-151.0 221.0 4.165720659197231 0.0 0.0 -0.2561089970392796</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -1952,7 +1952,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>20.3683625186 41.5863784998 11.3134785748</size>
+              <size>34.38367381818269 29.691591516559082 8.331441318394463</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -1972,12 +1972,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>20.3683625186 41.5863784998 11.3134785748</size>
+              <size>34.38367381818269 29.691591516559082 8.331441318394463</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.759995136923 0.849747082129 0.0443665826465 1</ambient>
-            <diffuse>0.759995136923 0.849747082129 0.0443665826465 1</diffuse>
+            <ambient>0.39634216641299447 0.6333936719073255 0.03267231889566456 1</ambient>
+            <diffuse>0.39634216641299447 0.6333936719073255 0.03267231889566456 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -1986,7 +1986,7 @@
       </link>
     </model>
     <model name='box_38'>
-      <pose>-193 -213 12.2015641854 0.0 0.0 2.82411930126</pose>
+      <pose>-5.0 -204.0 8.082145604959317 0.0 0.0 2.891012607475811</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2002,7 +2002,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>7.54724907206 46.6431129221 24.4031283708</size>
+              <size>63.81542495513948 47.632628482941215 16.164291209918634</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2022,12 +2022,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>7.54724907206 46.6431129221 24.4031283708</size>
+              <size>63.81542495513948 47.632628482941215 16.164291209918634</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.285473077524 0.633183870946 0.0956985426305 1</ambient>
-            <diffuse>0.285473077524 0.633183870946 0.0956985426305 1</diffuse>
+            <ambient>0.4810716751025005 0.8603596243398821 0.06338937729379857 1</ambient>
+            <diffuse>0.4810716751025005 0.8603596243398821 0.06338937729379857 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2036,7 +2036,7 @@
       </link>
     </model>
     <model name='box_39'>
-      <pose>-179 -246 4.03545930779 0.0 0.0 1.246887403</pose>
+      <pose>221.0 -194.0 9.888799346078489 0.0 0.0 -2.776487784236237</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2052,7 +2052,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>21.7478009021 26.040343463 8.07091861558</size>
+              <size>35.161756704427944 44.71986715520327 19.777598692156978</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2072,12 +2072,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>21.7478009021 26.040343463 8.07091861558</size>
+              <size>35.161756704427944 44.71986715520327 19.777598692156978</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.52619427923 0.120103532258 0.0316506612376 1</ambient>
-            <diffuse>0.52619427923 0.120103532258 0.0316506612376 1</diffuse>
+            <ambient>0.20723238165181845 0.8107544316672761 0.07755921055747834 1</ambient>
+            <diffuse>0.20723238165181845 0.8107544316672761 0.07755921055747834 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2086,7 +2086,7 @@
       </link>
     </model>
     <model name='box_40'>
-      <pose>205 145 9.26059594982 0.0 0.0 2.71866388203</pose>
+      <pose>136.0 -200.0 12.132162485877139 0.0 0.0 2.6780863786500375</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2102,7 +2102,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>43.7209167803 28.9753390812 18.5211918996</size>
+              <size>6.462550297341975 4.063285738065802 24.264324971754277</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2122,12 +2122,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>43.7209167803 28.9753390812 18.5211918996</size>
+              <size>6.462550297341975 4.063285738065802 24.264324971754277</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.729463266692 0.736754888191 0.0726321250966 1</ambient>
-            <diffuse>0.729463266692 0.736754888191 0.0726321250966 1</diffuse>
+            <ambient>0.17641557062571545 0.18113544883706556 0.09515421557550698 1</ambient>
+            <diffuse>0.17641557062571545 0.18113544883706556 0.09515421557550698 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2136,7 +2136,7 @@
       </link>
     </model>
     <model name='box_41'>
-      <pose>129 157 6.95454581176 0.0 0.0 2.00257018085</pose>
+      <pose>143.0 -244.0 3.476469358814098 0.0 0.0 -0.9147182973642045</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2152,7 +2152,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>42.1186697091 52.8638593932 13.9090916235</size>
+              <size>15.856706889763535 10.18111910579626 6.952938717628196</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2172,12 +2172,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>42.1186697091 52.8638593932 13.9090916235</size>
+              <size>15.856706889763535 10.18111910579626 6.952938717628196</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.683359940117 0.825038129888 0.0545454573472 1</ambient>
-            <diffuse>0.683359940117 0.825038129888 0.0545454573472 1</diffuse>
+            <ambient>0.07983863676356695 0.6925122687197355 0.027266426343639984 1</ambient>
+            <diffuse>0.07983863676356695 0.6925122687197355 0.027266426343639984 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2186,7 +2186,7 @@
       </link>
     </model>
     <model name='box_42'>
-      <pose>78 54 9.21078099246 0.0 0.0 -2.33241595072</pose>
+      <pose>14.0 184.0 12.412598644548913 0.0 0.0 2.5531505267635</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2202,7 +2202,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>40.7826669857 45.3882956481 18.4215619849</size>
+              <size>57.2920520556023 6.859954326275175 24.825197289097826</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2222,12 +2222,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>40.7826669857 45.3882956481 18.4215619849</size>
+              <size>57.2920520556023 6.859954326275175 24.825197289097826</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.667337920416 0.221630979978 0.0722414195487 1</ambient>
-            <diffuse>0.667337920416 0.221630979978 0.0722414195487 1</diffuse>
+            <ambient>0.07058239078120265 0.1146007214804432 0.09735371485920716 1</ambient>
+            <diffuse>0.07058239078120265 0.1146007214804432 0.09735371485920716 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2236,7 +2236,7 @@
       </link>
     </model>
     <model name='box_43'>
-      <pose>-6 239 14.6561571396 0.0 0.0 1.96834621176</pose>
+      <pose>45.0 -69.0 12.29163479925328 0.0 0.0 -2.896683955795986</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2252,7 +2252,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>24.1523672548 47.7438152912 29.3123142793</size>
+              <size>13.75184413998748 50.04514592465157 24.58326959850656</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2272,12 +2272,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>24.1523672548 47.7438152912 29.3123142793</size>
+              <size>13.75184413998748 50.04514592465157 24.58326959850656</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.950649602584 0.722010548878 0.114950252076 1</ambient>
-            <diffuse>0.950649602584 0.722010548878 0.114950252076 1</diffuse>
+            <ambient>0.7639931604975965 0.8532520939976921 0.09640497881767279 1</ambient>
+            <diffuse>0.7639931604975965 0.8532520939976921 0.09640497881767279 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2286,7 +2286,7 @@
       </link>
     </model>
     <model name='box_44'>
-      <pose>-97 130 8.04671038651 0.0 0.0 -0.236263586077</pose>
+      <pose>83.0 -238.0 13.774347091724763 0.0 0.0 -1.4452200126075483</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2302,7 +2302,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>49.8552717871 7.33730915468 16.093420773</size>
+              <size>15.455555862027065 56.23346511368365 27.548694183449527</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2322,12 +2322,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>49.8552717871 7.33730915468 16.093420773</size>
+              <size>15.455555862027065 56.23346511368365 27.548694183449527</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.718820940799 0.111970752724 0.0631114540118 1</ambient>
-            <diffuse>0.718820940799 0.111970752724 0.0631114540118 1</diffuse>
+            <ambient>0.36477967992937377 0.9359964496559172 0.10803409483705696 1</ambient>
+            <diffuse>0.36477967992937377 0.9359964496559172 0.10803409483705696 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2336,7 +2336,7 @@
       </link>
     </model>
     <model name='box_45'>
-      <pose>-28 -152 11.2720104168 0.0 0.0 -1.30818005301</pose>
+      <pose>-152.0 173.0 14.171544598025019 0.0 0.0 -2.7397283222993107</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2352,7 +2352,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>37.6225144238 13.6810053354 22.5440208337</size>
+              <size>37.43568224140223 16.063628676971135 28.343089196050038</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2372,12 +2372,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>37.6225144238 13.6810053354 22.5440208337</size>
+              <size>37.43568224140223 16.063628676971135 28.343089196050038</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0272068277125 0.645847125752 0.088407924838 1</ambient>
-            <diffuse>0.0272068277125 0.645847125752 0.088407924838 1</diffuse>
+            <ambient>0.5535732980657141 0.5468362370892589 0.11114936939627466 1</ambient>
+            <diffuse>0.5535732980657141 0.5468362370892589 0.11114936939627466 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2386,7 +2386,7 @@
       </link>
     </model>
     <model name='box_46'>
-      <pose>107 -226 5.98712350904 0.0 0.0 0.0147043700872</pose>
+      <pose>-139.0 45.0 11.269886473890583 0.0 0.0 -2.6977788459255243</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2402,7 +2402,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>23.9820060476 23.4735014108 11.9742470181</size>
+              <size>30.069513264270796 37.47412711637071 22.539772947781167</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2422,12 +2422,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>23.9820060476 23.4735014108 11.9742470181</size>
+              <size>30.069513264270796 37.47412711637071 22.539772947781167</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.00876379793524 0.790728976797 0.0469578314434 1</ambient>
-            <diffuse>0.00876379793524 0.790728976797 0.0469578314434 1</diffuse>
+            <ambient>0.036765469673333384 0.18167781202607658 0.08839126646188693 1</ambient>
+            <diffuse>0.036765469673333384 0.18167781202607658 0.08839126646188693 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2436,7 +2436,7 @@
       </link>
     </model>
     <model name='box_47'>
-      <pose>64 134 7.28907313688 0.0 0.0 2.64867996552</pose>
+      <pose>-57.0 94.0 9.372648042082945 0.0 0.0 0.05596532934757919</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2452,7 +2452,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>7.55012764103 34.2017376027 14.5781462738</size>
+              <size>39.60107481729689 8.991441567692949 18.74529608416589</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2472,12 +2472,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>7.55012764103 34.2017376027 14.5781462738</size>
+              <size>39.60107481729689 8.991441567692949 18.74529608416589</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.666073348549 0.856279093506 0.0571692010736 1</ambient>
-            <diffuse>0.666073348549 0.856279093506 0.0571692010736 1</diffuse>
+            <ambient>0.6712040335107005 0.7353076082102055 0.07351096503594466 1</ambient>
+            <diffuse>0.6712040335107005 0.7353076082102055 0.07351096503594466 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2486,7 +2486,7 @@
       </link>
     </model>
     <model name='box_48'>
-      <pose>-199 206 4.52596509374 0.0 0.0 -2.52502609977</pose>
+      <pose>120.0 -49.0 7.240691237536761 0.0 0.0 -0.7103731831897215</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2502,7 +2502,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>42.93446892 36.8146815378 9.05193018748</size>
+              <size>18.85390716043674 8.200221011359595 14.481382475073522</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2522,12 +2522,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>42.93446892 36.8146815378 9.05193018748</size>
+              <size>18.85390716043674 8.200221011359595 14.481382475073522</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.744594774529 0.270261445417 0.0354977654411 1</ambient>
-            <diffuse>0.744594774529 0.270261445417 0.0354977654411 1</diffuse>
+            <ambient>0.5756867890137396 0.18945015781231445 0.05678973519636675 1</ambient>
+            <diffuse>0.5756867890137396 0.18945015781231445 0.05678973519636675 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2536,7 +2536,7 @@
       </link>
     </model>
     <model name='box_49'>
-      <pose>110 231 10.1186670519 0.0 0.0 0.570421958596</pose>
+      <pose>-77.0 248.0 6.440253767427814 0.0 0.0 -1.4495109600477598</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2552,7 +2552,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>52.0557359985 13.1929617316 20.2373341039</size>
+              <size>33.057963698718765 52.93129736674424 12.880507534855628</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2572,12 +2572,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>52.0557359985 13.1929617316 20.2373341039</size>
+              <size>33.057963698718765 52.93129736674424 12.880507534855628</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.522577080024 0.758853987986 0.079362094525 1</ambient>
-            <diffuse>0.522577080024 0.758853987986 0.079362094525 1</diffuse>
+            <ambient>0.6388134072069928 0.2443794480513476 0.050511794254335794 1</ambient>
+            <diffuse>0.6388134072069928 0.2443794480513476 0.050511794254335794 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2586,7 +2586,7 @@
       </link>
     </model>
     <model name='box_50'>
-      <pose>220 -16 6.54574014745 0.0 0.0 0.18141555636</pose>
+      <pose>40.0 -225.0 10.578530268620582 0.0 0.0 -0.35900548347877853</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2602,7 +2602,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>29.1492984059 44.8535317596 13.0914802949</size>
+              <size>13.319653773570415 38.08172055820613 21.157060537241165</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2622,12 +2622,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>29.1492984059 44.8535317596 13.0914802949</size>
+              <size>13.319653773570415 38.08172055820613 21.157060537241165</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0651487790079 0.807655145883 0.0513391384114 1</ambient>
-            <diffuse>0.0651487790079 0.807655145883 0.0513391384114 1</diffuse>
+            <ambient>0.3388512799730252 0.8157356768695342 0.08296886485192613 1</ambient>
+            <diffuse>0.3388512799730252 0.8157356768695342 0.08296886485192613 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2636,7 +2636,7 @@
       </link>
     </model>
     <model name='box_51'>
-      <pose>-15 -83 2.7769694493 0.0 0.0 -1.28546764253</pose>
+      <pose>-211.0 -46.0 11.060492840238734 0.0 0.0 2.10139557618676</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2652,7 +2652,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>18.8659293929 10.3118773487 5.55393889859</size>
+              <size>16.44758351924334 27.24955697299575 22.120985680477467</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2672,12 +2672,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>18.8659293929 10.3118773487 5.55393889859</size>
+              <size>16.44758351924334 27.24955697299575 22.120985680477467</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.435697631235 0.233295172697 0.0217801525435 1</ambient>
-            <diffuse>0.435697631235 0.233295172697 0.0217801525435 1</diffuse>
+            <ambient>0.22415388501119504 0.8707033359837449 0.08674896345285281 1</ambient>
+            <diffuse>0.22415388501119504 0.8707033359837449 0.08674896345285281 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2686,7 +2686,7 @@
       </link>
     </model>
     <model name='box_52'>
-      <pose>128 -116 12.111876681 0.0 0.0 1.75654627328</pose>
+      <pose>-225.0 -87.0 7.467189815625993 0.0 0.0 2.1683072941414405</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2702,7 +2702,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>43.6323649559 11.5618206678 24.223753362</size>
+              <size>13.723568482200209 20.758068159289614 14.934379631251986</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2722,12 +2722,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>43.6323649559 11.5618206678 24.223753362</size>
+              <size>13.723568482200209 20.758068159289614 14.934379631251986</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.552008217972 0.657973288391 0.0949951112237 1</ambient>
-            <diffuse>0.552008217972 0.657973288391 0.0949951112237 1</diffuse>
+            <ambient>0.3983960676874573 0.938839908962965 0.05856619463236073 1</ambient>
+            <diffuse>0.3983960676874573 0.938839908962965 0.05856619463236073 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2736,7 +2736,7 @@
       </link>
     </model>
     <model name='box_53'>
-      <pose>210 224 5.88823835314 0.0 0.0 -0.0527596480973</pose>
+      <pose>78.0 -197.0 5.576283907005665 0.0 0.0 -1.2492827190321332</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2752,7 +2752,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>23.7800658846 25.5133574829 11.7764767063</size>
+              <size>46.772057144347556 12.579333476927994 11.15256781401133</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2772,12 +2772,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>23.7800658846 25.5133574829 11.7764767063</size>
+              <size>46.772057144347556 12.579333476927994 11.15256781401133</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0281051323168 0.879565080471 0.0461822615932 1</ambient>
-            <diffuse>0.0281051323168 0.879565080471 0.0461822615932 1</diffuse>
+            <ambient>0.14142465896214285 0.6263254640437175 0.043735560054946394 1</ambient>
+            <diffuse>0.14142465896214285 0.6263254640437175 0.043735560054946394 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2786,7 +2786,7 @@
       </link>
     </model>
     <model name='box_54'>
-      <pose>-96 201 13.5583494295 0.0 0.0 -2.5289238597</pose>
+      <pose>193.0 233.0 5.7998966686686755 0.0 0.0 -1.9395560428594647</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2802,7 +2802,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>28.780197306 30.2866895279 27.116698859</size>
+              <size>19.200888196373857 25.301782714017442 11.599793337337351</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2822,12 +2822,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>28.780197306 30.2866895279 27.116698859</size>
+              <size>19.200888196373857 25.301782714017442 11.599793337337351</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.175699371984 0.376784349989 0.106339995525 1</ambient>
-            <diffuse>0.175699371984 0.376784349989 0.106339995525 1</diffuse>
+            <ambient>0.5960275623261782 0.4654695609762862 0.045489385636617065 1</ambient>
+            <diffuse>0.5960275623261782 0.4654695609762862 0.045489385636617065 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2836,7 +2836,7 @@
       </link>
     </model>
     <model name='box_55'>
-      <pose>-24 135 8.95909492597 0.0 0.0 -0.777353080084</pose>
+      <pose>123.0 109.0 9.383912468043714 0.0 0.0 0.06575288888933324</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2852,7 +2852,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>46.2430720981 8.75517011544 17.9181898519</size>
+              <size>47.223947586904224 42.66392834239757 18.76782493608743</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2872,12 +2872,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>46.2430720981 8.75517011544 17.9181898519</size>
+              <size>47.223947586904224 42.66392834239757 18.76782493608743</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.747147169302 0.450812615163 0.0702674111841 1</ambient>
-            <diffuse>0.747147169302 0.450812615163 0.0702674111841 1</diffuse>
+            <ambient>0.3735187204133277 0.6535196936906211 0.07359931347485266 1</ambient>
+            <diffuse>0.3735187204133277 0.6535196936906211 0.07359931347485266 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2886,7 +2886,7 @@
       </link>
     </model>
     <model name='box_56'>
-      <pose>94 112 4.05833818929 0.0 0.0 0.0779328730621</pose>
+      <pose>-223.0 7.0 8.03610092690722 0.0 0.0 -2.9850801704133207</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2902,7 +2902,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>22.309716094 45.9797506231 8.11667637858</size>
+              <size>16.979872359533694 12.778602154953822 16.07220185381444</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2922,12 +2922,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>22.309716094 45.9797506231 8.11667637858</size>
+              <size>16.979872359533694 12.778602154953822 16.07220185381444</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.976103053541 0.295483458724 0.0318301034454 1</ambient>
-            <diffuse>0.976103053541 0.295483458724 0.0318301034454 1</diffuse>
+            <ambient>0.19192624174665496 0.36234521733194236 0.0630282425639782 1</ambient>
+            <diffuse>0.19192624174665496 0.36234521733194236 0.0630282425639782 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2936,7 +2936,7 @@
       </link>
     </model>
     <model name='box_57'>
-      <pose>46 0 7.17825950869 0.0 0.0 -1.07292811114</pose>
+      <pose>151.0 -190.0 12.043856261997218 0.0 0.0 1.2854394146472847</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -2952,7 +2952,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>8.71418365103 49.2050390455 14.3565190174</size>
+              <size>51.70887473942381 3.978318392629522 24.087712523994437</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -2972,12 +2972,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>8.71418365103 49.2050390455 14.3565190174</size>
+              <size>51.70887473942381 3.978318392629522 24.087712523994437</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.451062783931 0.314021972309 0.056300074578 1</ambient>
-            <diffuse>0.451062783931 0.314021972309 0.056300074578 1</diffuse>
+            <ambient>0.8921513724454181 0.8969720653918409 0.09446161774115465 1</ambient>
+            <diffuse>0.8921513724454181 0.8969720653918409 0.09446161774115465 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -2986,7 +2986,7 @@
       </link>
     </model>
     <model name='box_58'>
-      <pose>-68 79 2.59313338534 0.0 0.0 -2.09666151856</pose>
+      <pose>44.0 145.0 11.76288372965097 0.0 0.0 -1.5490794688722906</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3002,7 +3002,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>20.7990474243 39.6458342911 5.18626677069</size>
+              <size>13.233263653863634 13.253963283478683 23.52576745930194</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3022,12 +3022,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>20.7990474243 39.6458342911 5.18626677069</size>
+              <size>13.233263653863634 13.253963283478683 23.52576745930194</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.430708346897 0.0711222674218 0.0203383010615 1</ambient>
-            <diffuse>0.430708346897 0.0711222674218 0.0203383010615 1</diffuse>
+            <ambient>0.8406580615315964 0.3596186326085842 0.09225791160510564 1</ambient>
+            <diffuse>0.8406580615315964 0.3596186326085842 0.09225791160510564 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3036,7 +3036,7 @@
       </link>
     </model>
     <model name='box_59'>
-      <pose>12 143 13.4805141105 0.0 0.0 1.62974613999</pose>
+      <pose>-91.0 -173.0 10.476908913860031 0.0 0.0 -1.0013506717505154</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3052,7 +3052,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>43.669273013 26.6435064609 26.961028221</size>
+              <size>45.5059008148827 13.641786939762508 20.953817827720062</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3072,12 +3072,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>43.669273013 26.6435064609 26.961028221</size>
+              <size>45.5059008148827 13.641786939762508 20.953817827720062</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.384095125657 0.547862316695 0.105729522435 1</ambient>
-            <diffuse>0.384095125657 0.547862316695 0.105729522435 1</diffuse>
+            <ambient>0.8869161425110601 0.022240258857191275 0.08217183461851005 1</ambient>
+            <diffuse>0.8869161425110601 0.022240258857191275 0.08217183461851005 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3086,7 +3086,7 @@
       </link>
     </model>
     <model name='box_60'>
-      <pose>-25 -192 6.88318453767 0.0 0.0 -2.86798840596</pose>
+      <pose>-119.0 232.0 4.078089466994031 0.0 0.0 -2.938527706357722</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3102,7 +3102,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>23.3433822155 10.3545016447 13.7663690753</size>
+              <size>12.859760201981624 36.95762924405886 8.156178933988063</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3122,12 +3122,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>23.3433822155 10.3545016447 13.7663690753</size>
+              <size>12.859760201981624 36.95762924405886 8.156178933988063</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.184757255278 0.773989233454 0.0539857610798 1</ambient>
-            <diffuse>0.184757255278 0.773989233454 0.0539857610798 1</diffuse>
+            <ambient>0.3891946076284525 0.32699626780886637 0.031985015427404166 1</ambient>
+            <diffuse>0.3891946076284525 0.32699626780886637 0.031985015427404166 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3136,7 +3136,7 @@
       </link>
     </model>
     <model name='box_61'>
-      <pose>144 -10 4.19130127691 0.0 0.0 2.51946716104</pose>
+      <pose>-89.0 -241.0 14.385014468158124 0.0 0.0 -2.312393342709847</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3152,7 +3152,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>10.9560260524 44.819740648 8.38260255383</size>
+              <size>26.638618352874758 33.65732865111629 28.770028936316248</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3172,12 +3172,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>10.9560260524 44.819740648 8.38260255383</size>
+              <size>26.638618352874758 33.65732865111629 28.770028936316248</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.594065505953 0.036605783514 0.0328729511915 1</ambient>
-            <diffuse>0.594065505953 0.036605783514 0.0328729511915 1</diffuse>
+            <ambient>0.7931377531728706 0.6411030666062092 0.1128236428875147 1</ambient>
+            <diffuse>0.7931377531728706 0.6411030666062092 0.1128236428875147 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3186,7 +3186,7 @@
       </link>
     </model>
     <model name='box_62'>
-      <pose>23 39 13.8753470604 0.0 0.0 -1.22221070627</pose>
+      <pose>143.0 -158.0 10.612784833959536 0.0 0.0 2.7126834702468043</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3202,7 +3202,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>8.01946172598 43.4263045823 27.7506941208</size>
+              <size>2.9094047264742824 25.195525178283663 21.22556966791907</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3222,12 +3222,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>8.01946172598 43.4263045823 27.7506941208</size>
+              <size>2.9094047264742824 25.195525178283663 21.22556966791907</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.38917955688 0.421155121664 0.108826251454 1</ambient>
-            <diffuse>0.38917955688 0.421155121664 0.108826251454 1</diffuse>
+            <ambient>0.8903254708431828 0.49776740475164527 0.08323752810948655 1</ambient>
+            <diffuse>0.8903254708431828 0.49776740475164527 0.08323752810948655 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3236,7 +3236,7 @@
       </link>
     </model>
     <model name='box_63'>
-      <pose>-224 -240 9.5450025122 0.0 0.0 -3.06473654307</pose>
+      <pose>-132.0 -6.0 8.691373399730207 0.0 0.0 -0.9127669865479322</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3252,7 +3252,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>21.5177388081 43.0830623938 19.0900050244</size>
+              <size>23.12194946648444 10.344573865090672 17.382746799460413</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3272,12 +3272,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>21.5177388081 43.0830623938 19.0900050244</size>
+              <size>23.12194946648444 10.344573865090672 17.382746799460413</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.330494911266 0.878373911611 0.0748627648015 1</ambient>
-            <diffuse>0.330494911266 0.878373911611 0.0748627648015 1</diffuse>
+            <ambient>0.7922343637645333 0.4757213375954693 0.0681676345076879 1</ambient>
+            <diffuse>0.7922343637645333 0.4757213375954693 0.0681676345076879 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3286,7 +3286,7 @@
       </link>
     </model>
     <model name='box_64'>
-      <pose>-216 -192 8.3811051439 0.0 0.0 2.81015453214</pose>
+      <pose>-246.0 -42.0 14.5746909253847 0.0 0.0 -0.22042343004267617</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3302,7 +3302,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>7.01355143104 15.5016348261 16.7622102878</size>
+              <size>30.96656268455915 44.64055048780418 29.1493818507694</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3322,12 +3322,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>7.01355143104 15.5016348261 16.7622102878</size>
+              <size>30.96656268455915 44.64055048780418 29.1493818507694</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.499793929705 0.898373942611 0.0657341579914 1</ambient>
-            <diffuse>0.499793929705 0.898373942611 0.0657341579914 1</diffuse>
+            <ambient>0.27203331513046847 0.866780004693295 0.11431130137556628 1</ambient>
+            <diffuse>0.27203331513046847 0.866780004693295 0.11431130137556628 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3336,7 +3336,7 @@
       </link>
     </model>
     <model name='box_65'>
-      <pose>141 -209 9.31568379749 0.0 0.0 -1.62172168767</pose>
+      <pose>-5.0 -64.0 8.321705411121883 0.0 0.0 -1.3865575120020939</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3352,7 +3352,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>7.65636797648 50.4597472833 18.631367595</size>
+              <size>4.505801835102486 34.9868345589145 16.643410822243766</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3372,12 +3372,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>7.65636797648 50.4597472833 18.631367595</size>
+              <size>4.505801835102486 34.9868345589145 16.643410822243766</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.951815884885 0.694892904136 0.073064186647 1</ambient>
-            <diffuse>0.951815884885 0.694892904136 0.073064186647 1</diffuse>
+            <ambient>0.9027329967068933 0.8367197437175415 0.06526827773428928 1</ambient>
+            <diffuse>0.9027329967068933 0.8367197437175415 0.06526827773428928 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3386,7 +3386,7 @@
       </link>
     </model>
     <model name='box_66'>
-      <pose>-114 32 6.94679307588 0.0 0.0 -2.07812867749</pose>
+      <pose>167.0 -232.0 4.202942264141191 0.0 0.0 2.141572495543996</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3402,7 +3402,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>27.0979559623 3.81841847445 13.8935861518</size>
+              <size>3.4628423741446364 10.488893567857467 8.405884528282382</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3422,12 +3422,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>27.0979559623 3.81841847445 13.8935861518</size>
+              <size>3.4628423741446364 10.488893567857467 8.405884528282382</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.271538007306 0.514543063051 0.0544846515755 1</ambient>
-            <diffuse>0.271538007306 0.514543063051 0.0544846515755 1</diffuse>
+            <ambient>0.21653841395676565 0.5954912912606012 0.03296425305208777 1</ambient>
+            <diffuse>0.21653841395676565 0.5954912912606012 0.03296425305208777 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3436,7 +3436,7 @@
       </link>
     </model>
     <model name='box_67'>
-      <pose>-250 70 6.21412368891 0.0 0.0 0.122682471599</pose>
+      <pose>71.0 194.0 7.042951942143871 0.0 0.0 -1.8695652194114296</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3452,7 +3452,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>14.6744541551 22.3739535469 12.4282473778</size>
+              <size>13.306921387319635 49.95106908758192 14.085903884287742</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3472,12 +3472,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>14.6744541551 22.3739535469 12.4282473778</size>
+              <size>13.306921387319635 49.95106908758192 14.085903884287742</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.119712839731 0.102247841157 0.0487382250111 1</ambient>
-            <diffuse>0.119712839731 0.102247841157 0.0487382250111 1</diffuse>
+            <ambient>0.08733158801579832 0.7195026611824833 0.05523883876191271 1</ambient>
+            <diffuse>0.08733158801579832 0.7195026611824833 0.05523883876191271 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3486,7 +3486,7 @@
       </link>
     </model>
     <model name='box_68'>
-      <pose>-137 -7 3.58727135635 0.0 0.0 -3.06802473536</pose>
+      <pose>-4.0 166.0 14.906343968450011 0.0 0.0 0.09348041894418303</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3502,7 +3502,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>10.4096959174 18.3998910051 7.17454271271</size>
+              <size>19.299252112413622 39.650661033997004 29.812687936900023</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3522,12 +3522,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>10.4096959174 18.3998910051 7.17454271271</size>
+              <size>19.299252112413622 39.650661033997004 29.812687936900023</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.170827229306 0.427314415599 0.0281354616185 1</ambient>
-            <diffuse>0.170827229306 0.427314415599 0.0281354616185 1</diffuse>
+            <ambient>0.8606963046452468 0.19890697200719787 0.11691250171333342 1</ambient>
+            <diffuse>0.8606963046452468 0.19890697200719787 0.11691250171333342 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3536,7 +3536,7 @@
       </link>
     </model>
     <model name='box_69'>
-      <pose>206 -192 3.44393245965 0.0 0.0 1.73197048587</pose>
+      <pose>-71.0 -37.0 6.246784159069565 0.0 0.0 -2.008563872755172</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3552,7 +3552,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>28.9073883376 33.842811606 6.8878649193</size>
+              <size>8.315011473924656 8.902802141477668 12.49356831813913</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3572,12 +3572,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>28.9073883376 33.842811606 6.8878649193</size>
+              <size>8.315011473924656 8.902802141477668 12.49356831813913</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.71997126065 0.45738607923 0.0270112349777 1</ambient>
-            <diffuse>0.71997126065 0.45738607923 0.0270112349777 1</diffuse>
+            <ambient>0.09462459460057704 0.03424694379674198 0.04899438556132992 1</ambient>
+            <diffuse>0.09462459460057704 0.03424694379674198 0.04899438556132992 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3586,7 +3586,7 @@
       </link>
     </model>
     <model name='box_70'>
-      <pose>-90 -141 5.95968613652 0.0 0.0 2.78599713303</pose>
+      <pose>85.0 166.0 14.615826993485872 0.0 0.0 1.730482301686717</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3602,7 +3602,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>19.9900483573 56.1803951441 11.919372273</size>
+              <size>11.043469622448155 5.204269934756496 29.231653986971743</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3622,12 +3622,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>19.9900483573 56.1803951441 11.919372273</size>
+              <size>11.043469622448155 5.204269934756496 29.231653986971743</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.181910420305 0.653362192615 0.0467426363649 1</ambient>
-            <diffuse>0.181910420305 0.653362192615 0.0467426363649 1</diffuse>
+            <ambient>0.4377335516035049 0.23357343164586764 0.11463393720381075 1</ambient>
+            <diffuse>0.4377335516035049 0.23357343164586764 0.11463393720381075 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3636,7 +3636,7 @@
       </link>
     </model>
     <model name='box_71'>
-      <pose>-156 229 4.8287447067 0.0 0.0 -2.04931729237</pose>
+      <pose>48.0 232.0 5.946318855430198 0.0 0.0 -1.6158563315574723</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3652,7 +3652,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>24.4735863186 41.3088633133 9.65748941339</size>
+              <size>42.83450906743539 47.06624918438321 11.892637710860395</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3672,12 +3672,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>24.4735863186 41.3088633133 9.65748941339</size>
+              <size>42.83450906743539 47.06624918438321 11.892637710860395</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.822186004449 0.31935245682 0.0378725075035 1</ambient>
-            <diffuse>0.822186004449 0.31935245682 0.0378725075035 1</diffuse>
+            <ambient>0.01882411751123325 0.05830483047775337 0.046637794944550566 1</ambient>
+            <diffuse>0.01882411751123325 0.05830483047775337 0.046637794944550566 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3686,7 +3686,7 @@
       </link>
     </model>
     <model name='box_72'>
-      <pose>144 203 7.02077362503 0.0 0.0 -1.56053532356</pose>
+      <pose>145.0 37.0 6.613360968849233 0.0 0.0 -0.31305718043218267</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3702,7 +3702,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>8.15036712385 22.9316685621 14.0415472501</size>
+              <size>27.772304678779093 46.08052514308038 13.226721937698466</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3722,12 +3722,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>8.15036712385 22.9316685621 14.0415472501</size>
+              <size>27.772304678779093 46.08052514308038 13.226721937698466</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0359130481682 0.52971891361 0.0550648911767 1</ambient>
-            <diffuse>0.0359130481682 0.52971891361 0.0550648911767 1</diffuse>
+            <ambient>0.3449038805265231 0.39460369117037364 0.05186949779489595 1</ambient>
+            <diffuse>0.3449038805265231 0.39460369117037364 0.05186949779489595 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3736,7 +3736,7 @@
       </link>
     </model>
     <model name='box_73'>
-      <pose>-65 -184 8.7907025544 0.0 0.0 0.734914682954</pose>
+      <pose>57.0 -147.0 6.736701346163523 0.0 0.0 -2.3184936648706436</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3752,7 +3752,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>48.6331266935 3.2018723013 17.5814051088</size>
+              <size>35.465200659061054 47.67070644424733 13.473402692327046</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3772,12 +3772,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>48.6331266935 3.2018723013 17.5814051088</size>
+              <size>35.465200659061054 47.67070644424733 13.473402692327046</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.147725203062 0.980547995329 0.0689466867012 1</ambient>
-            <diffuse>0.147725203062 0.980547995329 0.0689466867012 1</diffuse>
+            <ambient>0.9920070039961404 0.4630234658226756 0.05283687330324332 1</ambient>
+            <diffuse>0.9920070039961404 0.4630234658226756 0.05283687330324332 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3786,7 +3786,7 @@
       </link>
     </model>
     <model name='box_74'>
-      <pose>-229 -152 14.3783810996 0.0 0.0 0.834942385903</pose>
+      <pose>-133.0 134.0 7.103199851632416 0.0 0.0 2.622349298829616</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3802,7 +3802,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>13.5480102265 25.6311889215 28.7567621991</size>
+              <size>7.998867064016279 12.195635743746312 14.206399703264832</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3822,12 +3822,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>13.5480102265 25.6311889215 28.7567621991</size>
+              <size>7.998867064016279 12.195635743746312 14.206399703264832</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.044890073143 0.86235783766 0.112771616467 1</ambient>
-            <diffuse>0.044890073143 0.86235783766 0.112771616467 1</diffuse>
+            <ambient>0.01616228057421676 0.5781331727350439 0.05571137138535228 1</ambient>
+            <diffuse>0.01616228057421676 0.5781331727350439 0.05571137138535228 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3836,7 +3836,7 @@
       </link>
     </model>
     <model name='box_75'>
-      <pose>134 -245 12.676646887 0.0 0.0 -3.03567593912</pose>
+      <pose>-164.0 -54.0 6.753363604953812 0.0 0.0 -0.04133915122461463</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3852,7 +3852,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>6.65420472144 56.3459432443 25.353293774</size>
+              <size>21.111580233564194 13.877491921705184 13.506727209907623</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3872,12 +3872,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>6.65420472144 56.3459432443 25.353293774</size>
+              <size>21.111580233564194 13.877491921705184 13.506727209907623</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.685653583098 0.23463293121 0.0994246814665 1</ambient>
-            <diffuse>0.685653583098 0.23463293121 0.0994246814665 1</diffuse>
+            <ambient>0.8953811252659857 0.6798290529736091 0.05296755768591225 1</ambient>
+            <diffuse>0.8953811252659857 0.6798290529736091 0.05296755768591225 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3886,7 +3886,7 @@
       </link>
     </model>
     <model name='box_76'>
-      <pose>87 -205 6.94020777017 0.0 0.0 -1.24200680779</pose>
+      <pose>-23.0 81.0 4.961963991692727 0.0 0.0 -1.160161470785719</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3902,7 +3902,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>8.97005138679 7.36887709513 13.8804155403</size>
+              <size>48.176345462302876 7.336989280396123 9.923927983385454</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3922,12 +3922,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>8.97005138679 7.36887709513 13.8804155403</size>
+              <size>48.176345462302876 7.336989280396123 9.923927983385454</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.624878414713 0.703107780391 0.054433002119 1</ambient>
-            <diffuse>0.624878414713 0.703107780391 0.054433002119 1</diffuse>
+            <ambient>0.21082644069372958 0.7529813451453596 0.03891736464072727 1</ambient>
+            <diffuse>0.21082644069372958 0.7529813451453596 0.03891736464072727 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3936,7 +3936,7 @@
       </link>
     </model>
     <model name='box_77'>
-      <pose>0 -93 4.57998634908 0.0 0.0 2.45025534834</pose>
+      <pose>134.0 165.0 7.748747172432944 0.0 0.0 -1.2893137561759742</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -3952,7 +3952,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>9.13145785035 36.6637697511 9.15997269817</size>
+              <size>10.647248718028262 26.276599516183587 15.497494344865888</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -3972,12 +3972,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>9.13145785035 36.6637697511 9.15997269817</size>
+              <size>10.647248718028262 26.276599516183587 15.497494344865888</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.18338265083 0.49573387043 0.0359214615614 1</ambient>
-            <diffuse>0.18338265083 0.49573387043 0.0359214615614 1</diffuse>
+            <ambient>0.003701190147638367 0.9727087592541899 0.060774487626925056 1</ambient>
+            <diffuse>0.003701190147638367 0.9727087592541899 0.060774487626925056 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -3986,7 +3986,7 @@
       </link>
     </model>
     <model name='box_78'>
-      <pose>221 195 10.5055275004 0.0 0.0 1.53448141124</pose>
+      <pose>-80.0 62.0 3.9465133216660724 0.0 0.0 -2.5296240685940723</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4002,7 +4002,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>6.34103068272 27.7137164776 21.0110550007</size>
+              <size>51.32797311882396 14.175911250057744 7.893026643332145</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4022,12 +4022,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>6.34103068272 27.7137164776 21.0110550007</size>
+              <size>51.32797311882396 14.175911250057744 7.893026643332145</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.653758997605 0.976754173636 0.0823962941204 1</ambient>
-            <diffuse>0.653758997605 0.976754173636 0.0823962941204 1</diffuse>
+            <ambient>0.29304856717685346 0.35873818535773316 0.030953045660126056 1</ambient>
+            <diffuse>0.29304856717685346 0.35873818535773316 0.030953045660126056 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4036,7 +4036,7 @@
       </link>
     </model>
     <model name='box_79'>
-      <pose>-188 -41 10.2703578483 0.0 0.0 1.34249633498</pose>
+      <pose>-53.0 -194.0 7.329973770237946 0.0 0.0 -0.2949790749454574</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4052,7 +4052,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>3.82906720536 44.1588392058 20.5407156967</size>
+              <size>15.839266251435271 30.178824433096537 14.659947540475892</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4072,12 +4072,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>3.82906720536 44.1588392058 20.5407156967</size>
+              <size>15.839266251435271 30.178824433096537 14.659947540475892</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.196793711332 0.0776693411383 0.0805518262614 1</ambient>
-            <diffuse>0.196793711332 0.0776693411383 0.0805518262614 1</diffuse>
+            <ambient>0.3579974531068668 0.11577986290016462 0.057489990354807424 1</ambient>
+            <diffuse>0.3579974531068668 0.11577986290016462 0.057489990354807424 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4086,7 +4086,7 @@
       </link>
     </model>
     <model name='box_80'>
-      <pose>48 -147 13.2356935851 0.0 0.0 0.567172123306</pose>
+      <pose>23.0 -146.0 3.8312740782133403 0.0 0.0 -2.304366436370442</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4102,7 +4102,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>17.4711297344 6.53584562144 26.4713871702</size>
+              <size>39.73992937379672 2.134152422848265 7.662548156426681</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4122,12 +4122,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>17.4711297344 6.53584562144 26.4713871702</size>
+              <size>39.73992937379672 2.134152422848265 7.662548156426681</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.165430382555 0.756593603742 0.103809361452 1</ambient>
-            <diffuse>0.165430382555 0.756593603742 0.103809361452 1</diffuse>
+            <ambient>0.713747949260759 0.47321885048339085 0.03004920845657522 1</ambient>
+            <diffuse>0.713747949260759 0.47321885048339085 0.03004920845657522 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4136,7 +4136,7 @@
       </link>
     </model>
     <model name='box_81'>
-      <pose>176 -92 8.36741505672 0.0 0.0 1.46607903422</pose>
+      <pose>5.0 -137.0 6.824074013637423 0.0 0.0 -1.3210916093599583</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4152,7 +4152,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>26.376796744 35.3523951853 16.7348301134</size>
+              <size>26.53294448973685 15.412126520552876 13.648148027274846</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4172,12 +4172,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>26.376796744 35.3523951853 16.7348301134</size>
+              <size>26.53294448973685 15.412126520552876 13.648148027274846</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.664498727627 0.720810490866 0.0656267847586 1</ambient>
-            <diffuse>0.664498727627 0.720810490866 0.0656267847586 1</diffuse>
+            <ambient>0.7370607822659504 0.3686737570181271 0.053522149126568025 1</ambient>
+            <diffuse>0.7370607822659504 0.3686737570181271 0.053522149126568025 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4186,7 +4186,7 @@
       </link>
     </model>
     <model name='box_82'>
-      <pose>89 -63 14.0137720912 0.0 0.0 -2.50824630131</pose>
+      <pose>116.0 196.0 14.636361803036499 0.0 0.0 -1.696495516904067</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4202,7 +4202,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>30.8910236996 29.0880421716 28.0275441824</size>
+              <size>13.206414423738542 29.493934000783625 29.272723606072997</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4222,12 +4222,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>30.8910236996 29.0880421716 28.0275441824</size>
+              <size>13.206414423738542 29.493934000783625 29.272723606072997</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.877358946668 0.775658783607 0.10991193797 1</ambient>
-            <diffuse>0.877358946668 0.775658783607 0.10991193797 1</diffuse>
+            <ambient>0.07200331095145396 0.547447779785224 0.11479499453361959 1</ambient>
+            <diffuse>0.07200331095145396 0.547447779785224 0.11479499453361959 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4236,7 +4236,7 @@
       </link>
     </model>
     <model name='box_83'>
-      <pose>154 123 7.0041048303 0.0 0.0 0.0412519344528</pose>
+      <pose>245.0 -128.0 3.047889268219996 0.0 0.0 -1.5369852967815305</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4252,7 +4252,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>45.9744192559 16.2267591053 14.0082096606</size>
+              <size>56.18522464515669 52.27310641391283 6.095778536439992</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4272,12 +4272,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>45.9744192559 16.2267591053 14.0082096606</size>
+              <size>56.18522464515669 52.27310641391283 6.095778536439992</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.639916112749 0.356691494129 0.0549341555318 1</ambient>
-            <diffuse>0.639916112749 0.356691494129 0.0549341555318 1</diffuse>
+            <ambient>0.7826340301863268 0.3993910678504655 0.023905013868392125 1</ambient>
+            <diffuse>0.7826340301863268 0.3993910678504655 0.023905013868392125 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4286,7 +4286,7 @@
       </link>
     </model>
     <model name='box_84'>
-      <pose>-247 173 8.34346737196 0.0 0.0 -2.69434754565</pose>
+      <pose>-245.0 -82.0 14.96398686879158 0.0 0.0 0.9560396650358185</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4302,7 +4302,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>16.5894335997 16.4471536402 16.6869347439</size>
+              <size>20.801453976119756 11.066914053185233 29.92797373758316</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4322,12 +4322,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>16.5894335997 16.4471536402 16.6869347439</size>
+              <size>20.801453976119756 11.066914053185233 29.92797373758316</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.579770222937 0.886245193806 0.0654389597801 1</ambient>
-            <diffuse>0.579770222937 0.886245193806 0.0654389597801 1</diffuse>
+            <ambient>0.33568366749348433 0.6804584691860653 0.11736460289248297 1</ambient>
+            <diffuse>0.33568366749348433 0.6804584691860653 0.11736460289248297 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4336,7 +4336,7 @@
       </link>
     </model>
     <model name='box_85'>
-      <pose>204 33 5.16484360826 0.0 0.0 -1.79502070391</pose>
+      <pose>121.0 -21.0 9.875234954149928 0.0 0.0 -1.1068710950343628</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4352,7 +4352,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>25.9886411176 38.2833158124 10.3296872165</size>
+              <size>19.107313094750424 49.148852692676755 19.750469908299856</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4372,12 +4372,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>25.9886411176 38.2833158124 10.3296872165</size>
+              <size>19.107313094750424 49.148852692676755 19.750469908299856</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.311311970546 0.903548981669 0.0405085773197 1</ambient>
-            <diffuse>0.311311970546 0.903548981669 0.0405085773197 1</diffuse>
+            <ambient>0.8981207591746908 0.21006147373014938 0.07745282316980336 1</ambient>
+            <diffuse>0.8981207591746908 0.21006147373014938 0.07745282316980336 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4386,7 +4386,7 @@
       </link>
     </model>
     <model name='box_86'>
-      <pose>-250 -39 6.32027631372 0.0 0.0 -1.43726692726</pose>
+      <pose>189.0 166.0 10.640653041039752 0.0 0.0 -2.748518584055905</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4402,7 +4402,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>34.9301822681 23.4170756561 12.6405526274</size>
+              <size>39.26988850810223 15.0775589127032 21.281306082079503</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4422,12 +4422,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>34.9301822681 23.4170756561 12.6405526274</size>
+              <size>39.26988850810223 15.0775589127032 21.281306082079503</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.755964630397 0.140313117276 0.0495707946174 1</ambient>
-            <diffuse>0.755964630397 0.140313117276 0.0495707946174 1</diffuse>
+            <ambient>0.04971245361973187 0.29778441268325384 0.08345610228266472 1</ambient>
+            <diffuse>0.04971245361973187 0.29778441268325384 0.08345610228266472 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4436,7 +4436,7 @@
       </link>
     </model>
     <model name='box_87'>
-      <pose>-121 155 13.9349762454 0.0 0.0 -0.147788667059</pose>
+      <pose>154.0 246.0 13.764790657190474 0.0 0.0 0.6856298399200135</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4452,7 +4452,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>6.70407276706 18.7435014959 27.8699524909</size>
+              <size>15.228272862707218 41.49792869561371 27.52958131438095</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4472,12 +4472,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>6.70407276706 18.7435014959 27.8699524909</size>
+              <size>15.228272862707218 41.49792869561371 27.52958131438095</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.692609796037 0.692871361649 0.109293931337 1</ambient>
-            <diffuse>0.692609796037 0.692871361649 0.109293931337 1</diffuse>
+            <ambient>0.06905149785271802 0.13032082390327848 0.10795914240933706 1</ambient>
+            <diffuse>0.06905149785271802 0.13032082390327848 0.10795914240933706 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4486,7 +4486,7 @@
       </link>
     </model>
     <model name='box_88'>
-      <pose>231 103 15.0702749318 0.0 0.0 0.661292778728</pose>
+      <pose>-188.0 68.0 8.997108333719114 0.0 0.0 0.7551058511117291</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4502,7 +4502,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>44.1952580502 5.42516704867 30.1405498635</size>
+              <size>40.441869282041495 33.64125789160992 17.994216667438227</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4522,12 +4522,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>44.1952580502 5.42516704867 30.1405498635</size>
+              <size>40.441869282041495 33.64125789160992 17.994216667438227</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.31864642603 0.681534974301 0.118198234759 1</ambient>
-            <diffuse>0.31864642603 0.681534974301 0.118198234759 1</diffuse>
+            <ambient>0.1539748627656613 0.3504296735840874 0.07056555555858128 1</ambient>
+            <diffuse>0.1539748627656613 0.3504296735840874 0.07056555555858128 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4536,7 +4536,7 @@
       </link>
     </model>
     <model name='box_89'>
-      <pose>91 -122 8.05646427248 0.0 0.0 2.0520325796</pose>
+      <pose>66.0 0.0 11.55570936208714 0.0 0.0 2.8011250503636047</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4552,7 +4552,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>39.1733176665 31.954259132 16.112928545</size>
+              <size>27.538913239885254 32.7847513779286 23.11141872417428</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4572,12 +4572,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>39.1733176665 31.954259132 16.112928545</size>
+              <size>27.538913239885254 32.7847513779286 23.11141872417428</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.679518844954 0.624297594359 0.0631879550783 1</ambient>
-            <diffuse>0.679518844954 0.624297594359 0.0631879550783 1</diffuse>
+            <ambient>0.9589306259978781 0.5508855891769465 0.09063301460460502 1</ambient>
+            <diffuse>0.9589306259978781 0.5508855891769465 0.09063301460460502 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4586,7 +4586,7 @@
       </link>
     </model>
     <model name='box_90'>
-      <pose>249 162 11.0164037074 0.0 0.0 -2.22253741163</pose>
+      <pose>1.0 224.0 8.081688344002872 0.0 0.0 2.6503772326636885</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4602,7 +4602,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>23.8246910546 9.71443133365 22.0328074148</size>
+              <size>40.30652474469334 9.53727784699203 16.163376688005744</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4622,12 +4622,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>23.8246910546 9.71443133365 22.0328074148</size>
+              <size>40.30652474469334 9.53727784699203 16.163376688005744</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.565018830538 0.840701228667 0.0864031663327 1</ambient>
-            <diffuse>0.565018830538 0.840701228667 0.0864031663327 1</diffuse>
+            <ambient>0.16870913950123256 0.46432973566247593 0.06338579093335586 1</ambient>
+            <diffuse>0.16870913950123256 0.46432973566247593 0.06338579093335586 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4636,7 +4636,7 @@
       </link>
     </model>
     <model name='box_91'>
-      <pose>184 -242 4.27878498646 0.0 0.0 -1.27331012786</pose>
+      <pose>91.0 103.0 11.296147235210183 0.0 0.0 -1.6337449572449578</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4652,7 +4652,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>5.8590000274 43.4325147328 8.55756997292</size>
+              <size>30.596055142566193 1.7489963206601762 22.592294470420367</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4672,12 +4672,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>5.8590000274 43.4325147328 8.55756997292</size>
+              <size>30.596055142566193 1.7489963206601762 22.592294470420367</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.9404272039 0.338899573316 0.033559097933 1</ambient>
-            <diffuse>0.9404272039 0.338899573316 0.033559097933 1</diffuse>
+            <ambient>0.855017931999269 0.11970172075090169 0.08859723321733477 1</ambient>
+            <diffuse>0.855017931999269 0.11970172075090169 0.08859723321733477 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4686,7 +4686,7 @@
       </link>
     </model>
     <model name='box_92'>
-      <pose>-242 222 4.03545097437 0.0 0.0 2.43773638429</pose>
+      <pose>170.0 -55.0 8.331041992335482 0.0 0.0 2.977353078917468</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4702,7 +4702,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>17.0280870132 11.3375264257 8.07090194873</size>
+              <size>30.8417026798595 11.57294127745068 16.662083984670964</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4722,12 +4722,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>17.0280870132 11.3375264257 8.07090194873</size>
+              <size>30.8417026798595 11.57294127745068 16.662083984670964</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.736426357893 0.0651426122626 0.0316505958774 1</ambient>
-            <diffuse>0.736426357893 0.0651426122626 0.0316505958774 1</diffuse>
+            <ambient>0.8923675117743 0.40329841996891813 0.06534150582223908 1</ambient>
+            <diffuse>0.8923675117743 0.40329841996891813 0.06534150582223908 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4736,7 +4736,7 @@
       </link>
     </model>
     <model name='box_93'>
-      <pose>-161 137 4.62434359367 0.0 0.0 -0.0839528180337</pose>
+      <pose>50.0 103.0 10.211878661392834 0.0 0.0 -2.9017000371816764</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4752,7 +4752,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>32.114983913 39.9643214956 9.24868718733</size>
+              <size>12.845379869943088 13.122478383305879 20.42375732278567</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4772,12 +4772,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>32.114983913 39.9643214956 9.24868718733</size>
+              <size>12.845379869943088 13.122478383305879 20.42375732278567</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.42615012309 0.289588487355 0.0362693615189 1</ambient>
-            <diffuse>0.42615012309 0.289588487355 0.0362693615189 1</diffuse>
+            <ambient>0.6001191306321492 0.7191266798240048 0.0800931659717085 1</ambient>
+            <diffuse>0.6001191306321492 0.7191266798240048 0.0800931659717085 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4786,7 +4786,7 @@
       </link>
     </model>
     <model name='box_94'>
-      <pose>240 -205 11.1106045684 0.0 0.0 -1.82637206354</pose>
+      <pose>-217.0 -221.0 4.894389115679768 0.0 0.0 -0.8377545759619555</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4802,7 +4802,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>15.9144302914 24.1092199902 22.2212091368</size>
+              <size>43.623836499159125 34.39170782896861 9.788778231359537</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4822,12 +4822,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>15.9144302914 24.1092199902 22.2212091368</size>
+              <size>43.623836499159125 34.39170782896861 9.788778231359537</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.739517510459 0.109487456371 0.087141996615 1</ambient>
-            <diffuse>0.739517510459 0.109487456371 0.087141996615 1</diffuse>
+            <ambient>0.6175609236648404 0.9891513802024257 0.03838736561317466 1</ambient>
+            <diffuse>0.6175609236648404 0.9891513802024257 0.03838736561317466 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4836,7 +4836,7 @@
       </link>
     </model>
     <model name='box_95'>
-      <pose>-67 -241 5.79555245651 0.0 0.0 -0.484756457678</pose>
+      <pose>-128.0 -83.0 7.1822747722254405 0.0 0.0 -2.522937255477635</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4852,7 +4852,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>22.1643653479 10.8534520444 11.591104913</size>
+              <size>13.727901948346876 21.26176689227792 14.364549544450881</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4872,12 +4872,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>22.1643653479 10.8534520444 11.591104913</size>
+              <size>13.727901948346876 21.26176689227792 14.364549544450881</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.478235188678 0.54869883136 0.0454553133844 1</ambient>
-            <diffuse>0.478235188678 0.54869883136 0.0454553133844 1</diffuse>
+            <ambient>0.8667554024550278 0.8926843104111059 0.056331566840983845 1</ambient>
+            <diffuse>0.8667554024550278 0.8926843104111059 0.056331566840983845 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4886,7 +4886,7 @@
       </link>
     </model>
     <model name='box_96'>
-      <pose>240 66 3.11096537066 0.0 0.0 2.96816835975</pose>
+      <pose>-22.0 23.0 12.178342814601573 0.0 0.0 -3.031311934242622</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4902,7 +4902,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>42.0919162159 4.03096510868 6.22193074132</size>
+              <size>26.255728971217202 39.27247494337708 24.356685629203145</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4922,12 +4922,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>42.0919162159 4.03096510868 6.22193074132</size>
+              <size>26.255728971217202 39.27247494337708 24.356685629203145</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.238276150527 0.600474560694 0.0243997283973 1</ambient>
-            <diffuse>0.238276150527 0.600474560694 0.0243997283973 1</diffuse>
+            <ambient>0.9105555077923427 0.3643748513417223 0.0955164142321692 1</ambient>
+            <diffuse>0.9105555077923427 0.3643748513417223 0.0955164142321692 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4936,7 +4936,7 @@
       </link>
     </model>
     <model name='box_97'>
-      <pose>104 -9 13.3645833604 0.0 0.0 -2.67289968802</pose>
+      <pose>-145.0 -72.0 4.103647153428659 0.0 0.0 1.9548253489771588</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -4952,7 +4952,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>47.9198914616 15.3611299065 26.7291667209</size>
+              <size>11.890616652996691 5.843474174398671 8.207294306857317</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -4972,12 +4972,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>47.9198914616 15.3611299065 26.7291667209</size>
+              <size>11.890616652996691 5.843474174398671 8.207294306857317</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.439061909 0.457006571254 0.10482026165 1</ambient>
-            <diffuse>0.439061909 0.457006571254 0.10482026165 1</diffuse>
+            <ambient>0.09631551835545815 0.2687869182430733 0.0321854678700287 1</ambient>
+            <diffuse>0.09631551835545815 0.2687869182430733 0.0321854678700287 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -4986,7 +4986,7 @@
       </link>
     </model>
     <model name='box_98'>
-      <pose>-56 231 3.646377285 0.0 0.0 -3.01376607422</pose>
+      <pose>-140.0 157.0 11.242073145942403 0.0 0.0 3.0450133666720762</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5002,7 +5002,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>6.02248519563 31.0794322064 7.29275457</size>
+              <size>22.676357466086603 9.419960572781127 22.484146291884805</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5022,12 +5022,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>6.02248519563 31.0794322064 7.29275457</size>
+              <size>22.676357466086603 9.419960572781127 22.484146291884805</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.914364124665 0.784725077229 0.0285990375294 1</ambient>
-            <diffuse>0.914364124665 0.784725077229 0.0285990375294 1</diffuse>
+            <ambient>0.7967917172608475 0.3441629299687601 0.08817312271327375 1</ambient>
+            <diffuse>0.7967917172608475 0.3441629299687601 0.08817312271327375 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5036,7 +5036,7 @@
       </link>
     </model>
     <model name='box_99'>
-      <pose>-180 54 10.1337341597 0.0 0.0 1.35700358933</pose>
+      <pose>-248.0 142.0 5.215899567763283 0.0 0.0 -2.5714390103188887</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5052,7 +5052,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>42.95268913 28.9241990803 20.2674683194</size>
+              <size>44.08911822333089 24.12466281267875 10.431799135526566</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5072,12 +5072,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>42.95268913 28.9241990803 20.2674683194</size>
+              <size>44.08911822333089 24.12466281267875 10.431799135526566</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0642838369323 0.793621708097 0.0794802679194 1</ambient>
-            <diffuse>0.0642838369323 0.793621708097 0.0794802679194 1</diffuse>
+            <ambient>0.07150638692058875 0.8778771533224196 0.04090901621775124 1</ambient>
+            <diffuse>0.07150638692058875 0.8778771533224196 0.04090901621775124 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5086,7 +5086,7 @@
       </link>
     </model>
     <model name='box_100'>
-      <pose>-26 58 6.03395749885 0.0 0.0 -2.80711600479</pose>
+      <pose>-244.0 30.0 14.062657079517829 0.0 0.0 0.44600649560308053</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5102,7 +5102,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>50.7914412703 8.90559841166 12.0679149977</size>
+              <size>35.83467993163497 36.56512309566214 28.125314159035657</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5122,12 +5122,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>50.7914412703 8.90559841166 12.0679149977</size>
+              <size>35.83467993163497 36.56512309566214 28.125314159035657</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.636626397342 0.784590954544 0.0473251568537 1</ambient>
-            <diffuse>0.636626397342 0.784590954544 0.0473251568537 1</diffuse>
+            <ambient>0.6288887226641986 0.6585125020741028 0.11029534964327709 1</ambient>
+            <diffuse>0.6288887226641986 0.6585125020741028 0.11029534964327709 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5136,7 +5136,7 @@
       </link>
     </model>
     <model name='box_101'>
-      <pose>145 90 9.21450495893 0.0 0.0 0.531842217494</pose>
+      <pose>66.0 90.0 2.905444253893114 0.0 0.0 1.2509716935132567</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5152,7 +5152,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>48.0863929023 7.00459996253 18.4290099179</size>
+              <size>30.704648129416725 13.666288862488152 5.810888507786228</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5172,12 +5172,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>48.0863929023 7.00459996253 18.4290099179</size>
+              <size>30.704648129416725 13.666288862488152 5.810888507786228</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.588227666759 0.771054254646 0.0722706271289 1</ambient>
-            <diffuse>0.588227666759 0.771054254646 0.0722706271289 1</diffuse>
+            <ambient>0.9435844056416095 0.44537523030450143 0.022787798069749912 1</ambient>
+            <diffuse>0.9435844056416095 0.44537523030450143 0.022787798069749912 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5186,7 +5186,7 @@
       </link>
     </model>
     <model name='box_102'>
-      <pose>-78 -16 13.9560727822 0.0 0.0 -0.457471994611</pose>
+      <pose>135.0 -112.0 4.022821187851656 0.0 0.0 0.44279375818264916</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5202,7 +5202,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>9.38622070811 37.7964638445 27.9121455645</size>
+              <size>45.04598361415417 15.272217187784182 8.045642375703313</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5222,12 +5222,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>9.38622070811 37.7964638445 27.9121455645</size>
+              <size>45.04598361415417 15.272217187784182 8.045642375703313</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.373194364636 0.106823743152 0.10945939437 1</ambient>
-            <diffuse>0.373194364636 0.106823743152 0.10945939437 1</diffuse>
+            <ambient>0.550976971496709 0.4676221734836721 0.031551538728248285 1</ambient>
+            <diffuse>0.550976971496709 0.4676221734836721 0.031551538728248285 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5236,7 +5236,7 @@
       </link>
     </model>
     <model name='box_103'>
-      <pose>-74 247 7.24909695352 0.0 0.0 1.7254372434</pose>
+      <pose>26.0 -8.0 8.350210729457519 0.0 0.0 -3.0960424068405046</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5252,7 +5252,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>18.2688445056 16.2856776628 14.498193907</size>
+              <size>34.29043396208377 18.864905767433104 16.700421458915038</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5272,12 +5272,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>18.2688445056 16.2856776628 14.498193907</size>
+              <size>34.29043396208377 18.864905767433104 16.700421458915038</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.11919055936 0.544352209803 0.0568556623806 1</ambient>
-            <diffuse>0.11919055936 0.544352209803 0.0568556623806 1</diffuse>
+            <ambient>0.49728660667330493 0.3935076234046926 0.06549184885849034 1</ambient>
+            <diffuse>0.49728660667330493 0.3935076234046926 0.06549184885849034 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5286,7 +5286,7 @@
       </link>
     </model>
     <model name='box_104'>
-      <pose>-66 99 4.68456949036 0.0 0.0 0.215993480776</pose>
+      <pose>-203.0 97.0 3.7032402877974966 0.0 0.0 2.5569084934024384</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5302,7 +5302,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>3.91690448286 12.9208890095 9.36913898072</size>
+              <size>9.386152801949198 20.867195162646425 7.406480575594993</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5322,12 +5322,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>3.91690448286 12.9208890095 9.36913898072</size>
+              <size>9.386152801949198 20.867195162646425 7.406480575594993</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.494217817956 0.357969233747 0.036741721493 1</ambient>
-            <diffuse>0.494217817956 0.357969233747 0.036741721493 1</diffuse>
+            <ambient>0.8609859848173351 0.8534062605564248 0.029045021865078405 1</ambient>
+            <diffuse>0.8609859848173351 0.8534062605564248 0.029045021865078405 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5336,7 +5336,7 @@
       </link>
     </model>
     <model name='box_105'>
-      <pose>-179 -97 7.25993813898 0.0 0.0 0.387767002788</pose>
+      <pose>88.0 24.0 9.032437725292166 0.0 0.0 -2.515540087471196</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5352,7 +5352,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>12.0721661706 56.7784306296 14.519876278</size>
+              <size>5.596523616378089 14.51750342812857 18.06487545058433</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5372,12 +5372,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>12.0721661706 56.7784306296 14.519876278</size>
+              <size>5.596523616378089 14.51750342812857 18.06487545058433</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.133665584949 0.775111024019 0.0569406912861 1</ambient>
-            <diffuse>0.133665584949 0.775111024019 0.0569406912861 1</diffuse>
+            <ambient>0.3789961716753004 0.5447863466730695 0.0708426488258209 1</ambient>
+            <diffuse>0.3789961716753004 0.5447863466730695 0.0708426488258209 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5386,7 +5386,7 @@
       </link>
     </model>
     <model name='box_106'>
-      <pose>-42 -66 14.6194655294 0.0 0.0 -0.863652639119</pose>
+      <pose>-54.0 -121.0 4.486791488278155 0.0 0.0 0.33378986143757877</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5402,7 +5402,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>27.2181977852 51.2181529066 29.2389310587</size>
+              <size>32.173116024777315 42.74829784695769 8.97358297655631</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5422,12 +5422,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>27.2181977852 51.2181529066 29.2389310587</size>
+              <size>32.173116024777315 42.74829784695769 8.97358297655631</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.419943404654 0.592912652448 0.11466247474 1</ambient>
-            <diffuse>0.419943404654 0.592912652448 0.11466247474 1</diffuse>
+            <ambient>0.6949196783177675 0.6578049838894168 0.03519052147669141 1</ambient>
+            <diffuse>0.6949196783177675 0.6578049838894168 0.03519052147669141 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5436,7 +5436,7 @@
       </link>
     </model>
     <model name='box_107'>
-      <pose>180 -62 5.39735544579 0.0 0.0 -0.299894160933</pose>
+      <pose>183.0 202.0 5.76945337618394 0.0 0.0 1.744145790280461</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5452,7 +5452,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>14.7216773922 5.3860190395 10.7947108916</size>
+              <size>22.678052447792197 23.427389052115892 11.53890675236788</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5472,12 +5472,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>14.7216773922 5.3860190395 10.7947108916</size>
+              <size>22.678052447792197 23.427389052115892 11.53890675236788</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.71656532367 0.0437557447092 0.0423321995748 1</ambient>
-            <diffuse>0.71656532367 0.0437557447092 0.0423321995748 1</diffuse>
+            <ambient>0.07560170047834691 0.7673772434583196 0.04525061471516816 1</ambient>
+            <diffuse>0.07560170047834691 0.7673772434583196 0.04525061471516816 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5486,7 +5486,7 @@
       </link>
     </model>
     <model name='box_108'>
-      <pose>13 -199 13.9765484352 0.0 0.0 2.22018957264</pose>
+      <pose>193.0 137.0 3.4969832218606256 0.0 0.0 0.8832813295245387</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5502,7 +5502,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>49.6423063812 20.3584504843 27.9530968703</size>
+              <size>2.1231732676101993 42.44953548340422 6.993966443721251</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5522,12 +5522,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>49.6423063812 20.3584504843 27.9530968703</size>
+              <size>2.1231732676101993 42.44953548340422 6.993966443721251</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.485503559594 0.368200363052 0.109619987727 1</ambient>
-            <diffuse>0.485503559594 0.368200363052 0.109619987727 1</diffuse>
+            <ambient>0.8493973223366417 0.4866347300614887 0.02742731938714216 1</ambient>
+            <diffuse>0.8493973223366417 0.4866347300614887 0.02742731938714216 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5536,7 +5536,7 @@
       </link>
     </model>
     <model name='box_109'>
-      <pose>-102 -24 9.73529857922 0.0 0.0 -0.27874505779</pose>
+      <pose>-134.0 113.0 15.163129548287321 0.0 0.0 -0.8290072397272706</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5552,7 +5552,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>16.662362989 56.9918857523 19.4705971584</size>
+              <size>39.51435576579994 4.660842093627279 30.326259096574642</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5572,12 +5572,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>16.662362989 56.9918857523 19.4705971584</size>
+              <size>39.51435576579994 4.660842093627279 30.326259096574642</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.543274869073 0.472569926858 0.0763552829743 1</ambient>
-            <diffuse>0.543274869073 0.472569926858 0.0763552829743 1</diffuse>
+            <ambient>0.4299075572348974 0.3221891894710509 0.11892650626107702 1</ambient>
+            <diffuse>0.4299075572348974 0.3221891894710509 0.11892650626107702 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5586,7 +5586,7 @@
       </link>
     </model>
     <model name='box_110'>
-      <pose>18 -246 9.00370938313 0.0 0.0 0.0538463276151</pose>
+      <pose>217.0 82.0 8.450654886772494 0.0 0.0 -1.7365797965750276</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5602,7 +5602,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>7.51200487626 21.4109880982 18.0074187663</size>
+              <size>43.80243094894455 5.234974625490452 16.901309773544988</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5622,12 +5622,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>7.51200487626 21.4109880982 18.0074187663</size>
+              <size>43.80243094894455 5.234974625490452 16.901309773544988</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.778504518239 0.816700716845 0.0706173284951 1</ambient>
-            <diffuse>0.778504518239 0.816700716845 0.0706173284951 1</diffuse>
+            <ambient>0.1320776437027289 0.33277313690420296 0.06627964617076466 1</ambient>
+            <diffuse>0.1320776437027289 0.33277313690420296 0.06627964617076466 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5636,7 +5636,7 @@
       </link>
     </model>
     <model name='box_111'>
-      <pose>112 28 5.21292318638 0.0 0.0 1.28173271897</pose>
+      <pose>123.0 -72.0 10.576791173111886 0.0 0.0 -0.7159233736941056</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5652,7 +5652,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>6.8297425102 21.6186174422 10.4258463728</size>
+              <size>3.9593725958411863 26.317512278791924 21.15358234622377</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5672,12 +5672,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>6.8297425102 21.6186174422 10.4258463728</size>
+              <size>3.9593725958411863 26.317512278791924 21.15358234622377</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.714504366973 0.40863175063 0.0408856720501 1</ambient>
-            <diffuse>0.714504366973 0.40863175063 0.0408856720501 1</diffuse>
+            <ambient>0.44466420739260726 0.18393361243019324 0.08295522488715204 1</ambient>
+            <diffuse>0.44466420739260726 0.18393361243019324 0.08295522488715204 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5686,7 +5686,7 @@
       </link>
     </model>
     <model name='box_112'>
-      <pose>-112 -129 2.98596295042 0.0 0.0 -3.06383476743</pose>
+      <pose>-57.0 39.0 4.110158033914322 0.0 0.0 0.3034130980399828</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5702,7 +5702,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>7.43489375004 24.6910563238 5.97192590084</size>
+              <size>17.111107710292252 26.262266306813736 8.220316067828644</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5722,12 +5722,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>7.43489375004 24.6910563238 5.97192590084</size>
+              <size>17.111107710292252 26.262266306813736 8.220316067828644</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0823209027554 0.51337045514 0.0234193172582 1</ambient>
-            <diffuse>0.0823209027554 0.51337045514 0.0234193172582 1</diffuse>
+            <ambient>0.38704316439707986 0.6903300750314914 0.032236533599328016 1</ambient>
+            <diffuse>0.38704316439707986 0.6903300750314914 0.032236533599328016 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5736,7 +5736,7 @@
       </link>
     </model>
     <model name='box_113'>
-      <pose>196 -153 7.52966422977 0.0 0.0 0.263942219937</pose>
+      <pose>-155.0 250.0 6.156640383488637 0.0 0.0 1.1487950939919638</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5752,7 +5752,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>24.1165385786 4.24516914659 15.0593284595</size>
+              <size>10.970990034235848 13.839648574198153 12.313280766977273</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5772,12 +5772,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>24.1165385786 4.24516914659 15.0593284595</size>
+              <size>10.970990034235848 13.839648574198153 12.313280766977273</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.205888241715 0.928968676956 0.0590561900374 1</ambient>
-            <diffuse>0.205888241715 0.928968676956 0.0590561900374 1</diffuse>
+            <ambient>0.9690089082621698 0.47846873595042705 0.04828737555677362 1</ambient>
+            <diffuse>0.9690089082621698 0.47846873595042705 0.04828737555677362 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5786,7 +5786,7 @@
       </link>
     </model>
     <model name='box_114'>
-      <pose>-25 97 14.5385473385 0.0 0.0 -1.00805203781</pose>
+      <pose>158.0 -1.0 13.420993537075626 0.0 0.0 0.05201420889058252</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5802,7 +5802,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>52.1140648379 18.6097921947 29.077094677</size>
+              <size>14.08079686882467 21.849671050695555 26.841987074151252</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5822,12 +5822,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>52.1140648379 18.6097921947 29.077094677</size>
+              <size>14.08079686882467 21.849671050695555 26.841987074151252</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.481262533902 0.627654031232 0.114027822263 1</ambient>
-            <diffuse>0.481262533902 0.627654031232 0.114027822263 1</diffuse>
+            <ambient>0.9990106853455332 0.6590576667108663 0.10526269440843629 1</ambient>
+            <diffuse>0.9990106853455332 0.6590576667108663 0.10526269440843629 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5836,7 +5836,7 @@
       </link>
     </model>
     <model name='box_115'>
-      <pose>-97 157 14.680259055 0.0 0.0 -1.21684660834</pose>
+      <pose>-246.0 62.0 13.491167431566458 0.0 0.0 -1.20140908090504</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5852,7 +5852,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>43.9990651411 7.54423096066 29.36051811</size>
+              <size>13.98360218868611 60.200546262310795 26.982334863132916</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5872,12 +5872,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>43.9990651411 7.54423096066 29.36051811</size>
+              <size>13.98360218868611 60.200546262310795 26.982334863132916</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.702938592711 0.761866864686 0.115139286706 1</ambient>
-            <diffuse>0.702938592711 0.761866864686 0.115139286706 1</diffuse>
+            <ambient>0.5949797829876834 0.7129645709460909 0.10581307789463888 1</ambient>
+            <diffuse>0.5949797829876834 0.7129645709460909 0.10581307789463888 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5886,7 +5886,7 @@
       </link>
     </model>
     <model name='box_116'>
-      <pose>153 -152 12.7227683978 0.0 0.0 0.159019804061</pose>
+      <pose>181.0 23.0 12.206734623988917 0.0 0.0 2.3071845988877477</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5902,7 +5902,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>26.3429461669 9.31341056869 25.4455367957</size>
+              <size>9.642018356573034 19.484114435151017 24.413469247977833</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5922,12 +5922,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>26.3429461669 9.31341056869 25.4455367957</size>
+              <size>9.642018356573034 19.484114435151017 24.413469247977833</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.700862503724 0.622953765036 0.0997864188066 1</ambient>
-            <diffuse>0.700862503724 0.622953765036 0.0997864188066 1</diffuse>
+            <ambient>0.7065004666610188 0.704520951323966 0.09573909509010915 1</ambient>
+            <diffuse>0.7065004666610188 0.704520951323966 0.09573909509010915 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5936,7 +5936,7 @@
       </link>
     </model>
     <model name='box_117'>
-      <pose>-87 64 9.71585067543 0.0 0.0 -0.27842899993</pose>
+      <pose>-101.0 192.0 13.928469013594412 0.0 0.0 -3.1015399841016635</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -5952,7 +5952,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>7.75077458967 16.974239984 19.4317013509</size>
+              <size>31.039785911990105 2.86582942245716 27.856938027188825</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -5972,12 +5972,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>7.75077458967 16.974239984 19.4317013509</size>
+              <size>31.039785911990105 2.86582942245716 27.856938027188825</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.334043550739 0.436609455971 0.0762027503955 1</ambient>
-            <diffuse>0.334043550739 0.436609455971 0.0762027503955 1</diffuse>
+            <ambient>0.7636293743481749 0.7404651169183253 0.1092428942242699 1</ambient>
+            <diffuse>0.7636293743481749 0.7404651169183253 0.1092428942242699 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -5986,7 +5986,7 @@
       </link>
     </model>
     <model name='box_118'>
-      <pose>0 -65 5.96844524015 0.0 0.0 -0.199338848458</pose>
+      <pose>-137.0 -29.0 10.519147257309424 0.0 0.0 2.3919951808484754</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -6002,7 +6002,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>17.1268307222 7.67544137289 11.9368904803</size>
+              <size>13.693209121008039 22.267721837756433 21.038294514618848</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -6022,12 +6022,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>17.1268307222 7.67544137289 11.9368904803</size>
+              <size>13.693209121008039 22.267721837756433 21.038294514618848</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.0241055942412 0.910464474706 0.0468113352169 1</ambient>
-            <diffuse>0.0241055942412 0.910464474706 0.0468113352169 1</diffuse>
+            <ambient>0.8871090734996654 0.34224175428330805 0.08250311574360332 1</ambient>
+            <diffuse>0.8871090734996654 0.34224175428330805 0.08250311574360332 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -6036,7 +6036,7 @@
       </link>
     </model>
     <model name='box_119'>
-      <pose>162 214 14.09959907 0.0 0.0 0.284325777077</pose>
+      <pose>81.0 73.0 11.571382635054452 0.0 0.0 0.5390874910646594</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -6052,7 +6052,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>8.93677012725 8.22555756413 28.19919814</size>
+              <size>23.587139875781283 3.0182421606817376 23.142765270108903</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -6072,12 +6072,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>8.93677012725 8.22555756413 28.19919814</size>
+              <size>23.587139875781283 3.0182421606817376 23.142765270108903</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.344489650137 0.784207430528 0.110585090745 1</ambient>
-            <diffuse>0.344489650137 0.784207430528 0.110585090745 1</diffuse>
+            <ambient>0.06752938162292876 0.3525177543481033 0.09075594223572118 1</ambient>
+            <diffuse>0.06752938162292876 0.3525177543481033 0.09075594223572118 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -6086,7 +6086,7 @@
       </link>
     </model>
     <model name='box_120'>
-      <pose>-150 -162 11.7234398622 0.0 0.0 0.347537824412</pose>
+      <pose>58.0 -104.0 4.773782314643148 0.0 0.0 -1.0270434939496211</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -6102,7 +6102,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>21.7052163367 25.7642120755 23.4468797245</size>
+              <size>17.819697739779606 22.90162376605965 9.547564629286295</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -6122,12 +6122,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>21.7052163367 25.7642120755 23.4468797245</size>
+              <size>17.819697739779606 22.90162376605965 9.547564629286295</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.156654056845 0.653644034559 0.0919485479392 1</ambient>
-            <diffuse>0.156654056845 0.653644034559 0.0919485479392 1</diffuse>
+            <ambient>0.9233924007450296 0.6225097963627779 0.03744142991876979 1</ambient>
+            <diffuse>0.9233924007450296 0.6225097963627779 0.03744142991876979 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -6136,7 +6136,7 @@
       </link>
     </model>
     <model name='box_121'>
-      <pose>230 -248 12.7060210736 0.0 0.0 -1.54296235385</pose>
+      <pose>174.0 -180.0 13.713576163597404 0.0 0.0 0.10827061116910523</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -6152,7 +6152,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>14.9529750079 12.3386592546 25.4120421473</size>
+              <size>10.166540634925372 13.415085191896832 27.427152327194808</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -6172,12 +6172,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>14.9529750079 12.3386592546 25.4120421473</size>
+              <size>10.166540634925372 13.415085191896832 27.427152327194808</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.121764397864 0.461663806036 0.0996550672441 1</ambient>
-            <diffuse>0.121764397864 0.461663806036 0.0996550672441 1</diffuse>
+            <ambient>0.1095513165491262 0.2167413304105975 0.10755746010664631 1</ambient>
+            <diffuse>0.1095513165491262 0.2167413304105975 0.10755746010664631 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -6186,7 +6186,7 @@
       </link>
     </model>
     <model name='box_122'>
-      <pose>102 245 7.01970937241 0.0 0.0 -1.08913311214</pose>
+      <pose>-217.0 29.0 13.079659436699421 0.0 0.0 2.902953596882108</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -6202,7 +6202,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>7.86644513889 45.6626792857 14.0394187448</size>
+              <size>8.815636306124762 3.878173580856383 26.159318873398842</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -6222,12 +6222,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>7.86644513889 45.6626792857 14.0394187448</size>
+              <size>8.815636306124762 3.878173580856383 26.159318873398842</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.716342671295 0.301515867082 0.0550565440974 1</ambient>
-            <diffuse>0.716342671295 0.301515867082 0.0550565440974 1</diffuse>
+            <ambient>0.16413628956517645 0.9709232204809147 0.10258556420940722 1</ambient>
+            <diffuse>0.16413628956517645 0.9709232204809147 0.10258556420940722 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -6236,7 +6236,7 @@
       </link>
     </model>
     <model name='box_123'>
-      <pose>-209 -147 13.4042893776 0.0 0.0 1.58191291037</pose>
+      <pose>117.0 -161.0 11.21372675303838 0.0 0.0 1.0574191394318593</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -6252,7 +6252,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>28.3341979366 6.51977036669 26.8085787552</size>
+              <size>11.248130748663348 24.865126790169207 22.42745350607676</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -6272,12 +6272,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>28.3341979366 6.51977036669 26.8085787552</size>
+              <size>11.248130748663348 24.865126790169207 22.42745350607676</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.461706258536 0.379808602798 0.105131681393 1</ambient>
-            <diffuse>0.461706258536 0.379808602798 0.105131681393 1</diffuse>
+            <ambient>0.8651905016380781 0.9380804240841811 0.08795079806304612 1</ambient>
+            <diffuse>0.8651905016380781 0.9380804240841811 0.08795079806304612 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -6286,7 +6286,7 @@
       </link>
     </model>
     <model name='box_124'>
-      <pose>182 7 10.1322255958 0.0 0.0 -2.81850193992</pose>
+      <pose>-225.0 -124.0 5.117026837135705 0.0 0.0 1.4976654640028524</pose>
       <link name='link'>
         <inertial>
           <mass>1</mass>
@@ -6302,7 +6302,7 @@
         <collision name='collision'>
           <geometry>
             <box>
-              <size>1.13339411423 34.2008251137 20.2644511916</size>
+              <size>33.730550844203236 16.357494828981537 10.23405367427141</size>
             </box>
           </geometry>
           <max_contacts>100</max_contacts>
@@ -6322,12 +6322,12 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>1.13339411423 34.2008251137 20.2644511916</size>
+              <size>33.730550844203236 16.357494828981537 10.23405367427141</size>
             </box>
           </geometry>
           <material>
-            <ambient>0.981390417988 0.907423825755 0.0794684360454 1</ambient>
-            <diffuse>0.981390417988 0.907423825755 0.0794684360454 1</diffuse>
+            <ambient>0.152924441006141 0.5845916651549035 0.0401335438206722 1</ambient>
+            <diffuse>0.152924441006141 0.5845916651549035 0.0401335438206722 1</diffuse>
           </material>
         </visual>
         <self_collide>0</self_collide>

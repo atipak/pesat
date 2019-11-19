@@ -9,11 +9,15 @@ bebop2:
       publish_rate: 20
 
    rotator_controller:
-      type: velocity_controllers/JointPositionController
+      type: position_controllers/JointPositionController
       joint: bebop2/camera_rotator_base_joint
       pid: {p: 1.0, i: 1.0, d: 0.0}
 
    camera_base_controller:
-      type: velocity_controllers/JointPositionController
+      type: position_controllers/JointPositionController
       joint: bebop2/camera_base_joint
       pid: {p: 1.0, i: 1.0, d: 0.0}
+
+gazebo_ros_control:
+   pid_gains:
+      camera_rotator_base_joint: {p: 1.0, i: 1.0, d: 0.0}

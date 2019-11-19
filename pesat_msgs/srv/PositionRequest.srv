@@ -1,0 +1,10 @@
+Header header # timestamp requested time
+
+int32 algorithm_index # index of predict algorithm
+
+bool refresh # new values for every time should be computed
+
+geometry_msgs/Point center # if format is map, it is possible specify the center of map
+---
+# possible return formats
+sensor_msgs/PointCloud2 pointcloud

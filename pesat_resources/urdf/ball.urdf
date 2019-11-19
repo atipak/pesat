@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot name="simple_ball">
-  <link name="ball">
+  <link name="target/base_link">
     <inertial>
       <mass value="1.0" />
       <!-- center of mass (com) is defined w.r.t. link local coordinate system -->
@@ -26,7 +26,7 @@
       </geometry>
     </collision>
   </link>
-  <gazebo reference="ball">
+  <gazebo reference="target/base_link">
     <mu1>10</mu1>
     <mu2>10</mu2>
     <material>Gazebo/Red</material>
