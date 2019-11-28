@@ -13,12 +13,15 @@ class FitnessFunction(object):
 class Median(FitnessFunction):
 
     def score(self, objects, properties):
-        scores = [object.score for object in objects]
+        ids = np.sort(np.array([i for (i, object) in objects.items()]))
+        scores = [objects[i].score for i in ids]
         median = np.median(scores)
         fitness = np.empty((len(objects)))
-        for index in range(len(objects)):
+        i = 0
+        for index in ids:
             object = objects[index]
-            fitness[index] = (abs(object.score - median))
+            fitness[i] = (abs(object.score - median))
+            i += 1
         fitness = np.max(fitness) - fitness
         return fitness
 
@@ -26,19 +29,24 @@ class Median(FitnessFunction):
 class Maximum(FitnessFunction):
 
     def score(self, objects, properties):
-        return np.array([object.score for object in objects])
+        ids = np.sort(np.array([i for (i, object) in objects.items()]))
+        return np.array([objects[i].score for i in ids])
 
 
 class Neighbour(FitnessFunction):
 
     def score(self, objects, properties):
+        ids = np.sort(np.array([i for (i, object) in objects.items()]))
         fitness = np.empty((len(objects)))
-        for index in range(len(objects)):
+        i = 0
+        for index in ids:
             object = objects[index]
             score = object.score
             for n in object.neighbors:
-                score += objects[n].score
-            fitness[index] = score
+                if n in objects:
+                    score += objects[n].score
+            fitness[i] = score
+            i += 1
         return fitness
 
 
@@ -46,7 +54,9 @@ class DistanceScore(FitnessFunction):
 
     def score(self, objects, properties):
         fitness = np.empty((len(objects)))
-        scores = np.array([object.score for object in objects])
+        distances = properties["distances"]
+        ids = np.sort(np.array([i for (i, object) in objects.items()]))
+        scores = np.array([objects[i].score for i in ids])
         for index in range(len(objects)):
-            fitness[index] = np.sum(scores / np.clip(properties[index, :], 1, None))
+            fitness[index] = np.sum(scores / np.clip(distances[index, :], 1, None))
         return fitness

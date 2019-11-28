@@ -665,6 +665,8 @@ class Map():
         self._drone_plan_service = None
         self._target_plan_service = None
         self._point_height_service = None
+        self._tree = None
+        self._map_details = None
         self._drone_min_altitude, self._drone_max_altitude = self.get_altitudes("drone")
         self._target_min_altitude, self._target_max_altitude = self.get_altitudes("target")
         self._drone_size, self._target_size = 0.5, 1
@@ -674,9 +676,49 @@ class Map():
         self._target_pixel_distance = self._target_max_altitude / 256
         self._pixels_with_obstacles = np.nonzero(
             np.bitwise_or(self._static_obstacles_height, self._dynamic_obstacles_height))
-        self._tree = None
         self._target_obstacle_map = self.get_target_obstacle_map()
         self._free_target_pixels = np.count_nonzero(self._target_obstacle_map)
+
+    def __setstate__(self, state):
+        [self._static_obstacles_height, self._static_obstacles_depth] = state["static_obstacles_arrays"]
+        [self._dynamic_obstacles_height, self._dynamic_obstacles_depth] = state["dynamic_obstacles_arrays"]
+        resolution = state["resolution"]
+        self._map_center = state["center"]
+        self._pixel_per_meter = state["pixel_per_meter"]
+        self._file_path = state["file_path"]
+        self._width = self._static_obstacles_height.shape[0]
+        self._height = self._static_obstacles_height.shape[1]
+        self._resolution = resolution
+        self._box_size = 1.0 / resolution
+        self._center_shift_x = self._width / 2 + self._map_center[0]
+        self._center_shift_y = self._height / 2 + self._map_center[1]
+        self._corners = None
+        self._rectangles_centers = None
+        self._corners_rectangles = None
+        self._file_path = None
+        self._object_type = None
+        self._drone_admissibility_service = None
+        self._target_admissibility_service = None
+        self._drone_plan_service = None
+        self._target_plan_service = None
+        self._point_height_service = None
+        self._tree = None
+        self._drone_min_altitude, self._drone_max_altitude = self.get_altitudes("drone")
+        self._target_min_altitude, self._target_max_altitude = self.get_altitudes("target")
+        self._drone_size, self._target_size = 0.5, 1
+        self._maximum_random_iteration = 100
+        self._drone_pixel_distance = self._drone_max_altitude / 256
+        self._target_pixel_distance = self._target_max_altitude / 256
+        self._pixels_with_obstacles = np.nonzero(
+            np.bitwise_or(self._static_obstacles_height, self._dynamic_obstacles_height))
+        self._target_obstacle_map = self.get_target_obstacle_map()
+        self._free_target_pixels = np.count_nonzero(self._target_obstacle_map)
+
+    def __getstate__(self):
+        return {"static_obstacles_arrays": [self._static_obstacles_height, self._static_obstacles_depth],
+                "dynamic_obstacles_arrays": [self._dynamic_obstacles_height, self._dynamic_obstacles_depth],
+                "resolution": self.resolution, "center": self._map_center, "pixel_per_meter": self._pixel_per_meter,
+                "file_path": self._file_path}
 
     @property
     def tree(self):
@@ -747,6 +789,23 @@ class Map():
     @property
     def free_target_pixels(self):
         return self._free_target_pixels
+
+    @property
+    def box_size(self):
+        return self._box_size
+
+    @property
+    def map_details(self):
+        if self._map_details is None:
+            with open(self._file_path, "r") as file:
+                information = json.load(file)
+            try:
+                with open(self._file_path, "r") as file:
+                    information = json.load(file)
+                self._map_details = information["world"]
+            except:
+                print("Invalid map file path")
+        return self._map_details
 
     def map_point_from_real_coordinates(self, real_x, real_y, real_z):
         map_point = self.MapPoint()

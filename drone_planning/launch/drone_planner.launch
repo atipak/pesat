@@ -4,5 +4,6 @@
     <rosparam command="load" file="$(find pesat_resources)/config/environment_configuration.yaml" />
     <rosparam command="load" file="$(find pesat_resources)/config/target_configuration.yaml" />
     <rosparam command="load" file="$(find pesat_resources)/config/logic_configuration.yaml" />
-    <node name="drone_planner" pkg="drone_planning" type="drone_planner.py" output="screen"/>
+    <!--<node name="drone_planner" pkg="drone_planning" type="drone_planner.py" output="screen" launch-prefix="xterm -e python -m pdb"/>-->
+    <node name="drone_planner" pkg="drone_planning" type="drone_planner.py" output="screen" />
 </launch>
