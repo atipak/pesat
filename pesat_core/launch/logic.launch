@@ -5,10 +5,10 @@
 	<arg name="standalone_pid_controllers" default="true" />
 
 	<!-- tracking section-->
-	<arg name="tracking" default="true" />
+	<arg name="tracking" default="false" />
 
 	<!-- dynamic avoidance section-->
-	<arg name="dynamic_avoidance" default="false" />
+	<arg name="dynamic_avoidance" default="true" />
 
 	<!-- planning section-->
 	<arg name="planning" default="false" />

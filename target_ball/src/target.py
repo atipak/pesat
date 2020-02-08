@@ -10,7 +10,7 @@ from geometry_msgs.msg import Pose, Point
 from gazebo_msgs.msg import ModelState, ModelStates
 from std_msgs.msg import Float64, Int64
 import helper_pkg.utils as utils
-from scipy.spatial import cKDTree
+from scipy.spatial import cKDTree, distance
 from pesat_msgs.srv import PointFloat, PosePlan
 from helper_pkg.move_it_server import MoveitServer
 
@@ -19,12 +19,13 @@ class TargetMoveit(MoveitServer):
     def __init__(self):
         target_configuration = rospy.get_param("target_configuration")
         super(TargetMoveit, self).__init__(target_configuration)
+        self.open_world_box()
         self._srv_point_height = rospy.Service(target_configuration["map_server"]["point_height_service"], PointFloat,
-                                self.callback_get_height)
+                                               self.callback_get_height)
         self._srv_admissibility = rospy.Service(target_configuration["map_server"]["admissibility_service"], PointFloat,
-                                self.callback_is_admissible)
+                                                self.callback_is_admissible)
         self._pose_planning = rospy.Service(target_configuration["map_server"]["pose_planning_service"], PosePlan,
-                                self.callback_get_plan)
+                                            self.callback_get_plan)
 
     def callback_get_height(self, data):
         return 0
@@ -54,7 +55,7 @@ class CustomMove(object):
         self.drone_configuration = rospy.get_param("drone_configuration")
         self.environment_configuration = rospy.get_param("environment_configuration")
         self._map = map
-        self._map_size = max(self._map.height, self._map.width)
+        self._map_size = max(self._map.real_height, self._map.real_width) / 2.0
         self._tfBuffer = tf2_ros.Buffer()
         self._tfListener = tf2_ros.TransformListener(self._tfBuffer)
         self._map_frame = self.environment_configuration["map"]["frame"]
@@ -71,7 +72,10 @@ class CustomMove(object):
             velocity = self.minimal_velocity
         else:
             velocity = original_velocity
-        return self.next_position(current_position, direction, velocity)
+        next_position, direction, velocity = self.next_position(current_position, direction, velocity)
+        if next_position is not None:
+            next_position.z = 1.5
+        return next_position, direction, velocity
 
     @abstractmethod
     def next_position(self, current_position, original_direction, original_velocity):
@@ -160,7 +164,7 @@ class AnimalsMove(ReactiveMove):
         for i in range(self._test_points):
             p = utils.Math.points_add(utils.Math.point_constant_mul(direction, step * i), current_position)
             m_point = self._map.map_point_from_real_coordinates(p.x, p.y, 0.0)
-            if not self._map.is_free_for_target(m_point, 0.5, min_value=255):
+            if not self._map.is_free_for_target(m_point):
                 return False
         return True
 
@@ -207,6 +211,9 @@ class CornersMove(CustomMove):
             self._tree = None
         else:
             self._tree = cKDTree(self._map.corners)
+        series = np.arange(0,2*np.pi, np.pi/10)
+        self._const = 1.5
+        self._circle = np.array(zip(self._const * np.cos(series), self._const * np.sin(series)))
 
     def corners_in_sector_and_distance(self, position, direction, points_distance, angle, radius):
         corners_in_directions = []
@@ -231,7 +238,18 @@ class CornersMove(CustomMove):
 
     def center_of_rec_from_corner(self, corner):
         rectangle_id = self._map.corners_rectangles[corner[0]][corner[1]]
-        return self._map.rectangles_centers[rectangle_id]
+        rectangle_start = rectangle_id * 4
+        ii = [self._map.array_corners_to_rectangles[rectangle_start],
+              self._map.array_corners_to_rectangles[rectangle_start + 1],
+              self._map.array_corners_to_rectangles[rectangle_start + 2],
+              self._map.array_corners_to_rectangles[rectangle_start + 3]]
+        cs = np.array(
+            [self._map.corners[ii[0]], self._map.corners[ii[1]], self._map.corners[ii[2]], self._map.corners[ii[3]]])
+        corners = cs - np.array(corner)
+        norm = [np.linalg.norm(corners[0]), np.linalg.norm(corners[1]), np.linalg.norm(corners[2]),
+                np.linalg.norm(corners[3])]
+        i = np.argsort(norm)[1]
+        return cs[i]
 
     @abstractmethod
     def params(self, original_direction):
@@ -242,7 +260,7 @@ class CornersMove(CustomMove):
         pass
 
     @abstractmethod
-    def get_position(self, corner, vector):
+    def get_position(self, corner, vector, current_position):
         pass
 
     def next_position_skeleton(self, current_position, original_direction):
@@ -253,18 +271,21 @@ class CornersMove(CustomMove):
         if len(corners_in_directions) > 0:
             distances_of_corners = np.array(distances_of_corners)
             probabilities = self.compute_probabilities(distances_of_corners)
-            index = np.random.choice(range(len(corners_in_directions)), 1, p=probabilities)
-            corner = np.array(corners_in_directions)[index][0]
-            center_of_rec = self.center_of_rec_from_corner(corner)
-            vector = np.array([center_of_rec[0] - corner[0], center_of_rec[1] - corner[1]])
-            vector = utils.Math.normalize(vector)
-            position = self.get_position(corner, vector)
-            p = Point()
-            p.x = position[0]
-            p.y = position[1]
-            if position is not None and self.moveit.is_admissible(p):
-                return p, self.calculate_new_direction(current_position, p)
-        return None, Point()
+            for _ in range(10):
+                index = np.random.choice(range(len(corners_in_directions)), 1, p=probabilities)
+                corner = np.array(corners_in_directions)[index][0]
+                center_of_rec = self.center_of_rec_from_corner(corner)
+                vector = np.array([corner[0] - center_of_rec[0] , corner[1] - center_of_rec[1]])
+                vector = utils.Math.normalize(vector)
+                position = self.get_position(corner, vector, current_position)
+                if position is not None:
+                    p = Point()
+                    p.x = position[0]
+                    p.y = position[1]
+                    if position is not None and self.moveit.is_admissible(p):
+                        return p, self.calculate_new_direction(current_position, p)
+
+        return None, self.choose_random_direction()
 
 
 class ZigzagMove(CornersMove):
@@ -289,9 +310,19 @@ class ZigzagMove(CornersMove):
         p[nearest_indices[1]] = 1
         return p
 
-    def get_position(self, corner, vector):
-        position = [corner[0] + vector[0], corner[1] + vector[1]]
-        return position
+    def get_position(self, corner, vector, current_position):
+        c = np.array(corner)
+        positions = c + self._circle
+        dd = distance.cdist(np.array([[current_position.x, current_position.y]]), positions)
+        indices = np.argsort(dd)[0][::-1]
+        sorted = positions[indices]
+        for pos in sorted:
+            p = Point()
+            p.x = pos[0]
+            p.y = pos[1]
+            if self.moveit.is_admissible(p):
+                return pos
+        return None
 
     def next_position(self, current_position, original_direction, original_velocity):
         next_position, direction = self.next_position_skeleton(current_position, original_direction)
@@ -316,12 +347,14 @@ class BehindCornersMove(CornersMove):
         d_factor = 1 / np.sum(probabilities)
         return [p * d_factor for p in probabilities]
 
-    def get_position(self, corner, vector):
-        positions = [[corner[0] + vector[0], corner[1] + vector[1]],
-                     [corner[0] + vector[1], corner[1] - vector[0]],
-                     [corner[0] - vector[1], corner[1] + vector[0]]]
+    def get_position(self, corner, vector, current_position):
+        c = np.array(corner)
+        positions = c + self._circle
+        dd = distance.cdist(np.array([[current_position.x, current_position.y]]), positions)
+        indices = np.argsort(dd)[0]
+        sorted = positions[indices]
         plausible_positions = []
-        for pos in positions:
+        for pos in sorted:
             p = Point()
             p.x = pos[0]
             p.y = pos[1]
@@ -348,8 +381,8 @@ class PlanningMove(CustomMove):
 
     def choose_random_position(self):
         point = Point()
-        point.x = np.random.uniform(0, self._map_size)
-        point.y = np.random.uniform(0, self._map_size)
+        point.x = np.random.uniform(-self._map_size, self._map_size)
+        point.y = np.random.uniform(-self._map_size, self._map_size)
         return point
 
 
@@ -403,6 +436,7 @@ class Target():
             BehindCornersMove(self.moveit, self._map),
             ZigzagMove(self.moveit, self._map)
         ]
+        self._invalid_counter = 0
         self._is_fusion_active = False
         self._strategy = self._strategies.Manual
         self._target_state = None
@@ -456,6 +490,7 @@ class Target():
             point = Point()
             point.x = self._target_state.position.x
             point.y = self._target_state.position.y
+            point.z = 1.5
             return point
         return None
 
@@ -484,10 +519,22 @@ class Target():
     def move_to_position(self, position, update_f):
         current_position = self.get_current_position()
         if current_position is not None:
+            maximal = self._current_velocity * update_f
+            maximal_position_index = self.fahrtest_position(current_position, maximal)
+            difx = self._plan[maximal_position_index].position.x - current_position.x
+            dify = self._plan[maximal_position_index].position.y - current_position.y
+            direction = (utils.Math.normalize(np.array([difx, dify]))) * self._current_velocity * update_f
+            direction = np.clip(direction, [-np.abs(difx), -np.abs(dify)], [np.abs(difx), np.abs(dify)])
+            self._plan_index = maximal_position_index
+            """
             while True:
                 difx = self._plan[self._plan_index].position.x - current_position.x
                 dify = self._plan[self._plan_index].position.y - current_position.y
                 direction = (utils.Math.normalize(np.array([difx, dify]))) * self._current_velocity * update_f
+                # print(np.all(direction > np.array([difx, dify])),
+                #      np.sum(np.isclose(self.point_to_array(current_position),
+                #                        self.pose_to_array(self._plan[self._plan_index]))) == 2, current_position,
+                #      self._plan[self._plan_index])
                 if np.all(direction > np.array([difx, dify])) or np.sum(
                         np.isclose(self.point_to_array(current_position),
                                    self.pose_to_array(self._plan[self._plan_index]))) == 2:
@@ -496,8 +543,27 @@ class Target():
                         break
                 else:
                     break
+            """
             direction = np.clip(direction, [-np.abs(difx), -np.abs(dify)], [np.abs(difx), np.abs(dify)])
+            if abs(current_position.x - self._plan[-1].position.x) < 0.01 and abs(
+                    current_position.y - self._plan[-1].position.y) < 0.01:
+                self._plan_index += 1
+            print("direction", direction, "plan index", self._plan_index, "velocity", self._current_velocity, "f",
+                  update_f)
             self.publish_pose(direction[0], direction[1])
+
+    def fahrtest_position(self, current_position, maximal):
+        index = self._plan_index
+        while True:
+            difx = self._plan[index].position.x - current_position.x
+            dify = self._plan[index].position.y - current_position.y
+            if np.hypot(difx, dify) >= maximal:
+                return index
+            else:
+                if index + 1 < len(self._plan):
+                    index += 1
+                else:
+                    return index
 
     def point_to_array(self, point):
         return np.array([point.x, point.y])
@@ -506,6 +572,7 @@ class Target():
         pose = Pose()
         pose.position.x = point.x
         pose.position.y = point.y
+        pose.position.z = point.z
         pose.orientation.w = 1
         return pose
 
@@ -522,16 +589,23 @@ class Target():
                 if self._destination_position is None:
                     velocity = self._current_velocity
                     direction = self._current_direction
+                    if self._invalid_counter >= 3:
+                        direction = self.pick_strategy().choose_random_direction()
                     next_position, next_direction, next_velocity = self.pick_strategy().calculate_position(
                         current_position, direction, velocity)
-                    plan = self.moveit.get_plan_from_poses(self.point_to_pose(current_position),
-                                                           self.point_to_pose(next_position))
+                    plan = []
+                    print(next_position)
+                    if next_position is not None:
+                        plan = self.moveit.get_plan_from_poses(self.point_to_pose(current_position),
+                                                               self.point_to_pose(next_position))
                     self._plan_index = 0
+                    self._invalid_counter += 1
                     if len(plan) > 0:
-                        self._destination_position = next_position
-                        self._current_velocity = next_velocity
-                        self._current_direction = next_direction
-                        self._plan = plan
+                        self._invalid_counter = 0
+                    self._destination_position = next_position
+                    self._current_velocity = next_velocity
+                    self._current_direction = next_direction
+                    self._plan = plan
                 if self._plan is not None:
                     if len(self._plan) > self._plan_index:
                         self.move_to_position(self._plan, f)

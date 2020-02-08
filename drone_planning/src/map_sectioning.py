@@ -993,11 +993,31 @@ def add_new_point(i, j, item, collection):
         collection[i][j].append(item)
 
 
-if __name__ == '__main__':
-    environment_configuration = rospy.get_param("environment_configuration")
-    map_file = environment_configuration["map"]["obstacles_file"]
-    section_file = environment_configuration["map"]["section_file"]
+def create_sections_from_folder(folder_name):
     section_map_creator = SectionMap()
-    section_objects = section_map_creator.create_sections_regions_and_points(map_file)
-    # section_objects = create_sections_regions_and_points(map_file)
-    SectionMap.pickle_sections(section_objects, section_file)
+    for f in os.listdir(folder_name):
+        if f.startswith("box_world_"):
+            f_path = folder_name + "/" + f
+            for f1 in os.listdir(f_path):
+                section_file_path = f_path + "/" + "section_file.pickle"
+                print(os.listdir(f_path))
+                if "section_file.pickle" in os.listdir(f_path):
+                    break
+                if f1.endswith(".json"):
+                    f1_path = f_path + "/" + f1
+                    section_objects = section_map_creator.create_sections_regions_and_points(f1_path)
+                    section_file_path = f_path + "/" + "section_file.pickle"
+                    SectionMap.pickle_sections(section_objects, section_file_path)
+
+
+if __name__ == '__main__':
+    if False:
+        environment_configuration = rospy.get_param("environment_configuration")
+        map_file = environment_configuration["map"]["obstacles_file"]
+        section_file = environment_configuration["map"]["section_file"]
+        section_map_creator = SectionMap()
+        section_objects = section_map_creator.create_sections_regions_and_points(map_file)
+        # section_objects = create_sections_regions_and_points(map_file)
+        SectionMap.pickle_sections(section_objects, section_file)
+    else:
+        create_sections_from_folder("/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds")

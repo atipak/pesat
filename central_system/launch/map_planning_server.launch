@@ -2,5 +2,8 @@
 <launch>
     <rosparam command="load" file="$(find pesat_resources)/config/drone_configuration.yaml" />
     <rosparam command="load" file="$(find pesat_resources)/config/environment_configuration.yaml" />
-    <node name="map_planning_server" pkg="central_system" type="map_planning_server.py" output="screen"/>
+    <arg name="namespace" value="/bebop2" />
+    <node name="map_planning_server" pkg="central_system" type="map_planning_server.py" output="screen">
+        <remap from="/collision_object" to="/$(arg namespace)/collision_object"/>
+    </node>
 </launch>

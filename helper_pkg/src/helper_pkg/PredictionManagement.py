@@ -13,6 +13,7 @@ import tf as tf_ros
 import tf2_ros
 from helper_pkg.utils import Constants
 from collections import deque
+import traceback
 
 
 class PredictionAlgorithm(object):
@@ -64,7 +65,7 @@ class PredictionAlgorithm(object):
                 if not isinstance(drone_positions[i], control_class):
                     raise AttributeError(
                         self._prediction_algorithm_name + ": drone position with index {} isn't instance of class {}, but it is {}".format(
-                            i, control_class, type(target_positions[i])))
+                            i, control_class, type(drone_positions[i])))
         if self.MAP_PRESENCE == Constants.MapPresenceParameter.yes:
             if map is None or not isinstance(map, utils.Map):
                 raise AttributeError(self._prediction_algorithm_name + ": wrong map parameter.")
@@ -80,7 +81,7 @@ class PredictionAlgorithm(object):
         input_drone_positions = self.prepare_data_for_input(drone_positions)
         input_target_positions = self.prepare_data_for_input(target_positions)
         data = self.pose_from_parameters(input_drone_positions, input_target_positions, map, **kwargs)
-        state_variables = self.state_variables(drone_positions, target_positions, map, **kwargs)
+        state_variables = self.state_variables(input_drone_positions, input_target_positions, map, **kwargs)
         output_data = self.prepare_data_for_output(data,
                                                    self.get_samples_count(drone_positions, target_positions,
                                                                           **kwargs))
@@ -505,6 +506,7 @@ class PredictionManagement(object):
             predicted_position, state_variables = object_prediction_mechanism.predict_pose(*input_data, **kwargs)
         except AttributeError as ae:
             rospy.loginfo("Problem with prediction for time " + str(time) + " : " + str(ae))
+            rospy.loginfo(traceback.format_exc())
         return predicted_position, state_variables
 
     def prepare_input_data_for_prediction_algorithm(self, parameter, time, renew):
@@ -527,6 +529,7 @@ class PredictionManagement(object):
             return None, {}
         # print("position in time")
         position, state_variables = self.recursive_get_position_in_time(time, renew)
+        array = utils.DataStructures.pointcloud2_to_array(position)
         if position is not None:
             array = utils.DataStructures.pointcloud2_to_array(position)
             if requested_type == Constants.InputOutputParameterType.pose:

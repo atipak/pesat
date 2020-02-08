@@ -10,6 +10,7 @@ from pesat_msgs.srv import PointFloat, PosePlan
 from geometry_msgs.msg import Point, Pose, PoseStamped
 from sensor_msgs.msg import PointField, PointCloud2
 from scipy.spatial.transform import Rotation as R
+from scipy.spatial import cKDTree, ConvexHull
 from pyoctree import pyoctree as ot
 import time
 from shapely.geometry import Polygon as ShapelyPolygon
@@ -79,6 +80,8 @@ class DataStructures():
 
     @staticmethod
     def pointcloud2_to_array(cloud_msg):
+        if cloud_msg is None:
+            return None
         cloud_arr = np.fromstring(cloud_msg.data, np.float32)
         return np.reshape(cloud_arr, (cloud_msg.height, cloud_msg.width))
 
@@ -94,21 +97,13 @@ class DataStructures():
     @staticmethod
     def array_to_image(data, width, height, step, center=(0, 0)):
         buckets = {}
+        rounded_data = np.zeros((len(data), 2))
         rounded_center = (Math.rounding(center[0]) / step, Math.rounding(center[1]) / step)
-        for d in data:
-            box_index_x = np.round(d[0] / step)
-            box_index_y = np.round(d[1] / step)
-            map_x = np.clip(box_index_x + rounded_center[0] - width / 2, 0, width - 1)
-            map_y = np.clip(box_index_y + rounded_center[1] - height / 2, 0, height - 1)
-            if map_x not in buckets:
-                buckets[map_x] = {}
-            if map_y not in buckets[map_x]:
-                buckets[map_x][map_y] = 0
-            buckets[map_x][map_y] += 1
+        rounded_data[:, 0] = np.clip(np.round(data[:, 0] / step) + rounded_center[0] - width / 2, 0, width - 1).astype(np.int32)
+        rounded_data[:, 1] = np.clip(np.round(data[:, 1] / step) + rounded_center[1] - height / 2, 0, height - 1).astype(np.int32)
         image = np.zeros((width, height))
-        for x_coor in buckets:
-            for y_coor in buckets[x_coor]:
-                image[x_coor, y_coor] = buckets[x_coor][y_coor] / len(data)
+        values, counts = np.unique(rounded_data, return_counts=True, axis=0)
+        image[values[:, 0].astype(np.int32), values[:, 1].astype(np.int32)] = counts / len(data)
         return image
 
     @staticmethod
@@ -268,6 +263,18 @@ class DataStructures():
                              y_diff - height_half, val[i], 0])
                 return val[0], False, index + index1
             return val[0], True, index
+
+    @staticmethod
+    def copy_pose(pose):
+        p = Pose()
+        p.position.x = pose.position.x
+        p.position.y = pose.position.y
+        p.position.z = pose.position.z
+        p.orientation.x = pose.orientation.x
+        p.orientation.y = pose.orientation.y
+        p.orientation.z = pose.orientation.z
+        p.orientation.w = pose.orientation.w
+        return p
 
 
 class Math():
@@ -446,6 +453,8 @@ class Math():
     def calculate_yaw_from_points(x_map, y_map, x_map_next, y_map_next):
         direction_x = x_map_next - x_map
         direction_y = y_map_next - y_map
+        if abs(direction_x) < 1e-6 and abs(direction_y) < 1e-6:
+            return 0
         # direction_length = np.sqrt(np.power(direction_x, 2) + np.power(direction_y, 2))
         # print("direction length", direction_length)
         # if abs(direction_length) > 1:
@@ -590,6 +599,8 @@ class Map():
                 all_corners = []
                 centers_of_rectangles = []
                 mapping_corners_to_rectangles = {}
+                rectangles_height = []
+                array_corners_to_rectangles = []
                 i = -1
                 for object in information["objects"]:
                     i += 1
@@ -597,18 +608,20 @@ class Map():
                     corners = Building.split_to_points(object)[0]
                     center = Building.calculate_center_of_object(object)
                     centers_of_rectangles.append(center)
+                    rectangles_height.append(object[0].height)
                     for corner in corners:
                         if corner[0] in mapping_corners_to_rectangles:
                             mapping_corners_to_rectangles[corner[0]][corner[1]] = i
                         else:
                             mapping_corners_to_rectangles[corner[0]] = {corner[1]: i}
+                        array_corners_to_rectangles.append(i)
                         all_corners.append(corner)
-                return all_corners, centers_of_rectangles, mapping_corners_to_rectangles
+                return all_corners, centers_of_rectangles, mapping_corners_to_rectangles, rectangles_height, array_corners_to_rectangles
             except Exception as e:
                 print(e)
-                return [], [], {}
+                return [], [], {}, [], []
         else:
-            return [], [], {}
+            return [], [], {}, [], []
 
     @staticmethod
     def check_bounds(values, limits):
@@ -658,6 +671,8 @@ class Map():
         self._corners = None
         self._rectangles_centers = None
         self._corners_rectangles = None
+        self._rectangles_height = None
+        self._array_corners_to_rectangles = None
         self._file_path = None
         self._object_type = None
         self._drone_admissibility_service = None
@@ -678,6 +693,7 @@ class Map():
             np.bitwise_or(self._static_obstacles_height, self._dynamic_obstacles_height))
         self._target_obstacle_map = self.get_target_obstacle_map()
         self._free_target_pixels = np.count_nonzero(self._target_obstacle_map)
+        self._corners_tree = None
 
     def __setstate__(self, state):
         [self._static_obstacles_height, self._static_obstacles_depth] = state["static_obstacles_arrays"]
@@ -695,7 +711,8 @@ class Map():
         self._corners = None
         self._rectangles_centers = None
         self._corners_rectangles = None
-        self._file_path = None
+        self._rectangles_height = None
+        self._array_corners_to_rectangles = None
         self._object_type = None
         self._drone_admissibility_service = None
         self._target_admissibility_service = None
@@ -713,6 +730,7 @@ class Map():
             np.bitwise_or(self._static_obstacles_height, self._dynamic_obstacles_height))
         self._target_obstacle_map = self.get_target_obstacle_map()
         self._free_target_pixels = np.count_nonzero(self._target_obstacle_map)
+        self._corners_tree = None
 
     def __getstate__(self):
         return {"static_obstacles_arrays": [self._static_obstacles_height, self._static_obstacles_depth],
@@ -756,21 +774,42 @@ class Map():
     @property
     def corners(self):
         if self._corners is None and self._file_path is not None:
-            self._corners, self._rectangles_centers, self._corners_rectangles = Map.load_corners_from_obstacle_file(
+            self._corners, self._rectangles_centers, self._corners_rectangles, self._rectangles_height, self._array_corners_to_rectangles = Map.load_corners_from_obstacle_file(
                 self._file_path)
         return self._corners
 
     @property
+    def rectangles_height(self):
+        if self._rectangles_height is None and self._file_path is not None:
+            self._corners, self._rectangles_centers, self._corners_rectangles, self._rectangles_height, self._array_corners_to_rectangles = Map.load_corners_from_obstacle_file(
+                self._file_path)
+        return self._rectangles_height
+
+    @property
+    def array_corners_to_rectangles(self):
+        if self._array_corners_to_rectangles is None and self._file_path is not None:
+            self._corners, self._rectangles_centers, self._corners_rectangles, self._rectangles_height, self._array_corners_to_rectangles = Map.load_corners_from_obstacle_file(
+                self._file_path)
+        return self._array_corners_to_rectangles
+
+    @property
+    def corners_tree(self):
+        if self._corners_tree is None:
+            if len(self.corners) > 0:
+                self._corners_tree = cKDTree(self.corners)
+        return self._corners_tree
+
+    @property
     def rectangles_centers(self):
         if self._rectangles_centers is None and self._file_path is not None:
-            self._corners, self._rectangles_centers, self._corners_rectangles = Map.load_corners_from_obstacle_file(
+            self._corners, self._rectangles_centers, self._corners_rectangles, self._rectangles_height, self._array_corners_to_rectangles = Map.load_corners_from_obstacle_file(
                 self._file_path)
         return self._rectangles_centers
 
     @property
     def corners_rectangles(self):
         if self._corners_rectangles is None and self._file_path is not None:
-            self._corners, self._rectangles_centers, self._corners_rectangles = Map.load_corners_from_obstacle_file(
+            self._corners, self._rectangles_centers, self._corners_rectangles, self._rectangles_height, self._array_corners_to_rectangles = Map.load_corners_from_obstacle_file(
                 self._file_path)
         return self._corners_rectangles
 
@@ -905,11 +944,14 @@ class Map():
                                                                              config_string, "Target")
         self._target_plan_service = self.load_plan_service(self._target_plan_service, config_string, "Target")
 
-    def get_index_on_map(self, x, y):
+    def get_index_on_map(self, x, y, safety=True):
         box_index_x = np.round(x / self._box_size)
         box_index_y = np.round(y / self._box_size)
-        shifted_x = np.clip(box_index_x + self._center_shift_x, 0, self.width - 1)
-        shifted_y = np.clip(box_index_y + self._center_shift_y, 0, self.height - 1)
+        shifted_x = box_index_x + self._center_shift_x
+        shifted_y = box_index_y + self._center_shift_y
+        if safety:
+            shifted_x = np.clip(shifted_x, 0, self.width - 1)
+            shifted_y = np.clip(shifted_y, 0, self.height - 1)
         if isinstance(x, np.ndarray):
             return shifted_x.astype(np.int32), shifted_y.astype(np.int32)
         else:
@@ -1158,6 +1200,221 @@ class Map():
             right_indices[i] = 1
         return indices[right_indices, :]
 
+    def fast_rectangle_ray_tracing_3d(self, position, vfov, hfov, max_range):
+        start_time = time.time()
+        height = 0.2
+        h_angles = [position.orientation.z - hfov / 2.0, position.orientation.z + hfov / 2.0]
+        v_angles = np.clip([position.orientation.y - vfov / 2.0, position.orientation.y + vfov / 2.0],
+                           (0, 0), (np.pi / 2, np.pi / 2))
+        angles = [[v_angles[0], h_angles[0]],  # bottom left
+                  [v_angles[1], h_angles[0]],  # upper left
+                  [v_angles[1], h_angles[1]],  # upper right
+                  [v_angles[0], h_angles[1]]]  # bottom right
+        r = R.from_euler('yz', angles)
+        start_point = np.array([position.position.x, position.position.y, position.position.z])
+        vectors = r.apply(np.array([1, 0, 0]))
+        t = np.abs(height + (-position.position.z / vectors[:, 2]))
+        t = np.nan_to_num(t)
+        t = np.clip(t, None, max_range)
+        xyz = np.empty((4, 2))
+        xyz[:, 0], xyz[:, 1] = self.get_index_on_map(t * vectors[:, 0] + position.position.x,
+                                                     t * vectors[:, 1] + position.position.y, False)
+        rectangle = np.zeros((self.width, self.height), dtype=np.uint8)
+        cv2.fillConvexPoly(rectangle, xyz.astype(np.int32), 1)
+        obstacles = np.logical_and(self._static_obstacles_height > 0, self._static_obstacles_depth < height)
+        rectangle = np.logical_and(np.logical_not(obstacles), rectangle).astype(np.uint8)
+        # find corners
+        ii = np.array(self.corners_tree.query_ball_point([start_point[:2]], max_range)[0])
+        corners = np.array(self.corners)
+        cr = np.array(self.array_corners_to_rectangles)
+        rectangles = np.zeros(len(self.rectangles_height))
+        inside_area = corners[ii]
+        map_corners_points_x, map_corners_points_y = self.get_index_on_map(inside_area[:, 0], inside_area[:, 1])
+        mask = rectangle[map_corners_points_x, map_corners_points_y] == 1
+        iii = ii[mask]
+        rectangles[cr[iii]] = 1
+        indices = np.argwhere(rectangles > 0)
+        for i in indices:
+            i = i[0]
+            cs = np.zeros((4, 3))
+            cs[:, :2] = corners[i * 4:(i + 1) * 4]
+            cs[:, 2] = self.rectangles_height[i]
+            vectors = cs - start_point
+            t = np.abs(height + (-position.position.z / vectors[:, 2]))
+            t = np.nan_to_num(t)
+            t = np.clip(t, None, max_range)
+            xyz = np.empty((8, 2))
+            xyz[:4, 0], xyz[:4, 1] = self.get_index_on_map(cs[:, 0], cs[:, 1])
+            xyz[4:, 0], xyz[4:, 1] = self.get_index_on_map(t * vectors[:, 0] + position.position.x,
+                                                           t * vectors[:, 1] + position.position.y, False)
+            hull = ConvexHull(xyz)
+            cv2.fillConvexPoly(rectangle, xyz[hull.vertices].astype(np.int32), 0)
+        indices = np.argwhere(rectangle > 0)
+        right_indices = np.zeros(len(indices), dtype=np.bool)
+        ray = np.empty((2, 3), dtype=np.float32)
+        ray[0, :] = start_point
+        i = -1
+        for index in indices:
+            i += 1
+            map_point = self.map_point_from_map_coordinates(index[1], index[0], height)
+            ray[1, :2] = [map_point.real_x + 0.25, map_point.real_y + 0.25]
+            ray[1, 2] = height
+            intersections = self.tree.rayIntersection(ray)
+            if len(intersections) >= 1 and (
+                    (np.abs(intersections[0].p[0] - ray[0, 0]) + np.abs(intersections[0].p[1]) - ray[0, 1]) < (np.abs(
+                ray[1, 0] - ray[0, 0]) + np.abs(ray[1, 1] - ray[0, 1]))):
+                continue
+            right_indices[i] = 1
+        return indices[right_indices, :]
+
+    def faster_rectangle_ray_tracing_3d(self, position, vfov, hfov, max_range):
+        start_time = time.time()
+        height = 0.2
+        h_angles = [position.orientation.z - hfov / 2.0, position.orientation.z + hfov / 2.0]
+        v_angles = np.clip([position.orientation.y - vfov / 2.0, position.orientation.y + vfov / 2.0],
+                           (0, 0), (np.pi / 2, np.pi / 2))
+        angles = [[v_angles[0], h_angles[0]],  # bottom left
+                  [v_angles[1], h_angles[0]],  # upper left
+                  [v_angles[1], h_angles[1]],  # upper right
+                  [v_angles[0], h_angles[1]]]  # bottom right
+        r = R.from_euler('yz', angles)
+        start_point = np.array([position.position.x, position.position.y, position.position.z])
+        vectors = r.apply(np.array([1, 0, 0]))
+        t = np.abs(height + (-position.position.z / vectors[:, 2]))
+        t = np.nan_to_num(t)
+        t = np.clip(t, None, max_range)
+        xyz = np.empty((4, 2))
+        xyz[:, 0], xyz[:, 1] = self.get_index_on_map(t * vectors[:, 0] + position.position.x,
+                                                     t * vectors[:, 1] + position.position.y, False)
+        rectangle = np.zeros((self.width, self.height), dtype=np.uint8)
+        cv2.fillConvexPoly(rectangle, xyz.astype(np.int32), 1)
+        obstacles = np.logical_and(self._static_obstacles_height > 0, self._static_obstacles_depth < height)
+        rectangle = np.logical_and(np.logical_not(obstacles), rectangle).astype(np.uint8)
+        # find corners
+        ii = np.array(self.corners_tree.query_ball_point([start_point[:2]], max_range)[0]).astype(np.int32)
+        if len(ii) > 0:
+            corners = np.array(self.corners)
+            cr = np.array(self.array_corners_to_rectangles)
+            rectangles = np.zeros(len(self.rectangles_height))
+            inside_area = corners[ii]
+            map_corners_points_x, map_corners_points_y = self.get_index_on_map(inside_area[:, 0], inside_area[:, 1])
+            mask = rectangle[map_corners_points_x, map_corners_points_y] == 1
+            iii = ii[mask]
+            rectangles[cr[iii]] = 1
+            indices = np.argwhere(rectangles > 0)
+            for i in indices:
+                i = i[0]
+                cs = np.zeros((4, 3))
+                cs[:, :2] = corners[i * 4:(i + 1) * 4]
+                cs[:, 2] = self.rectangles_height[i]
+                vectors = cs - start_point
+                t = np.abs(height + (-position.position.z / vectors[:, 2]))
+                t = np.nan_to_num(t)
+                t = np.clip(t, None, max_range)
+                xyz = np.empty((8, 2))
+                xyz[:4, 0], xyz[:4, 1] = self.get_index_on_map(cs[:, 0], cs[:, 1])
+                xyz[4:, 0], xyz[4:, 1] = self.get_index_on_map(t * vectors[:, 0] + position.position.x,
+                                                               t * vectors[:, 1] + position.position.y, False)
+                hull = ConvexHull(xyz)
+                cv2.fillConvexPoly(rectangle, xyz[hull.vertices].astype(np.int32), 0)
+        indices = np.argwhere(rectangle > 0)
+        return indices
+
+    def not_so_faster_rectangle_ray_tracing_3d(self, position, vfov, hfov, max_range):
+        start_time = time.time()
+        height = 0.2
+        h_angles = [position.orientation.z - hfov / 2.0, position.orientation.z + hfov / 2.0]
+        v_angles = np.clip([position.orientation.y - vfov / 2.0, position.orientation.y + vfov / 2.0],
+                           (0, 0), (np.pi / 2, np.pi / 2))
+        angles = [[v_angles[0], h_angles[0]],  # bottom left
+                  [v_angles[1], h_angles[0]],  # upper left
+                  [v_angles[1], h_angles[1]],  # upper right
+                  [v_angles[0], h_angles[1]]]  # bottom right
+        r = R.from_euler('yz', angles)
+        start_point = np.array([position.position.x, position.position.y, position.position.z])
+        vectors = r.apply(np.array([1, 0, 0]))
+        t = np.abs(height + (-position.position.z / vectors[:, 2]))
+        t = np.nan_to_num(t)
+        t = np.clip(t, None, max_range)
+        xyz = np.empty((4, 2))
+        xyz[:, 0], xyz[:, 1] = self.get_index_on_map(t * vectors[:, 0] + position.position.x,
+                                                     t * vectors[:, 1] + position.position.y, False)
+        rectangle = np.zeros((self.width, self.height), dtype=np.uint8)
+        cv2.fillConvexPoly(rectangle, xyz.astype(np.int32), 1)
+        obstacles = np.logical_and(self._static_obstacles_height > 0, self._static_obstacles_depth < height)
+        rectangle = np.logical_and(np.logical_not(obstacles), rectangle).astype(np.uint8)
+        # find corners
+        ii = np.array(self.corners_tree.query_ball_point([start_point[:2]], max_range)[0])
+        corners = np.array(self.corners)
+        cr = np.array(self.array_corners_to_rectangles)
+        rectangles = np.zeros(len(self.rectangles_height))
+        rectangles[cr[ii]] = 1
+        indices = np.argwhere(rectangles > 0)
+        for i in indices:
+            i = i[0]
+            cs = np.zeros((4, 3))
+            cs[:, :2] = corners[i * 4:(i + 1) * 4]
+            cs[:, 2] = self.rectangles_height[i]
+            vectors = cs - start_point
+            t = np.abs(height + (-position.position.z / vectors[:, 2]))
+            t = np.nan_to_num(t)
+            t = np.clip(t, None, max_range)
+            xyz = np.empty((8, 2))
+            xyz[:4, 0], xyz[:4, 1] = self.get_index_on_map(cs[:, 0], cs[:, 1])
+            xyz[4:, 0], xyz[4:, 1] = self.get_index_on_map(t * vectors[:, 0] + position.position.x,
+                                                           t * vectors[:, 1] + position.position.y, False)
+            hull = ConvexHull(xyz)
+            cv2.fillConvexPoly(rectangle, xyz[hull.vertices].astype(np.int32), 0)
+        indices = np.argwhere(rectangle > 0)
+        return indices
+
+    def port_inside_map(self, points):
+        rolled_points = np.roll(points, 1, 0)
+        corrected_points = []
+        for point_index in xrange(len(points)):
+            point = np.array(points[point_index])
+            rolled_point = np.array(rolled_points[point_index])
+            if self.point_outside_condition(point) or self.point_outside_condition(rolled_point):
+                target_value = self.target_point(point)
+                intersection = self.intersection_point(target_value, point, rolled_point)
+                corrected_points.append(intersection.astype(np.int32))
+                if self.point_outside_condition(point):
+                    continue
+            corrected_points.append(point)
+        return np.array(corrected_points)
+
+    def point_outside_condition(self, point):
+        return point[0] > self.width or point[1] > self.height or point[0] < 0 or point[1] < 0
+
+    def target_point(self, point):
+        target_value = np.array(point)
+        if point[0] > self.width:
+            target_value[0] = self.width
+        if point[1] > self.height:
+            target_value[1] = self.height
+        if point[0] < 0:
+            target_value[0] = 0
+        if point[1] < 0:
+            target_value[1] = 0
+        return target_value
+
+    def intersection_point(self, target_value, point, rolled_point):
+        vector = point - rolled_point
+        t = (target_value - rolled_point) / vector
+        argmin_t = np.argmin(np.abs(t))
+        opposite_index = 1 - argmin_t
+        opposite_value = vector[opposite_index] * t[argmin_t] + rolled_point[opposite_index]
+        if opposite_index == 0 and opposite_value > self.width:
+            opposite_value = self.width
+        if opposite_index == 1 and opposite_value > self.height:
+            opposite_value = self.height
+        if opposite_value < 0:
+            opposite_value = 0
+        p = np.zeros(2)
+        p[argmin_t] = target_value[argmin_t]
+        p[opposite_index] = opposite_value
+        return p
+
     def append_to_collection(self, x, y, collection):
         if x not in collection:
             collection[x] = {}
@@ -1325,7 +1582,7 @@ class CameraCalculation():
 
     @staticmethod
     def generate_particles_object_out_of_fov(coordinates):
-        weight = CameraCalculation.coordinates_length(coordinates)
+        weight = len(coordinates)
         particles = np.zeros((len(coordinates), 3))
         particles[:, :2] = coordinates
         particles[:, 2] = weight

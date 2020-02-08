@@ -20,7 +20,7 @@
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>10 10</size>
+              <size>20 20</size>
             </plane>
           </geometry>
           <surface>
@@ -37,7 +37,7 @@
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>10 10</size>
+              <size>20 20</size>
             </plane>
           </geometry>
           <material>
@@ -79,12 +79,12 @@
     </physics>
     <model name='upper_face_of_box_box_0'>
       <static>true</static>
-      <pose>2.5570003986358643 2.986370325088501 9.21139508071362 0.0 0.0 0.03718439076325708</pose>
+      <pose>-3.037827730178833 -2.960949659347534 13.062334649037908 0.0 0.0 1.4183958447437104</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.3232262214717707 2.235273534695087 0.1</size>
+              <size>10.705953951815745 3.7873968483794087 0.1</size>
             </box>
           </geometry>
           <surface>
@@ -100,12 +100,12 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.3232262214717707 2.235273534695087 0.1</size>
+              <size>10.705953951815745 3.7873968483794087 0.1</size>
             </box>
           </geometry>
           <material>
-                        <ambient>0.5816815118611605 0.6159169990529608 0.03592703953221027 1</ambient>
-            <diffuse>0.5816815118611605 0.6159169990529608 0.03592703953221027 1</diffuse>
+                        <ambient>0.1390484712361435 0.05330917590974482 0.05102876332956042 1</ambient>
+            <diffuse>0.1390484712361435 0.05330917590974482 0.05102876332956042 1</diffuse>
           </material>
         </visual>
         <gravity>false</gravity>
@@ -113,12 +113,12 @@
     </model>
     <model name='front_face_of_box_box_0'>
       <static>true</static>
-      <pose>2.6004082556604673 1.81954069810333 4.58069754035681 0.0 0.0 1.6079807175581537</pose>
+      <pose>-1.1166577310633279 -3.2560249017791367 6.5061673245189535 0.0 0.0 2.989192171538607</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>0.1 2.3232262214717707 9.16139508071362</size>
+              <size>0.1 10.705953951815745 13.012334649037907</size>
             </box>
           </geometry>
           <surface>
@@ -134,7 +134,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>0.1 2.3232262214717707 9.16139508071362</size>
+              <size>0.1 10.705953951815745 13.012334649037907</size>
             </box>
           </geometry>
           <material>
@@ -150,12 +150,12 @@
     </model>
     <model name='back_face_of_box_box_0'>
       <static>true</static>
-      <pose>2.513592541611261 4.153199952073672 4.58069754035681 0.0 0.0 1.6079807175581537</pose>
+      <pose>-4.958997729294339 -2.6658744169159316 6.5061673245189535 0.0 0.0 2.989192171538607</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>0.1 2.3232262214717707 9.16139508071362</size>
+              <size>0.1 10.705953951815745 13.012334649037907</size>
             </box>
           </geometry>
           <surface>
@@ -171,7 +171,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>0.1 2.3232262214717707 9.16139508071362</size>
+              <size>0.1 10.705953951815745 13.012334649037907</size>
             </box>
           </geometry>
           <material>
@@ -187,12 +187,12 @@
     </model>
     <model name='left_face_of_box_box_0'>
       <static>true</static>
-      <pose>1.3462248273408413 2.9413276113347777 4.58069754035681 0.0 0.0 1.6079807175581537</pose>
+      <pose>-3.858060293614189 -8.301303462614772 6.5061673245189535 0.0 0.0 2.989192171538607</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.235273534695087 0.1 9.16139508071362</size>
+              <size>3.7873968483794087 0.1 13.012334649037907</size>
             </box>
           </geometry>
           <surface>
@@ -208,7 +208,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.235273534695087 0.1 9.16139508071362</size>
+              <size>3.7873968483794087 0.1 13.012334649037907</size>
             </box>
           </geometry>
           <material>
@@ -224,12 +224,12 @@
     </model>
     <model name='right_face_of_box_box_0'>
       <static>true</static>
-      <pose>3.767775969930887 3.0314130388422242 4.58069754035681 0.0 0.0 1.6079807175581537</pose>
+      <pose>-2.217595166743477 2.379404143919703 6.5061673245189535 0.0 0.0 2.989192171538607</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.235273534695087 0.1 9.16139508071362</size>
+              <size>3.7873968483794087 0.1 13.012334649037907</size>
             </box>
           </geometry>
           <surface>
@@ -245,7 +245,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.235273534695087 0.1 9.16139508071362</size>
+              <size>3.7873968483794087 0.1 13.012334649037907</size>
             </box>
           </geometry>
           <material>
@@ -261,12 +261,12 @@
     </model>
     <model name='upper_face_of_box_box_1'>
       <static>true</static>
-      <pose>2.7699947357177734 -3.415470600128174 2.138575720677075 0.0 0.0 1.3293735966459064</pose>
+      <pose>2.6477463245391846 -0.07830039411783218 6.855897089241907 0.0 0.0 0.014196406812587381</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.5663356103167185 2.325551060110848 0.1</size>
+              <size>3.0877584974595695 16.722131010473845 0.1</size>
             </box>
           </geometry>
           <surface>
@@ -282,12 +282,12 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.5663356103167185 2.325551060110848 0.1</size>
+              <size>3.0877584974595695 16.722131010473845 0.1</size>
             </box>
           </geometry>
           <material>
-                        <ambient>0.04160463882620036 0.2568515721217788 0.008190493022263039 1</ambient>
-            <diffuse>0.04160463882620036 0.2568515721217788 0.008190493022263039 1</diffuse>
+                        <ambient>0.3665146074727429 0.6187437208969343 0.026689792506831008 1</ambient>
+            <diffuse>0.3665146074727429 0.6187437208969343 0.026689792506831008 1</diffuse>
           </material>
         </visual>
         <gravity>false</gravity>
@@ -295,12 +295,12 @@
     </model>
     <model name='front_face_of_box_box_1'>
       <static>true</static>
-      <pose>3.947598326378494 -3.7054262339140878 1.0442878603385375 0.0 0.0 2.900169923440803</pose>
+      <pose>2.767149221381709 -8.488518339070987 3.4029485446209535 0.0 0.0 1.5849927336074838</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>0.1 2.5663356103167185 2.088575720677075</size>
+              <size>0.1 3.0877584974595695 6.805897089241907</size>
             </box>
           </geometry>
           <surface>
@@ -316,7 +316,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>0.1 2.5663356103167185 2.088575720677075</size>
+              <size>0.1 3.0877584974595695 6.805897089241907</size>
             </box>
           </geometry>
           <material>
@@ -332,12 +332,12 @@
     </model>
     <model name='back_face_of_box_box_1'>
       <static>true</static>
-      <pose>1.5923911450570525 -3.12551496634226 1.0442878603385375 0.0 0.0 2.900169923440803</pose>
+      <pose>2.5283434276966603 8.331917550835323 3.4029485446209535 0.0 0.0 1.5849927336074838</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>0.1 2.5663356103167185 2.088575720677075</size>
+              <size>0.1 3.0877584974595695 6.805897089241907</size>
             </box>
           </geometry>
           <surface>
@@ -353,7 +353,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>0.1 2.5663356103167185 2.088575720677075</size>
+              <size>0.1 3.0877584974595695 6.805897089241907</size>
             </box>
           </geometry>
           <material>
@@ -369,12 +369,12 @@
     </model>
     <model name='left_face_of_box_box_1'>
       <static>true</static>
-      <pose>2.451255194633858 -4.709974946069265 1.0442878603385375 0.0 0.0 2.900169923440803</pose>
+      <pose>1.0540276867031688 -0.10092699230530665 3.4029485446209535 0.0 0.0 1.5849927336074838</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.325551060110848 0.1 2.088575720677075</size>
+              <size>16.722131010473845 0.1 6.805897089241907</size>
             </box>
           </geometry>
           <surface>
@@ -390,7 +390,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.325551060110848 0.1 2.088575720677075</size>
+              <size>16.722131010473845 0.1 6.805897089241907</size>
             </box>
           </geometry>
           <material>
@@ -406,12 +406,12 @@
     </model>
     <model name='right_face_of_box_box_1'>
       <static>true</static>
-      <pose>3.0887342768016888 -2.120966254187083 1.0442878603385375 0.0 0.0 2.900169923440803</pose>
+      <pose>4.2414649623752005 -0.05567379593035772 3.4029485446209535 0.0 0.0 1.5849927336074838</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.325551060110848 0.1 2.088575720677075</size>
+              <size>16.722131010473845 0.1 6.805897089241907</size>
             </box>
           </geometry>
           <surface>
@@ -427,7 +427,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.325551060110848 0.1 2.088575720677075</size>
+              <size>16.722131010473845 0.1 6.805897089241907</size>
             </box>
           </geometry>
           <material>
@@ -443,12 +443,12 @@
     </model>
     <model name='upper_face_of_box_box_2'>
       <static>true</static>
-      <pose>-1.3858321905136108 2.141458511352539 7.234257489170628 0.0 0.0 0.9383469664485125</pose>
+      <pose>5.8997111320495605 5.769093990325928 14.602008485318542 0.0 0.0 0.1116231011678076</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>4.55506703515271 2.870470599117115 0.1</size>
+              <size>2.9948961892771937 3.255330037248059 0.1</size>
             </box>
           </geometry>
           <surface>
@@ -464,12 +464,12 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>4.55506703515271 2.870470599117115 0.1</size>
+              <size>2.9948961892771937 3.255330037248059 0.1</size>
             </box>
           </geometry>
           <material>
-                        <ambient>0.9715067155834561 0.759421914497735 0.028173558781061286 1</ambient>
-            <diffuse>0.9715067155834561 0.759421914497735 0.028173558781061286 1</diffuse>
+                        <ambient>0.06880007246690367 0.1894479278761465 0.05706669994242566 1</ambient>
+            <diffuse>0.06880007246690367 0.1894479278761465 0.05706669994242566 1</diffuse>
           </material>
         </visual>
         <gravity>false</gravity>
@@ -477,12 +477,12 @@
     </model>
     <model name='front_face_of_box_box_2'>
       <static>true</static>
-      <pose>-0.18786804580106864 1.2635030437814636 3.592128744585314 0.0 0.0 2.509143293243409</pose>
+      <pose>6.086588665768598 4.101869739630822 7.276004242659271 0.0 0.0 1.6824194279627043</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>0.1 4.55506703515271 7.184257489170628</size>
+              <size>0.1 2.9948961892771937 14.552008485318542</size>
             </box>
           </geometry>
           <surface>
@@ -498,7 +498,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>0.1 4.55506703515271 7.184257489170628</size>
+              <size>0.1 2.9948961892771937 14.552008485318542</size>
             </box>
           </geometry>
           <material>
@@ -514,12 +514,12 @@
     </model>
     <model name='back_face_of_box_box_2'>
       <static>true</static>
-      <pose>-2.583796335226153 3.0194139789236143 3.592128744585314 0.0 0.0 2.509143293243409</pose>
+      <pose>5.712833598330523 7.436318241021033 7.276004242659271 0.0 0.0 1.6824194279627043</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>0.1 4.55506703515271 7.184257489170628</size>
+              <size>0.1 2.9948961892771937 14.552008485318542</size>
             </box>
           </geometry>
           <surface>
@@ -535,7 +535,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>0.1 4.55506703515271 7.184257489170628</size>
+              <size>0.1 2.9948961892771937 14.552008485318542</size>
             </box>
           </geometry>
           <material>
@@ -551,12 +551,12 @@
     </model>
     <model name='left_face_of_box_box_2'>
       <static>true</static>
-      <pose>-2.761688782609463 0.2641117363991876 3.592128744585314 0.0 0.0 2.509143293243409</pose>
+      <pose>4.361893414309106 5.596721508171258 7.276004242659271 0.0 0.0 1.6824194279627043</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.870470599117115 0.1 7.184257489170628</size>
+              <size>3.255330037248059 0.1 14.552008485318542</size>
             </box>
           </geometry>
           <surface>
@@ -572,7 +572,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.870470599117115 0.1 7.184257489170628</size>
+              <size>3.255330037248059 0.1 14.552008485318542</size>
             </box>
           </geometry>
           <material>
@@ -588,12 +588,12 @@
     </model>
     <model name='right_face_of_box_box_2'>
       <static>true</static>
-      <pose>-0.009975598417758968 4.0188052863058905 3.592128744585314 0.0 0.0 2.509143293243409</pose>
+      <pose>7.437528849790015 5.941466472480598 7.276004242659271 0.0 0.0 1.6824194279627043</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.870470599117115 0.1 7.184257489170628</size>
+              <size>3.255330037248059 0.1 14.552008485318542</size>
             </box>
           </geometry>
           <surface>
@@ -609,7 +609,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.870470599117115 0.1 7.184257489170628</size>
+              <size>3.255330037248059 0.1 14.552008485318542</size>
             </box>
           </geometry>
           <material>
@@ -625,12 +625,12 @@
     </model>
     <model name='upper_face_of_box_box_3'>
       <static>true</static>
-      <pose>-2.6752614974975586 -1.9790018796920776 13.72198925613376 0.0 0.0 1.0765679411473759</pose>
+      <pose>-8.055870056152344 -3.391749858856201 8.911956005183466 0.0 0.0 0.18888422416856054</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.5227743518429055 2.7290731358726177 0.1</size>
+              <size>2.50324302572536 4.104577759444691 0.1</size>
             </box>
           </geometry>
           <surface>
@@ -646,12 +646,12 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.5227743518429055 2.7290731358726177 0.1</size>
+              <size>2.50324302572536 4.104577759444691 0.1</size>
             </box>
           </geometry>
           <material>
-                        <ambient>0.06728769772960541 0.9611416208271738 0.053615644141701016 1</ambient>
-            <diffuse>0.06728769772960541 0.9611416208271738 0.053615644141701016 1</diffuse>
+                        <ambient>0.30669045885037083 0.7667523879646418 0.03475276864777829 1</ambient>
+            <diffuse>0.30669045885037083 0.7667523879646418 0.03475276864777829 1</diffuse>
           </material>
         </visual>
         <gravity>false</gravity>
@@ -659,12 +659,12 @@
     </model>
     <model name='front_face_of_box_box_3'>
       <static>true</static>
-      <pose>-1.4299954634127323 -2.6499908560424195 6.83599462806688 0.0 0.0 2.6473642679422724</pose>
+      <pose>-7.661137818835439 -5.456648160135716 4.430978002591733 0.0 0.0 1.759680550963457</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>0.1 2.5227743518429055 13.67198925613376</size>
+              <size>0.1 2.50324302572536 8.861956005183465</size>
             </box>
           </geometry>
           <surface>
@@ -680,7 +680,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>0.1 2.5227743518429055 13.67198925613376</size>
+              <size>0.1 2.50324302572536 8.861956005183465</size>
             </box>
           </geometry>
           <material>
@@ -696,12 +696,12 @@
     </model>
     <model name='back_face_of_box_box_3'>
       <static>true</static>
-      <pose>-3.920527531582385 -1.3080129033417358 6.83599462806688 0.0 0.0 2.6473642679422724</pose>
+      <pose>-8.450602293469249 -1.3268515575766866 4.430978002591733 0.0 0.0 1.759680550963457</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>0.1 2.5227743518429055 13.67198925613376</size>
+              <size>0.1 2.50324302572536 8.861956005183465</size>
             </box>
           </geometry>
           <surface>
@@ -717,7 +717,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>0.1 2.5227743518429055 13.67198925613376</size>
+              <size>0.1 2.50324302572536 8.861956005183465</size>
             </box>
           </geometry>
           <material>
@@ -733,12 +733,12 @@
     </model>
     <model name='left_face_of_box_box_3'>
       <static>true</static>
-      <pose>-3.297321300486067 -3.1334618948840895 6.83599462806688 0.0 0.0 2.6473642679422724</pose>
+      <pose>-9.334341381736293 -3.6361463244741703 4.430978002591733 0.0 0.0 1.759680550963457</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.7290731358726177 0.1 13.67198925613376</size>
+              <size>4.104577759444691 0.1 8.861956005183465</size>
             </box>
           </geometry>
           <surface>
@@ -754,7 +754,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.7290731358726177 0.1 13.67198925613376</size>
+              <size>4.104577759444691 0.1 8.861956005183465</size>
             </box>
           </geometry>
           <material>
@@ -770,12 +770,12 @@
     </model>
     <model name='right_face_of_box_box_3'>
       <static>true</static>
-      <pose>-2.05320169450905 -0.8245418645000653 6.83599462806688 0.0 0.0 2.6473642679422724</pose>
+      <pose>-6.777398730568396 -3.1473533932382325 4.430978002591733 0.0 0.0 1.759680550963457</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>2.7290731358726177 0.1 13.67198925613376</size>
+              <size>4.104577759444691 0.1 8.861956005183465</size>
             </box>
           </geometry>
           <surface>
@@ -791,7 +791,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>2.7290731358726177 0.1 13.67198925613376</size>
+              <size>4.104577759444691 0.1 8.861956005183465</size>
             </box>
           </geometry>
           <material>
@@ -805,14 +805,14 @@
         <gravity>false</gravity>
       </link>
     </model>
-    <model name='front_face_of_box_world_side'>
+    <model name='upper_face_of_box_box_4'>
       <static>true</static>
-      <pose>5.0 0.05 10.0 0.0 0.0 0.0</pose>
+      <pose>6.899400234222412 -5.146559238433838 18.116273096288605 0.0 0.0 1.453758267436935</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>0.1 10 20.0</size>
+              <size>5.80870292299687 4.315497444378678 0.1</size>
             </box>
           </geometry>
           <surface>
@@ -828,7 +828,553 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>0.1 10 20.0</size>
+              <size>5.80870292299687 4.315497444378678 0.1</size>
+            </box>
+          </geometry>
+          <material>
+                        <ambient>0.36748517363764066 0.6101431089426826 0.07084812978936708 1</ambient>
+            <diffuse>0.36748517363764066 0.6101431089426826 0.07084812978936708 1</diffuse>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='front_face_of_box_box_4'>
+      <static>true</static>
+      <pose>9.092045440062055 -5.404360366509511 9.033136548144302 0.0 0.0 3.0245545942318315</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.1 5.80870292299687 18.066273096288604</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>0.1 5.80870292299687 18.066273096288604</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/majors_box_4</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='back_face_of_box_box_4'>
+      <static>true</static>
+      <pose>4.706755028382769 -4.8887581103581645 9.033136548144302 0.0 0.0 3.0245545942318315</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.1 5.80870292299687 18.066273096288604</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>0.1 5.80870292299687 18.066273096288604</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/majors_box_4</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='left_face_of_box_box_4'>
+      <static>true</static>
+      <pose>6.554417523168672 -8.080699570308226 9.033136548144302 0.0 0.0 3.0245545942318315</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>4.315497444378678 0.1 18.066273096288604</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>4.315497444378678 0.1 18.066273096288604</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/minors_box_4</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='right_face_of_box_box_4'>
+      <static>true</static>
+      <pose>7.244382945276153 -2.212418906559447 9.033136548144302 0.0 0.0 3.0245545942318315</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>4.315497444378678 0.1 18.066273096288604</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>4.315497444378678 0.1 18.066273096288604</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/minors_box_4</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='upper_face_of_box_box_5'>
+      <static>true</static>
+      <pose>-5.829028129577637 8.292282104492188 14.764999248607717 0.0 0.0 1.4490020089539524</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>2.0450490907105356 4.163208755301545 0.1</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>2.0450490907105356 4.163208755301545 0.1</size>
+            </box>
+          </geometry>
+          <material>
+                        <ambient>0.46993771822757446 0.42923904820831227 0.05770587940630477 1</ambient>
+            <diffuse>0.46993771822757446 0.42923904820831227 0.05770587940630477 1</diffuse>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='front_face_of_box_box_5'>
+      <static>true</static>
+      <pose>-3.7132141740796305 8.03330618178929 7.357499624303858 0.0 0.0 3.019798335748849</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.1 2.0450490907105356 14.714999248607716</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>0.1 2.0450490907105356 14.714999248607716</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/majors_box_5</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='back_face_of_box_box_5'>
+      <static>true</static>
+      <pose>-7.944842085075645 8.551258027195086 7.357499624303858 0.0 0.0 3.019798335748849</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.1 2.0450490907105356 14.714999248607716</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>0.1 2.0450490907105356 14.714999248607716</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/majors_box_5</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='left_face_of_box_box_5'>
+      <static>true</static>
+      <pose>-5.959332813067263 7.227702567843943 7.357499624303858 0.0 0.0 3.019798335748849</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>4.163208755301545 0.1 14.714999248607716</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>4.163208755301545 0.1 14.714999248607716</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/minors_box_5</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='right_face_of_box_box_5'>
+      <static>true</static>
+      <pose>-5.69872344608801 9.356861641140432 7.357499624303858 0.0 0.0 3.019798335748849</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>4.163208755301545 0.1 14.714999248607716</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>4.163208755301545 0.1 14.714999248607716</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/minors_box_5</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='upper_face_of_box_box_6'>
+      <static>true</static>
+      <pose>-5.941562175750732 2.5355541706085205 18.569164494548353 0.0 0.0 1.4409171060318755</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>5.860241114073385 2.2010622849263486 0.1</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>5.860241114073385 2.2010622849263486 0.1</size>
+            </box>
+          </geometry>
+          <material>
+                        <ambient>0.9384963777342281 0.5772962320522756 0.07262417448842491 1</ambient>
+            <diffuse>0.9384963777342281 0.5772962320522756 0.07262417448842491 1</diffuse>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='front_face_of_box_box_6'>
+      <static>true</static>
+      <pose>-4.8007213316771855 2.386543841197522 9.259582247274176 0.0 0.0 3.011713432826772</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.1 5.860241114073385 18.519164494548352</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>0.1 5.860241114073385 18.519164494548352</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/majors_box_6</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='back_face_of_box_box_6'>
+      <static>true</static>
+      <pose>-7.082403019824279 2.684564500019519 9.259582247274176 0.0 0.0 3.011713432826772</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.1 5.860241114073385 18.519164494548352</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>0.1 5.860241114073385 18.519164494548352</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/majors_box_6</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='left_face_of_box_box_6'>
+      <static>true</static>
+      <pose>-6.327530646745632 -0.4194664509558286 9.259582247274176 0.0 0.0 3.011713432826772</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>2.2010622849263486 0.1 18.519164494548352</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>2.2010622849263486 0.1 18.519164494548352</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/minors_box_6</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='right_face_of_box_box_6'>
+      <static>true</static>
+      <pose>-5.555593704755833 5.490574792172868 9.259582247274176 0.0 0.0 3.011713432826772</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>2.2010622849263486 0.1 18.519164494548352</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>2.2010622849263486 0.1 18.519164494548352</size>
+            </box>
+          </geometry>
+          <material>
+                        <script>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/worlds/box_world/scripts</uri>
+                <uri>/home/patik/Diplomka/dp_ws/src/helper_pkg/src/helper_pkg/../../../pesat_resources/textures</uri>
+                <name>vrc/minors_box_6</name>
+            </script>
+          </material>
+        </visual>
+        <gravity>false</gravity>
+      </link>
+    </model>
+    <model name='front_face_of_box_world_side'>
+      <static>true</static>
+      <pose>10.0 0.05 10.0 0.0 0.0 0.0</pose>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.1 20 20.0</size>
+            </box>
+          </geometry>
+          <surface>
+              <friction>
+                <ode>
+                  <mu>100</mu>
+                  <mu2>50</mu2>
+                </ode>
+              </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box>
+              <size>0.1 20 20.0</size>
             </box>
           </geometry>
           <material>
@@ -844,12 +1390,12 @@
     </model>
     <model name='back_face_of_box_world_side'>
       <static>true</static>
-      <pose>-5.0 -0.05 10.0 0.0 0.0 0.0</pose>
+      <pose>-10.0 -0.05 10.0 0.0 0.0 0.0</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>0.1 10 20.0</size>
+              <size>0.1 20 20.0</size>
             </box>
           </geometry>
           <surface>
@@ -865,7 +1411,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>0.1 10 20.0</size>
+              <size>0.1 20 20.0</size>
             </box>
           </geometry>
           <material>
@@ -881,12 +1427,12 @@
     </model>
     <model name='left_face_of_box_world_side'>
       <static>true</static>
-      <pose>0 -5.05 10.0 0.0 0.0 0.0</pose>
+      <pose>0 -10.05 10.0 0.0 0.0 0.0</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>10 0.1 20.0</size>
+              <size>20 0.1 20.0</size>
             </box>
           </geometry>
           <surface>
@@ -902,7 +1448,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>10 0.1 20.0</size>
+              <size>20 0.1 20.0</size>
             </box>
           </geometry>
           <material>
@@ -918,12 +1464,12 @@
     </model>
     <model name='right_face_of_box_world_side'>
       <static>true</static>
-      <pose>0 5.05 10.0 0.0 0.0 0.0</pose>
+      <pose>0 10.05 10.0 0.0 0.0 0.0</pose>
       <link name='link'>
         <collision name='collision'>
           <geometry>
             <box>
-              <size>10 0.1 20.0</size>
+              <size>20 0.1 20.0</size>
             </box>
           </geometry>
           <surface>
@@ -939,7 +1485,7 @@
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box>
-              <size>10 0.1 20.0</size>
+              <size>20 0.1 20.0</size>
             </box>
           </geometry>
           <material>

@@ -23,15 +23,16 @@ drone_configuration:
     camera_range: 50
   properties:
     base_link: bebop2/base_link
+    simulation_base_link: "bebop2/simulation/position/base_link"
     max_speed: 17
     size: 0.5
   localization:
     position_in_time_service: /bebop2/position_in_time
   control:
     cmd_vel_topic: "/bebop2/cmd_vel"
-    video_max_horizontal_speed: 6.0 # m/s
+    video_max_horizontal_speed: 1.0 # 6.0 # m/s
     max_horizontal_speed: 16.0 # m/s
-    video_max_vertical_speed: 4.0 # m/s
+    video_max_vertical_speed: 1.0 # m/s
     max_vertical_speed: 6.0 # m/s
     max_rotation_speed: 3.491 # rad/s
     video_max_rotation_speed: 0.349 # rad/s

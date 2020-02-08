@@ -15,7 +15,7 @@ class Median(FitnessFunction):
     def score(self, objects, properties):
         ids = np.sort(np.array([i for (i, object) in objects.items()]))
         scores = [objects[i].score for i in ids]
-        median = np.median(scores)
+        median = np.median(scores[scores > 0.02])
         fitness = np.empty((len(objects)))
         i = 0
         for index in ids:

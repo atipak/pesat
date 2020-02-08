@@ -30,8 +30,7 @@
   </group>
   <node pkg="tf" type="static_transform_publisher" name="map_publisher" args="0 0 0 0 0 0 world map 10" />
 
-  <group ns="$(arg mav_name)">
-    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="rotator_controller camera_base_controller joint_state_controller"/>
+  <group ns="$(arg mav_name)" >
     <include file="$(find velocity_controller)/launch/spawn_mav_from_urdf.launch">
       <arg name="mav_name" value="$(arg mav_name)" />
       <arg name="model" value="$(find pesat_resources)/urdf/$(arg mav_name).urdf" />
@@ -41,12 +40,12 @@
       <rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />
       <remap from="odometry" to="odometry_sensor1/odometry" />
     </node>
-    <!-- ><node pkg="velocity_controller" name="map_server" type="velocity_controller_map_server" />-->
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >     
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="rotator_controller camera_base_controller joint_state_controller"/>
+    <node name="cmd_vel_controler" pkg="velocity_controller" type="velocity_controller_controler" output="screen"/>
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
      <param name="publish_frequency" type="double" value="50.0" />
      <param name="tf_prefix" type="string" value="" />
     </node>
-    <node name="cmd_vel_controler" pkg="velocity_controller" type="velocity_controller_controler" output="screen"/>
-    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
   </group>
 </launch>

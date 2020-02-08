@@ -176,14 +176,14 @@
       <parent link="${parent_link}" />
       <child link="${namespace}/camera_rotator_${camera_suffix}_link" />
       <axis xyz="0 1 0"/>
-      <limit lower="-${pi/6}" upper="${pi/6}" effort="0.02" velocity="0.02" /> 
+      <limit lower="-${pi/6}" upper="${pi/6}" effort="2.0" velocity="2.00" />
     </joint>
     <joint name="${namespace}/camera_${camera_suffix}_joint" type="revolute">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <parent link="${namespace}/camera_rotator_${camera_suffix}_link" />
       <child link="${namespace}/camera_${camera_suffix}_link" />
       <axis xyz="0 0 1"/>
-      <limit lower="-${pi/6}" upper="${pi/6}" effort="0.02" velocity="0.02" /> 
+      <limit lower="-${pi/6}" upper="${pi/6}" effort="2.0" velocity="2.0" />
     </joint>
     <link name="${namespace}/camera_${camera_suffix}_optical_link" />
     <joint name="${namespace}/camera_${camera_suffix}_optical_joint" type="fixed" >

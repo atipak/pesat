@@ -1,0 +1,102 @@
+material vrc/minors_box_0
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture mossy.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.6289308176100629 0.5333333333333333
+			}
+		}
+	}
+}
+material vrc/majors_box_0
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture mossy.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.6289308176100629 0.5333333333333333
+			}
+		}
+	}
+}
+material vrc/minors_box_1
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture mossy.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.13333333333333333 0.20512820512820515
+			}
+		}
+	}
+}
+material vrc/majors_box_1
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture mossy.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 5.333333333333333 0.20512820512820515
+			}
+		}
+	}
+}
+material vrc/minors_world_side
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture mossy.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.02666666666666667 0.13333333333333333
+			}
+		}
+	}
+}
+material vrc/majors_world_side
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture mossy.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.02666666666666667 0.13333333333333333
+			}
+		}
+	}
+}

@@ -7,10 +7,10 @@ material vrc/minors_box_0
 		{
 			texture_unit
 			{
-				texture red_bricks.png
+				texture grey_bricks.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.3728104504431526 0.09096140118306321
+				scale 0.2506995131726512 0.02499192195741484
 			}
 		}
 	}
@@ -24,10 +24,10 @@ material vrc/majors_box_0
 		{
 			texture_unit
 			{
-				texture red_bricks.png
+				texture grey_bricks.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.3586965942582269 0.09096140118306321
+				scale 0.08868883150009393 0.02499192195741484
 			}
 		}
 	}
@@ -44,7 +44,7 @@ material vrc/minors_box_1
 				texture red_bricks.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.3583380075488914 0.39899598807132697
+				scale 0.049834158864762994 0.12244283485428906
 			}
 		}
 	}
@@ -61,7 +61,7 @@ material vrc/majors_box_1
 				texture red_bricks.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.3247172076728069 0.39899598807132697
+				scale 0.2698829374185035 0.12244283485428906
 			}
 		}
 	}
@@ -78,7 +78,7 @@ material vrc/minors_box_2
 				texture red_bricks.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.29031244339853046 0.11599435774531736
+				scale 0.25599042917252224 0.05726586362109944
 			}
 		}
 	}
@@ -95,7 +95,7 @@ material vrc/majors_box_2
 				texture red_bricks.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.18294644774758964 0.11599435774531736
+				scale 0.27825115819271684 0.05726586362109944
 			}
 		}
 	}
@@ -112,7 +112,7 @@ material vrc/minors_box_3
 				texture grey_bricks.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.34791978771091103 0.02378609622492368
+				scale 0.2313267287714411 0.03669655455774155
 			}
 		}
 	}
@@ -129,7 +129,109 @@ material vrc/majors_box_3
 				texture grey_bricks.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.3763707782214987 0.02378609622492368
+				scale 0.3793073769995692 0.03669655455774155
+			}
+		}
+	}
+}
+material vrc/minors_box_4
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.19310249723790815 0.046126466089152995
+			}
+		}
+	}
+}
+material vrc/majors_box_4
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.14346289427784914 0.046126466089152995
+			}
+		}
+	}
+}
+material vrc/minors_box_5
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.20016611760631597 0.056631557994281274
+			}
+		}
+	}
+}
+material vrc/majors_box_5
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.4074881806596625 0.056631557994281274
+			}
+		}
+	}
+}
+material vrc/minors_box_6
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.37860506676266914 0.044998430333001736
+			}
+		}
+	}
+}
+material vrc/majors_box_6
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture red_bricks.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 0.14220120249524906 0.044998430333001736
 			}
 		}
 	}
@@ -143,10 +245,10 @@ material vrc/minors_world_side
 		{
 			texture_unit
 			{
-				texture red_bricks.png
+				texture grey_bricks.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.08333333333333334 0.04166666666666667
+				scale 0.04747492730401757 0.016260162601626018
 			}
 		}
 	}
@@ -160,10 +262,10 @@ material vrc/majors_world_side
 		{
 			texture_unit
 			{
-				texture red_bricks.png
+				texture grey_bricks.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.08333333333333334 0.04166666666666667
+				scale 0.04747492730401757 0.016260162601626018
 			}
 		}
 	}

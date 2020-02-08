@@ -12,6 +12,7 @@ import helper_pkg.utils as utils
 import helper_pkg.PredictionManagement as pm
 from algorithms.drone_neural import DeepPrediction
 from algorithms.drone_reactive import ReactivePrediction
+from algorithms.drone_section import SectionAlgorithm
 
 
 class PredictionLocalization(pm.PredictionManagement):
@@ -21,7 +22,7 @@ class PredictionLocalization(pm.PredictionManagement):
         target_configuration = rospy.get_param("target_configuration")
         drone_configuration = rospy.get_param("drone_configuration")
         logic_configuration = rospy.get_param("logic_configuration")
-        self._prediction_systems = [ReactivePrediction(), DeepPrediction(1)]
+        self._prediction_systems = [ReactivePrediction(), DeepPrediction(1), SectionAlgorithm(self.map)]
         self.prepare_structures()
         self._default_system = 0
         enum = namedtuple("State", ["searching", "tracking"])
@@ -76,7 +77,10 @@ class PredictionLocalization(pm.PredictionManagement):
             self._state = self._states.tracking
         elif self._state == self._states.tracking and change_state:
             self._state = self._states.searching
-        return 0
+        if self._state == self._states.tracking and False:
+            return 0
+        else:
+            return 2
 
     def change_between_tracking_and_planning(self):
         if self._target_under_supervision:
@@ -114,6 +118,22 @@ class PredictionLocalization(pm.PredictionManagement):
                 kwargs["camera_yaw"] = 0
                 kwargs["camera_pitch"] = 0
             kwargs["target_information"] = self._target_information
+        try:
+            trans_drone = self._tfBuffer.lookup_transform(self._map_frame,
+                                                                 self._drone_base_link_frame, rospy.Time())
+            trans_drone_camera = self._tfBuffer.lookup_transform(self._drone_base_link_frame,
+                                                                 self._camera_base_link_frame, rospy.Time())
+            explicit_quat = [trans_drone.transform.rotation.x, trans_drone.transform.rotation.y,
+                             trans_drone.transform.rotation.z, trans_drone.transform.rotation.w]
+            (_, _, yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
+            explicit_quat = [trans_drone_camera.transform.rotation.x, trans_drone_camera.transform.rotation.y,
+                             trans_drone_camera.transform.rotation.z, trans_drone_camera.transform.rotation.w]
+            (_, camera_pitch, camera_yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
+            kwargs["current_position"] = [trans_drone.transform.translation.x, trans_drone.transform.translation.y,
+                                          trans_drone.transform.translation.z, camera_yaw, camera_pitch, yaw]
+
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as excs:
+            rospy.loginfo("Exception during calculating of camera position:\n" + str(excs))
         return kwargs
 
     def get_position_from_history(self, time):

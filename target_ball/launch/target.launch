@@ -5,6 +5,9 @@
     <rosparam command="load" file="$(find pesat_resources)/config/drone_configuration.yaml" />
     <rosparam command="load" file="$(find pesat_resources)/config/environment_configuration.yaml" />
     <include file="$(find target_ball)/launch/spawn_target_from_urdf.launch"></include>
-    <node name="target_node" pkg="target_ball" type="target.py" output="screen"/>
+    <arg name="namespace" value="/target" />
+    <node name="target_node" pkg="target_ball" type="target.py" output="screen">
+        <remap from="/collision_object" to="/$(arg namespace)/collision_object"/>
+    </node>
     <node name="target_odom" pkg="target_ball" type="target_odom.py" output="screen"/>
 </launch>

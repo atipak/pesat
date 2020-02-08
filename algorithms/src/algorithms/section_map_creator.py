@@ -1,7 +1,6 @@
 import rospy
 import os
 import copy
-import pickle
 from geometry_msgs.msg import Pose
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
@@ -18,26 +17,51 @@ import triangle
 import matplotlib.pyplot as plt
 from shapely.ops import triangulate, nearest_points
 from shapely.strtree import STRtree
+from shapely.validation import explain_validity
 from scipy.optimize import differential_evolution
 import random
 from deap import base
 from deap import creator
 from deap import tools
+import traceback
+
+import multiprocessing
+import pickle as pck
+from copy_reg import pickle
+from types import MethodType
 
 
-# import multiprocessing
+def _pickle_method(method):
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    return _unpickle_method, (func_name, obj, cls)
+
+
+def _unpickle_method(func_name, obj, cls):
+    for cls in cls.mro():
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)
 
 
 class SectionMap(object):
     def __init__(self):
         super(SectionMap, self).__init__()
+        pickle(MethodType, _pickle_method, _unpickle_method)
         _camera_configuration = rospy.get_param("drone_configuration")["camera"]
+        logic_configuration = rospy.get_param("logic_configuration")
         self.hfov = _camera_configuration["hfov"]
         self.image_height = _camera_configuration["image_height"]
         self.image_width = _camera_configuration["image_width"]
         self.focal_length = self.image_width / (2.0 * np.tan(self.hfov / 2.0))
         self.vfov = 2 * np.arctan2(self.image_height / 2, self.focal_length)
         self.camera_range = _camera_configuration["camera_range"]
+        self.camera_max_angle = logic_configuration["tracking"]["camera_max_angle"]
         self._max_section_area = 40000
         self.vertices_tree = None
         self.centers_tree = None
@@ -107,6 +131,8 @@ class SectionMap(object):
                     if type(polygon) == LineString:
                         coords = polygon.coords
                         d = Point(coords[0]).distance(Point(coords[1]))
+                    elif type(polygon) == Point:
+                        d = 1
                     else:
                         a = np.array(zip(*polygon.exterior.xy))
                         d = np.max(distance.cdist(a, a))
@@ -149,7 +175,7 @@ class SectionMap(object):
                 region_object.maximal_entropy = np.clip(np.log2(points_visibility), 0, None)
             section_index += 1
             section_object.visibility = region_visibility * np.square(world_map.box_size)
-            section_object.maximal_entropy = np.clip(np.log2(region_visibility),0,None)
+            section_object.maximal_entropy = np.clip(np.log2(region_visibility), 0, None)
         vor = Voronoi(np.array(points_into_voronoi))
         for ridge_point in vor.ridge_points:
             s = sections_id[ridge_point[0]]
@@ -200,30 +226,30 @@ class SectionMap(object):
         verticies, delimiters = self.create_verticies(rtc)
         obstacles = self.get_shapely_obstacles(verticies, delimiters)
         print("Vertices for graph created:", len(verticies), "during time", time.time() - begin)
-        self.print_vertices(verticies, obstacles)
+        # SectionMap.print_vertices(verticies, obstacles)
         begin = time.time()
         edges = self.create_edges(verticies, delimiters, world_map, environment_configuration)
         print("Edges for graph created:", np.count_nonzero(edges), "during time", time.time() - begin)
-        self.print_edges(verticies, edges, obstacles)
+        # SectionMap.print_edges(verticies, edges, obstacles)
         # first section is map
         verticies_indices = range(len(verticies))
         sections_for_reduction = [verticies_indices[delimiters[len(delimiters) - 2] + 1:]]
         # print(sections_for_reduction)
         sections = []
         maximum = np.max(edges)
-        print("Dijsktra was successful")
+        self._max_section_area = np.clip(int(world_map.real_width * world_map.real_height / 50), 4000, 20000)
         print("Launching algorithm for making sections")
         while len(sections_for_reduction) > 0:
             section = np.array(sections_for_reduction.pop())
             rolled_section = np.roll(section, 1)
-            saved_index = 0
-            l_index = 0
-            for l_index in range(len(section)):
-                v = verticies[section[l_index]]
-                if v[0] == 2 and v[1] == 5:
-                    print(v)
-                    saved_index = l_index
-                    break
+            # saved_index = 0
+            # l_index = 0
+            # for l_index in range(len(section)):
+            #    v = verticies[section[l_index]]
+            #    if v[0] == -10 and v[1] == -4:
+            #        print(v)
+            #        saved_index = l_index
+            #        break
             # print(section)
             # print(rolled_section)
             # indeces = zip(rolled_section, section)
@@ -234,8 +260,8 @@ class SectionMap(object):
             # print(edges)
             graph = csr_matrix(edges)
             _, predecessors = dijkstra(csgraph=graph, directed=False, return_predecessors=True)
-            # [vertex1_index] = np.random.choice(len(section), 1, False)
-            vertex1_index = saved_index
+            [vertex1_index] = np.random.choice(len(section), 1, False)
+            # vertex1_index = saved_index
             vertex2_index = (vertex1_index + len(section) / 2) % len(section)
             lower_index, upper_index = (vertex1_index, vertex2_index) if vertex1_index < vertex2_index else (
                 vertex2_index, vertex1_index)
@@ -247,80 +273,56 @@ class SectionMap(object):
                     v2_index, v1_index)
                 path_upper_to_lower = utils.Graph.get_path(predecessors, section[lower_index], section[upper_index])
                 if len(np.intersect1d(path_upper_to_lower, section)) != len(path_upper_to_lower):
-                    correct_path = True
-                    break
-            if correct_path:
-                path_lower_to_upper = path_upper_to_lower[::-1]
-                print("vertices", verticies[section[lower_index]], verticies[section[upper_index]])
-                print("paths", path_upper_to_lower, path_lower_to_upper)
-                section_one = [section[i] for i in range(lower_index + 1, upper_index)]
-                section_two = [section[i] for i in range(upper_index + 1, len(section))]
-                section_two_part_one = [section[i] for i in range(0, lower_index)]
-                section_two.extend(section_two_part_one)
-                section_one.extend(path_upper_to_lower)
-                section_two.extend(path_lower_to_upper)
-                if self.get_section_area(section_one, verticies) > self._max_section_area:
-                    sections_for_reduction.append(section_one)
-                else:
-                    sections.append(section_one)
-                if self.get_section_area(section_two, verticies) > self._max_section_area:
-                    sections_for_reduction.append(section_two)
-                else:
-                    sections.append(section_two)
-            else:
+                    correct_path_upper_to_lower = [path_upper_to_lower[0]]
+                    for pi in range(1, len(path_upper_to_lower)):
+                        p = path_upper_to_lower[pi]
+                        if p not in section:
+                            correct_path_upper_to_lower.append(p)
+                        else:
+                            correct_path_upper_to_lower.append(p)
+                            break
+                    path_upper_to_lower = correct_path_upper_to_lower
+                    correct_first = np.in1d(section, correct_path_upper_to_lower[0]).nonzero()[0][0]
+                    correct_last = np.in1d(section, correct_path_upper_to_lower[-1]).nonzero()[0][0]
+                    lower_index, upper_index = (correct_first, correct_last) if correct_first < correct_last else (
+                        correct_last, correct_first)
+                    path_lower_to_upper = path_upper_to_lower[::-1]
+                    # print("vertices", verticies[section[lower_index]], verticies[section[upper_index]])
+                    # print("paths", path_upper_to_lower, path_lower_to_upper)
+                    section_one = [section[i] for i in range(lower_index + 1, upper_index)]
+                    section_two = [section[i] for i in range(upper_index + 1, len(section))]
+                    section_two_part_one = [section[i] for i in range(0, lower_index)]
+                    section_two.extend(section_two_part_one)
+                    section_one.extend(path_upper_to_lower)
+                    section_two.extend(path_lower_to_upper)
+                    if len(section_one) > 2 and len(section_two) > 2:
+                        section_one_polygon = Polygon(self.section_to_verticies(section_one, verticies))
+                        section_two_polygon = Polygon(self.section_to_verticies(section_two, verticies))
+                        if section_one_polygon.is_valid and section_two_polygon.is_valid and section_one_polygon.area > 25 and section_two_polygon.area > 25:
+                            if self.get_section_area(section_one, verticies) > self._max_section_area:
+                                sections_for_reduction.append(section_one)
+                            else:
+                                sections.append(section_one)
+                            if self.get_section_area(section_two, verticies) > self._max_section_area:
+                                sections_for_reduction.append(section_two)
+                            else:
+                                sections.append(section_two)
+                            correct_path = True
+                            break
+            if not correct_path:
                 sections.append(section)
         vertex_sections = []
         for s in sections:
-            vertex_section = []
-            for v in s:
-                vertex_section.append(verticies[v])
-            vertex_sections.append(np.array(vertex_section))
+            vertex_sections.append(np.array(self.section_to_verticies(s, verticies)))
         vertex_sections = np.array(vertex_sections)
-        self.print_section(vertex_sections, obstacles)
+        SectionMap.print_section(vertex_sections, obstacles)
         return vertex_sections, obstacles
 
-    def print_vertices(self, vertices, obstacles):
-        plt.figure()
-        self.draw_obstacles(obstacles)
-        self.draw_verticies(vertices)
-        plt.savefig("vertices_map.png")
-        plt.close()
-        return None
-
-    def draw_verticies(self, vertices):
-        plt.scatter(vertices[:, 0], vertices[:, 1], 3, "k")
-
-    def draw_edges(self, vertices, edges):
-        for v1 in range(len(edges)):
-            for v2 in range(len(edges[v1])):
-                if edges[v1, v2] > 0:
-                    plt.plot([vertices[v1, 0], vertices[v2, 0]], [vertices[v1, 1], vertices[v2, 1]], "k")
-
-    def print_edges(self, vertices, edges, obstacles):
-        plt.figure()
-        self.draw_obstacles(obstacles)
-        self.draw_edges(vertices, edges)
-        plt.savefig("edges_map.png")
-        plt.close()
-        return None
-
-    def draw_section(self, sections):
-        patterns = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
-        for section in sections:
-            pattern = np.random.choice(patterns, 1)[0]
-            plt.fill(section[:, 0], section[:, 1], fill=False, hatch=pattern)
-
-    def draw_obstacles(self, obstacles):
-        for o in obstacles:
-            x, y = o.exterior.xy
-            plt.fill(x, y, color=(0.2, 0.2, 0.2, 0.3))
-
-    def print_section(self, sections, obstacles):
-        plt.figure()
-        self.draw_obstacles(obstacles)
-        self.draw_section(sections)
-        plt.savefig("sections_map.png")
-        plt.close()
+    def section_to_verticies(self, section, verticies):
+        vertex_section = []
+        for v in section:
+            vertex_section.append(verticies[v])
+        return vertex_section
 
     def get_section_area(self, section, verticies):
         area = 0
@@ -521,9 +523,13 @@ class SectionMap(object):
 
     def triangulate_section(self, section, obstacles):
         section_polygon = Polygon(section)
+        if not section_polygon.is_valid:
+            print(section)
+            print(explain_validity(section_polygon))
         inner_obstacles = []
         for obstacle_index in range(len(obstacles)):
             obstacle = obstacles[obstacle_index]
+
             if abs(section_polygon.intersection(obstacle).area - obstacle.area) < 0.001:
                 # obstacle = self.simplify_polygon(obstacle)
                 # obstacle = obstacle.simplify(0.0, True)
@@ -561,18 +567,21 @@ class SectionMap(object):
                     continue
                 dd, ii = centers_tree.query(d, 5)
                 found = False
-                for i in ii[1:]:
-                    if used[i] == 0 and type(
-                            correct_triangles[i].intersection(correct_triangles[d_index])) is LineString:
-                        polygon = correct_triangles[i].union(correct_triangles[d_index])
-                        simplified_polygon = self.simplify_polygon(polygon)
-                        if len(np.array(simplified_polygon.exterior.coords)) == 4:
-                            union.append(simplified_polygon)
-                            used[i] = 1
-                            used[d_index] = 1
-                            extensible_polygons = True
-                            found = True
+                if len(ii) > 1:
+                    for i in ii[1:]:
+                        if i >= len(used):
                             break
+                        if used[i] == 0 and type(
+                                correct_triangles[i].intersection(correct_triangles[d_index])) is LineString:
+                            polygon = correct_triangles[i].union(correct_triangles[d_index])
+                            simplified_polygon = self.simplify_polygon(polygon)
+                            if len(np.array(simplified_polygon.exterior.coords)) == 4:
+                                union.append(simplified_polygon)
+                                used[i] = 1
+                                used[d_index] = 1
+                                extensible_polygons = True
+                                found = True
+                                break
                 if found:
                     continue
                 union.append(correct_triangles[d_index])
@@ -642,15 +651,25 @@ class SectionMap(object):
     def create_regions(self, world_map, sections, obstacles):
         section_points = []
         HEIGHTS_MIN, HEIGHTS_MAX = 3, 16
-        CAMERA_MIN, CAMERA_MAX = 0, np.pi / 3
+        CAMERA_MIN, CAMERA_MAX = 0, np.deg2rad(self.camera_max_angle)
         YAW_MIN, YAW_MAX = 0, 2 * np.pi
         CXPB = 0.02
         MUTPB = 0.8
-        NGEN = 1
+        NGEN = 100
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMin)
-        # pool = multiprocessing.Pool()
-        for section in sections:
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        inp = [(section, obstacles, world_map, HEIGHTS_MIN, CAMERA_MIN, YAW_MIN, HEIGHTS_MAX, CAMERA_MAX, YAW_MAX,
+                NGEN, MUTPB, CXPB) for section in sections]
+        section_points = pool.map(self.multiproc, inp)
+        return section_points
+
+    def multiproc(self, args):
+        try:
+            section, obstacles, world_map = args[0], args[1], args[2]
+            HEIGHTS_MIN, CAMERA_MIN, YAW_MIN = args[3], args[4], args[5]
+            HEIGHTS_MAX, CAMERA_MAX, YAW_MAX = args[6], args[7], args[8]
+            NGEN, MUTPB, CXPB = args[9], args[10], args[11]
             correct_triangles, inner_obstacles = self.triangulate_section(section, obstacles)
             min_area = 0.5
             maximal_iterations = 50
@@ -687,9 +706,12 @@ class SectionMap(object):
             pop = toolbox.population(n=100)
             current_best = None
             current_best_value = float("inf")
+            print("# individuals: " + str(N_CYCLES))
+            print("# triangles: " + str(len(correct_triangles)))
 
             iteration = 0
             for g in range(NGEN):
+                begin = time.time()
                 iteration += 1
                 var = 1.0 - float(iteration) / NGEN
                 position_var = int(PLACES_MAX * var)
@@ -709,6 +731,9 @@ class SectionMap(object):
                         del child1.fitness.values
                         del child2.fitness.values
 
+                # print("Time crossover: " + str(time.time() - begin))
+                # begin = time.time()
+
                 # Apply mutation on the offspring
                 for mutant in offspring:
                     if random.random() < MUTPB:
@@ -716,24 +741,42 @@ class SectionMap(object):
                                        yaw_var=yaw_var)
                         del mutant.fitness.values
 
+                # print("Time mutation: " + str(time.time() - begin))
+                # begin = time.time()
+
                 # Evaluate the individuals with an invalid fitness
                 invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                 fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
                 for ind, fit in zip(invalid_ind, fitnesses):
                     ind.fitness.values = fit
 
+                # print("Time evaluation: " + str(time.time() - begin))
+                # begin = time.time()
+
                 # The population is entirely replaced by the offspring
                 pop[:] = offspring
-                fitnesses = toolbox.map(toolbox.evaluate, pop)
+                fitnesses = [i.fitness.values for i in pop]
                 minimal_value = np.min(fitnesses)
                 if minimal_value < current_best_value:
                     current_best = pop[np.argmin(fitnesses)]
                     current_best_value = minimal_value
                 print("iteration:" + str(iteration) + ", minimal value: " + str(minimal_value))
+                print("Time: " + str(time.time() - begin))
 
             print("individual:", current_best)
             print("minimal value", current_best_value)
             points = np.reshape(np.array(current_best), (-1, 4))
+            without_duplicates = []
+            for p1 in points:
+                found = False
+                for p2 in without_duplicates:
+                    if p1[0] == p2[0] and abs(p1[1] - p2[1]) <= 1 and abs(p1[2] - p2[2]) <= np.deg2rad(0.5) and abs(
+                            p1[3] - p2[3]) <= np.deg2rad(15):
+                        found = True
+                        break
+                if not found:
+                    without_duplicates.append(p1)
+            points = np.array(without_duplicates)
             triangles = correct_triangles[np.round(points[:, 0]).astype(np.int32)]
             xy = np.array([np.array(tri.centroid) for tri in triangles])
             max_distance = self.get_max_distance(xy)
@@ -745,8 +788,12 @@ class SectionMap(object):
                 clusters[cluster[index] - 1].append(
                     [xy[index, 0], xy[index, 1], points[index, 1], points[index, 2], points[index, 3]])
             # self.plot_regions()
-            section_points.append(clusters)
-        return section_points
+            print(clusters)
+            return clusters
+        except Exception as e:
+            print(traceback.format_exc())
+            print(e)
+            raise e
 
     def plot_regions(self, section, correct_triangles, obstacles, xy, points):
         plt.figure()
@@ -823,7 +870,7 @@ class SectionMap(object):
             position.position.z = np.round(points[triangle_index, 1])
             position.orientation.y = points[triangle_index, 2]
             position.orientation.z = points[triangle_index, 3]
-            coordinates = world_map.rectangle_ray_tracing_3d(position, self.vfov, self.hfov, self.camera_range)
+            coordinates = world_map.faster_rectangle_ray_tracing_3d(position, self.vfov, self.hfov, self.camera_range)
             # print(coordinates)
             seen_pixels[coordinates[:, 0], coordinates[:, 1]] = 1
         seen_pixels_from_section = np.logical_and(seen_pixels, section_map)
@@ -887,10 +934,10 @@ class SectionMap(object):
             height_change = np.random.randint(-height_var, height_var, N_CYCLES)
             mutant1[:, 1] += height_change
         if camera_var > 0:
-            camera_change = np.random.uniform(-camera_var, camera_var, N_CYCLES)
+            camera_change = np.random.normal(0.0, camera_var, N_CYCLES)
             mutant1[:, 2] += camera_change
         if yaw_var > 0:
-            yaw_change = np.random.uniform(-yaw_var, yaw_var, N_CYCLES)
+            yaw_change = np.random.normal(0.0, yaw_var, N_CYCLES)
             mutant1[:, 3] += yaw_change
         mutant[:] = np.reshape(mutant1, (-1))[:]
         return (mutant,)
@@ -960,12 +1007,12 @@ class SectionMap(object):
     @staticmethod
     def pickle_sections(section_objects, section_file):
         with open(section_file, "wb") as fp:  # Pickling
-            pickle.dump(section_objects, fp)
+            pck.dump(section_objects, fp)
 
     @staticmethod
     def unpickle_sections(section_file):
         with open(section_file, "rb") as fp:  # Unpickling
-            return pickle.load(fp)
+            return pck.load(fp)
 
     @staticmethod
     def show_sections(sections):
@@ -989,6 +1036,139 @@ class SectionMap(object):
                     print("          NEIGHBORS")
                     for neighbor in point.neighbors:
                         print("          -neighbor " + str(neighbor) + " : " + str(point.neighbors[neighbor]))
+
+    @staticmethod
+    def section_score(sections):
+        print("SECTIONS")
+        for (_, section) in sections.items():
+            print("-section " + str(section.object_id) + "-- score: " + str(section.score) + ", entropy " + str(
+                section.entropy) + ", visibility: " + str(section.visibility))
+            print("    REGIONS")
+            for region_index in section.objects:
+                region = section.objects[region_index]
+                print("    -region " + str(region.object_id) + "-- score: " + str(region.score) + ", entropy " + str(
+                    region.entropy) + ", visibility: " + str(region.visibility))
+                print("       POINTS")
+                for point_index in region.objects:
+                    point = region.objects[point_index]
+                    print(
+                        "       -point " + str(point.object_id) + "-- score: " + str(point.score) + ", entropy: " + str(
+                            point.entropy) + ", visibility: " + str(point.visibility))
+
+    @staticmethod
+    def print_vertices(vertices, obstacles):
+        plt.figure()
+        SectionMap.draw_obstacles(obstacles)
+        SectionMap.draw_verticies(vertices)
+        plt.savefig("vertices_map.png")
+        plt.close()
+        return None
+
+    @staticmethod
+    def draw_verticies(vertices):
+        plt.scatter(vertices[:, 0], vertices[:, 1], 3, "k")
+
+    @staticmethod
+    def draw_edges(vertices, edges):
+        for v1 in range(len(edges)):
+            for v2 in range(len(edges[v1])):
+                if edges[v1, v2] > 0:
+                    plt.plot([vertices[v1, 0], vertices[v2, 0]], [vertices[v1, 1], vertices[v2, 1]], "k")
+
+    @staticmethod
+    def print_edges(vertices, edges, obstacles):
+        plt.figure()
+        SectionMap.draw_obstacles(obstacles)
+        SectionMap.draw_edges(vertices, edges)
+        plt.savefig("edges_map.png")
+        plt.close()
+        return None
+
+    @staticmethod
+    def draw_section(sections):
+        patterns = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
+        for section in sections:
+            pattern = np.random.choice(patterns, 1)[0]
+            plt.fill(section[:, 0], section[:, 1], fill=True, hatch=pattern)
+
+    @staticmethod
+    def draw_obstacles(obstacles):
+        for o in obstacles:
+            x, y = o.exterior.xy
+            plt.fill(x, y, color=(0.2, 0.2, 0.2, 0.3))
+
+    @staticmethod
+    def draw_list_obstacles(obstacles):
+        for o in obstacles:
+            plt.fill(o[:, 0], o[:, 1], color=(0.2, 0.2, 0.2, 0.3))
+
+    @staticmethod
+    def print_section(sections, obstacles):
+        plt.figure()
+        SectionMap.draw_obstacles(obstacles)
+        SectionMap.draw_section(sections)
+        plt.savefig("sections_map.png")
+        plt.close()
+
+    @staticmethod
+    def print_orientation_points(sections, world_map):
+        plt.figure()
+        obstacles = SectionMap.obstacles_corners(world_map)
+        SectionMap.draw_list_obstacles(obstacles)
+        SectionMap.draw_orientation_points(sections)
+        plt.savefig("orientation_point_map.png")
+        plt.close()
+        SectionMap.draw_visible_pixels(sections, world_map)
+
+    @staticmethod
+    def draw_orientation_points(sections):
+        logic_configuration = rospy.get_param("logic_configuration")
+        angle = np.deg2rad(logic_configuration["tracking"]["camera_max_angle"])
+        for (_, section) in sections.items():
+            for region_index in section.objects:
+                region = section.objects[region_index]
+                for point_index in region.objects:
+                    point = region.objects[point_index]
+                    x = point.data[0]
+                    y = point.data[1]
+                    z = point.data[2]
+                    vc = point.data[3]
+                    yaw = point.data[4]
+                    size = np.interp(z, [3, 15], [5, 20]).astype(np.int32)
+                    a = np.interp(vc, [0, angle], [0.1, 1])
+                    plt.scatter(x, y, size, "k")
+                    start_vector = np.array([x, y])
+                    end_vector = np.array(utils.Math.rotate_2d_vector(yaw, [1, 0]) * a + start_vector)
+                    plt.plot([start_vector[0], end_vector[0]], [start_vector[1], end_vector[1]])
+
+    @staticmethod
+    def draw_visible_pixels(sections, world_map):
+        m = np.logical_not(np.copy(world_map.target_obstacle_map))
+        for (_, section) in sections.items():
+            for region_index in section.objects:
+                region = section.objects[region_index]
+                for point_index in region.objects:
+                    point = region.objects[point_index]
+                    for (di, d) in point.objects.items():
+                        m[d[0], d[1]] = 1
+        m = m.astype(np.uint8)
+        m[m > 0] = 255
+        cv2.imwrite("visibility_map.png", m)
+
+    @staticmethod
+    def obstacles_corners(world_map):
+        corners = copy.copy(world_map.corners)
+        iterations = int(len(corners) / 4)
+        obstacles = []
+        for i in range(iterations):
+            obstacle = []
+            for j in range(4):
+                if i * 4 + j >= len(corners):
+                    break
+                corner = corners[i * 4 + j]
+                obstacle.append(corner)
+            obstacles.append(obstacle)
+        return np.array(obstacles)
 
 
 class SectionMapObjectTypes:

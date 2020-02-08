@@ -34,9 +34,12 @@ class DroneMoveit(MoveitServer):
 
     def get_target_joints(self, end_position):
         q = tf.transformations.quaternion_from_euler(0.0, 0.0, end_position.orientation.z)
+        # print("yaw", end_position.orientation.z, q)
         target_joints = [end_position.position.x, end_position.position.y, end_position.position.z, q[0], q[1], q[2],
                          q[3]]
         return target_joints
+
+
 
 if __name__ == '__main__':
     map_server = DroneMoveit()

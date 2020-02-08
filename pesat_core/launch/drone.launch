@@ -8,8 +8,9 @@
 	<include file="$(find velocity_controller)/launch/bebop_cmd_vel.launch">
 		<arg name="extra_localization" value="$(arg extra_localization)" />
 		<!--<arg name="world_name" value="avoidance"/>-->
-		<!--<arg name="world_name" value="basic"/>-->
-		<arg name="world_name" value="box_world/box_world"/>
+		<!--<arg name="world_name" value="basic"/>
+		<arg name="world_name" value="box_world/box_world"/>-->
+		<arg name="world_name" value="base_dynamic_world/base_dynamic_world"/>
 		<arg name="world_path" value="$(find pesat_resources)/worlds"/>
 	</include>
 

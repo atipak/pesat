@@ -7,6 +7,9 @@ from section_map_creator import SectionMapObject
 import rospy
 from collections import defaultdict
 import graph_tool.all as gt
+from sko.GA import GA_TSP
+from sko.SA import SA_TSP
+from sko.ACA import ACA_TSP
 
 
 class ExtendedOrderingFunction(object):
@@ -20,6 +23,178 @@ class ExtendedOrderingFunction(object):
 
     def remove_start_end_from_selected(self, selected, start, end):
         pass
+
+
+class TSPath(ExtendedOrderingFunction):
+
+    def __init__(self):
+        super(TSPath, self).__init__()
+        # Calculate the euclidian distance in n-space of the route r traversing cities c, ending at the path start.
+        self.path_distance = lambda r, c: np.sum([np.linalg.norm(c[r[p + 1]] - c[r[p]]) for p in range(len(r) - 1)])
+        # Reverse the order of all elements from element i to element k in array r.
+        self.two_opt_swap = lambda r, i, k: np.concatenate((r[0:i], r[k:-len(r) + i - 1:-1], r[k + 1:len(r)]))
+
+    def extended_select(self, selected_objects, scored_objects, objects, properties, start_position_index,
+                        end_position_index=None):
+        if len(end_position_index) > 1:
+            return np.array([])
+        distances = properties["distances"]
+        dist_sum = np.sum(distances)
+        ids = np.sort(np.array([i for (i, object) in objects.items()]))
+        start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        selected_objects_list = list(selected_objects)
+        if start_index not in selected_objects_list:
+            selected_objects_list.append(start_index)
+        if end_position_index is not None and len(end_position_index) > 0:
+            end_index = np.in1d(ids, end_position_index).nonzero()[0][0]
+            if end_index not in selected_objects_list and end_index != start_index:
+                selected_objects_list.append(end_index)
+        else:
+            end_index = start_index
+        s = np.in1d(selected_objects_list, [start_index]).nonzero()[0][0]
+        e = np.in1d(selected_objects_list, [end_index]).nonzero()[0][0]
+        # tour = self.graphtoolway(selected_objects_list, distances, dist_sum, end_index, start_index, s)
+        path = self.scikitopt("ga", selected_objects_list, s, e, distances, dist_sum)
+        # tour = self.scikitopt("sa", selected_objects_list, s, e, distances, dist_sum)
+        # tour = self.scikitopt("aca", selected_objects_list, s, e, distances, dist_sum)
+        print(start_position_index, end_position_index, ids[path])
+        return ids[path]
+
+    def graphtoolway(self, selected_objects_list, distances, dist_sum, end_index, start_index, s):
+        g = gt.Graph(directed=False)
+        start_node = g.add_vertex(1)
+        _ = g.add_vertex(len(selected_objects_list))
+        weight = g.new_edge_property("double")
+        # edges
+        ###################
+        for i in range(len(selected_objects_list)):
+            for j in range(len(selected_objects_list)):
+                if i != j:
+                    e = g.add_edge(i + 1, j + 1)
+                    # Euclidean distances
+                    weight[e] = distances[
+                        selected_objects_list[int(e.source()) - 1], selected_objects_list[int(e.target()) - 1]]
+            if i == s:
+                e1 = g.add_edge(0, s + 1)
+                weight[e1] = 0
+                e1 = g.add_edge(s + 1, 0)
+                weight[e1] = 0
+            else:
+                e1 = g.add_edge(0, i + 1)
+                weight[e1] = dist_sum
+                e1 = g.add_edge(i + 1, 0)
+                weight[e1] = dist_sum
+
+        # edges properties
+        ###################
+        if end_index != start_index:
+            end_node = g.vertex(np.in1d(selected_objects_list, end_index).nonzero()[0][0])
+            print(int(end_node))
+            e2 = g.add_edge(start_node, int(end_node))
+            weight[e2] = 0
+            e2 = g.add_edge(int(end_node), start_node)
+            weight[e2] = 0
+        pos = gt.sfdp_layout(g, eweight=weight)
+        # gt.graph_draw(g, pos=pos)
+        tour = gt.tsp_tour(g, start_node, weight)
+        if s + 1 == tour[1]:
+            path = np.array(tour)[1:-1]
+        else:
+            path = np.array(tour)[1:-1][::-1]
+        return path - 1
+
+    def two_opt(self, cities,
+                improvement_threshold):  # 2-opt Algorithm adapted from https://en.wikipedia.org/wiki/2-opt
+        route = np.arange(cities.shape[0])  # Make an array of row numbers corresponding to cities.
+        improvement_factor = 1  # Initialize the improvement factor.
+        best_distance = self.path_distance(route, cities)  # Calculate the distance of the initial path.
+        while improvement_factor > improvement_threshold:  # If the route is still improving, keep going!
+            distance_to_beat = best_distance  # Record the distance at the beginning of the loop.
+            for swap_first in range(0, len(route) - 2):
+                for swap_last in range(swap_first + 1, len(route)):  # to each of the cities following,
+                    new_route = self.two_opt_swap(route, swap_first,
+                                                  swap_last)  # try reversing the order of these cities
+                    new_distance = self.path_distance(new_route,
+                                                      cities)  # and check the total distance with this modification.
+                    if new_distance < best_distance:  # If the path distance is an improvement,
+                        route = new_route  # make this the accepted best route
+                        best_distance = new_distance  # and update the distance corresponding to this route.
+            improvement_factor = 1 - best_distance / distance_to_beat  # Calculate how much the route has improved.
+        return route  # When the route is no longer improving substantially, stop searching and return the route.
+
+    def scikitopt(self, typ, selected, begin_index, end_index, distances, dist_sum):
+        selected = np.array(selected)
+        selected_distances = distances[np.ix_(selected, selected)]
+        distance_matrix = np.empty((selected_distances.shape[0] + 1, selected_distances.shape[1] + 1))
+        distance_matrix[1:, 1:] = selected_distances
+        distance_matrix[0, :] = dist_sum
+        distance_matrix[:, 0] = dist_sum
+        distance_matrix[0, begin_index + 1] = 0
+        distance_matrix[begin_index + 1, 0] = 0
+        distance_matrix[0, end_index + 1] = 0
+        distance_matrix[end_index + 1, 0] = 0
+        if typ == "ga":
+            points = self.gatsp(distance_matrix)
+        if typ == "sa":
+            points = self.satsp(distance_matrix)
+        if typ == "aca":
+            points = self.acatsp(distance_matrix)
+        print(points)
+        index = np.in1d(points, [0]).nonzero()[0][0]
+        points = np.roll(points, -index)[1:] - 1
+        if points[0] != begin_index:
+            points = points[::-1]
+        print(points)
+        return points
+
+    def gatsp(self, distance_matrix):
+        def cal_total_distance(routine):
+            '''The objective function. input routine, return total distance.
+            cal_total_distance(np.arange(num_points))
+            '''
+            num_points, = routine.shape
+            ii = np.arange(0, num_points)
+            ii %= num_points
+            jj = np.roll(ii, 1)
+            return np.sum(distance_matrix[routine[ii], routine[jj]])
+
+        ga_tsp = GA_TSP(func=cal_total_distance, n_dim=distance_matrix.shape[0], size_pop=50, max_iter=50,
+                        prob_mut=0.01)
+        best_points, best_distance = ga_tsp.fit()
+        return best_points
+
+    def satsp(self, distance_matrix):
+        def cal_total_distance(routine):
+            '''The objective function. input routine, return total distance.
+            cal_total_distance(np.arange(num_points))
+            '''
+            num_points, = routine.shape
+            ii = np.arange(0, num_points)
+            ii %= num_points
+            jj = np.roll(ii, 1)
+            return np.sum(distance_matrix[routine[ii], routine[jj]])
+
+        sa_tsp = SA_TSP(func=cal_total_distance, x0=range(distance_matrix.shape[0]), T=100, T_min=1,
+                        L=10 * distance_matrix.shape[0])
+
+        best_points, best_distance = sa_tsp.fit()
+        return best_points
+
+    def acatsp(self, distance_matrix):
+        def cal_total_distance(routine):
+            '''The objective function. input routine, return total distance.
+            cal_total_distance(np.arange(num_points))
+            '''
+            num_points, = routine.shape
+            return sum(
+                [distance_matrix[routine[i % num_points], routine[(i + 1) % num_points]] for i in range(num_points)])
+
+        aca = ACA_TSP(func=cal_total_distance, n_dim=distance_matrix.shape[0],
+                      size_pop=50, max_iter=200,
+                      distance_matrix=distance_matrix)
+
+        best_x, best_y = aca.fit()
+        return best_x
 
 
 class NeighboursPath(ExtendedOrderingFunction):
@@ -41,21 +216,24 @@ class NeighboursPath(ExtendedOrderingFunction):
             i += 1
         graph = csr_matrix(dist)
         dist_matrix, predecessors = dijkstra(csgraph=graph, directed=False, return_predecessors=True)
+        start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
         # where we start and the way we will go
-        lasts = [start_position_index]
-        way = [start_position_index]
+        lasts = [start_index]
+        way = [start_index]
         # if end position is not None, then we have to end up in this position
         back_way = []
+        end_index = -1
         if len(end_position_index) > 0 and end_position_index[0] != start_position_index:
-            lasts.append(end_position_index[0])
-            back_way.extend(end_position_index)
+            end_index = np.in1d(ids, [end_position_index[0]]).nonzero()[0][0]
+            lasts.append(end_index)
+            back_way.extend([end_index])
         rest = selected_objects[:]
-        if start_position_index in rest:
-            i = list(rest).index(start_position_index)
+        if start_index in rest:
+            i = list(rest).index(start_index)
             ii = np.r_[0:i, i + 1: len(rest)]
             rest = rest[ii]
-        if end_position_index in rest:
-            i = list(rest).index(end_position_index)
+        if end_index in rest:
+            i = list(rest).index(end_index)
             ii = np.r_[0:i, i + 1:len(rest)]
             rest = rest[ii]
         # find better part for complete way from start to end
@@ -79,7 +257,7 @@ class NeighboursPath(ExtendedOrderingFunction):
                 lasts[1] = maximum[-1]
             rest = rest[np.bitwise_not(np.in1d(rest, maximum))]
         way.extend(np.flip(back_way))
-        return way
+        return ids[way]
 
 
 class DirectPath(ExtendedOrderingFunction):
@@ -88,20 +266,24 @@ class DirectPath(ExtendedOrderingFunction):
                         end_position_index=[]):
         object_distances = properties["distances"]
         # where we start and the way we will go
-        lasts = [start_position_index]
-        way = [start_position_index]
+        ids = np.sort(np.array([i for (i, object) in objects.items()]))
+        start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        lasts = [start_index]
+        way = [start_index]
         # if end position is not None, then we have to end up in this position
         back_way = []
+        end_index = -1
         if len(end_position_index) > 0 and end_position_index[0] != start_position_index:
-            lasts.append(end_position_index[0])
-            back_way.extend(end_position_index)
+            end_index = np.in1d(ids, [end_position_index[0]]).nonzero()[0][0]
+            lasts.append(end_index)
+            back_way.extend(end_index)
         rest = np.array(selected_objects[:])
-        if start_position_index in rest:
-            i = list(rest).index(start_position_index)
+        if start_index in rest:
+            i = list(rest).index(start_index)
             ii = np.r_[0:i, i + 1: len(rest)]
             rest = rest[ii]
-        if end_position_index in rest:
-            i = list(rest).index(end_position_index)
+        if end_index in rest:
+            i = list(rest).index(end_index)
             ii = np.r_[0:i, i + 1:len(rest)]
             rest = rest[ii]
         while len(rest) > 0:
@@ -124,7 +306,7 @@ class DirectPath(ExtendedOrderingFunction):
                 lasts[1] = rest[minimum_index]
             rest = rest[mask]
         way.extend(np.flip(back_way))
-        return way
+        return ids[way]
 
 
 class AStarSearch(ExtendedOrderingFunction):
@@ -346,11 +528,11 @@ class AStarSearch(ExtendedOrderingFunction):
                 ind = np.in1d(ids, [key]).nonzero()[0]
                 if len(ind) > 0:
                     if ind[0] == start_index:
-                        add_vertex =  shadow_start_index
+                        add_vertex = shadow_start_index
                     else:
                         add_vertex = ind[0]
-                    #print(str(i) + "->" + str(add_vertex))
-                    g.add_edge(i,add_vertex)
+                    # print(str(i) + "->" + str(add_vertex))
+                    g.add_edge(i, add_vertex)
             i += 1
 
         # edges properties
@@ -414,6 +596,7 @@ class AStarSearch(ExtendedOrderingFunction):
         while v != g.vertex(start_index):
             path.append(int(v))
             v = g.vertex(pred[v])
+        path.append(int(v))
         path = path[::-1]
         return ids[path]
 

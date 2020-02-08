@@ -1,7 +1,7 @@
 environment_configuration:
   map:
     frame: map
-    obstacles_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/box_world/box_world.json
+    obstacles_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/box_world/box_world1.json
     section_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/box_world/section_file.pickle
     size: 10
   world:
