@@ -7,12 +7,11 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
-from matplotlib.collections import PatchCollection
-from matplotlib.patches import Rectangle
-from numpy.distutils.command.build import build
 from scipy import signal, spatial
 import multiprocessing as mp
 import time
+from scipy.spatial.transform import Rotation as R
+from scipy.spatial import cKDTree, ConvexHull
 
 box = namedtuple("box", ["center_x", "center_y", "width", "length", "height", "orientation"])
 loaded_box = None
@@ -28,11 +27,11 @@ class Building(object):
 
     def __init__(self):
         brick_height = 0.075  # mm
-        #self.texture_names = ["grey_bricks.png", "red_bricks.png"]
+        # self.texture_names = ["grey_bricks.png", "red_bricks.png"]
         self.texture_names = ["mossy.png", "mossy.png"]
         # bricks_count_in_column = [41, 16]
         bricks_count_in_column = [5, 5]
-        #images_pixels_width = [1233, 1024]
+        # images_pixels_width = [1233, 1024]
         images_pixels_width = [1, 1]
         # images_pixels_heigth = [3600, 1024]
         images_pixels_heigth = [1, 1]
@@ -881,9 +880,10 @@ class Building(object):
         box_height = 0.1
         h = box.height
         z = h / 2
-        red = np.random.rand()
-        green = np.random.rand()
-        blue = h / 255.0
+        r_number = 0.4
+        red = r_number
+        green = r_number
+        blue = r_number
         i = np.random.randint(0, len(self.texture_names))
         texture_name = self.texture_names[i]
         texture_height = self.textures_heights[i]
@@ -1324,8 +1324,6 @@ def dynamic_avoidance_map():
     building.draw_map_into_file(world_name, obstacles, [0.0, 0.0], None, width, height, prefix="statical_image_")
 
 
-
-
 def base_maps():
     sizes = [10, 100]
     builts = [0.1, 0.4, 0.7]
@@ -1464,6 +1462,7 @@ def generate_random_map_from_submaps(size, build_up, height, position, dynamical
                  size, final_built_up, maximal_width, minimal_width, maximal_height, minimal_height,
                  maximal_orientation, minimal_orientation)
     print("Time {}".format(time.time() - start))
+    return world_name, drone_position, target_position
 
 
 def objects_reduction(objects, size):
@@ -1526,6 +1525,12 @@ def objects_reduction(objects, size):
                             cv2.fillConvexPoly(map, int_pts[i], 255)
                         break
             if not found:
+                b = [box(small_objects[i, 0, 0], small_objects[i, 0, 1], small_objects[i, 0, 2], small_objects[i, 0, 3],
+                         small_objects[i, 0, 4], small_objects[i, 0, 5])]
+                v, rso, sh, int_sh_pts, int_pts, b = building.check_new_object(b, size, size, map_resolution,
+                                                                               map, 1.5, 1)
+                for i in range(len(int_pts)):
+                    cv2.fillConvexPoly(map, int_pts[i], 255)
                 new_objects.append(np.copy(small_objects[i]))
                 used[i] = True
     oo = []
@@ -1569,7 +1574,7 @@ def generate_map_from_submaps(size, build_up, height, position, dynamical_obstac
                 map_data = json.load(inputfile)
             objects = np.array(map_data["objects"])
             c_o = len(objects)
-            objects = objects_reduction(objects, 50)
+            # objects = objects_reduction(objects, 50)
             reduced_objects += c_o - len(objects)
             selected_objects = decrease_build_up(objects, 50.0, build_up)
             selected_objects = move_and_resize_objects(selected_objects, k, l, size, 50.0, height)
@@ -1580,16 +1585,19 @@ def generate_map_from_submaps(size, build_up, height, position, dynamical_obstac
     all_objects = np.array(all_objects)
     print("After reduction: {}".format(reduced_objects))
     drone_position, target_position, _ = free_position_for_drone_and_target(all_objects, position)
-    t = right_objects[:, 0, [0, 1]] == np.array(drone_position)
-    s = np.sum(t, axis=1)
-    indices_drone = np.nonzero(s == 2)[0]
-    t = right_objects[:, 0, [0, 1]] == np.array(target_position)
-    s = np.sum(t, axis=1)
-    indices_target = np.nonzero(s == 2)[0]
-    mm = np.ones(len(right_objects), dtype=np.bool)
-    mm[indices_drone] = False
-    mm[indices_target] = False
-    right_objects = right_objects[mm]
+    if drone_position is None:
+        print("Unfortunately there weren't find places for drone and its target.")
+    else:
+        t = right_objects[:, 0, [0, 1]] == np.array(drone_position[:2])
+        s = np.sum(t, axis=1)
+        indices_drone = np.nonzero(s == 2)[0]
+        t = right_objects[:, 0, [0, 1]] == np.array(target_position[:2])
+        s = np.sum(t, axis=1)
+        indices_target = np.nonzero(s == 2)[0]
+        mm = np.ones(len(right_objects), dtype=np.bool)
+        mm[indices_drone] = False
+        mm[indices_target] = False
+        right_objects = right_objects[mm]
     if dynamical_obstacles == "y":
         a = np.array([o[0][2] * o[0][3] for o in right_objects])
         mask = a > 9
@@ -1683,11 +1691,24 @@ def convolution_method(boxes, target_size, drone_size, map_resolution):
 
 
 def free_position_for_drone_and_target(objects, mode):
+    hfov = 1.7
+    image_height = 480
+    image_width = 856
+    camera_range = 50
+    focal_length = image_width / (2.0 * np.tan(hfov / 2.0))
+    vfov = 2 * np.arctan2(image_height / 2, focal_length)
     x_coors = []
     y_coors = []
+    corners_height = []
     boolean_mask = []
+    objects_centers = []
     for obj in objects:
         o = obj[0]
+        object_class = [box(*o)]
+        corners = Building.split_to_points(object_class)
+        height = o[4]
+        corners_height.append([corners, height])
+        objects_centers.append([o[0], o[1]])
         if o[2] * o[3] < 9:
             boolean_mask.append(True)
             x_coors.append(o[0])
@@ -1696,6 +1717,8 @@ def free_position_for_drone_and_target(objects, mode):
             boolean_mask.append(False)
     x_coors = np.array(x_coors)
     y_coors = np.array(y_coors)
+    corners_height = np.array(corners_height)
+    tree = cKDTree(np.array(objects_centers))
     boolean_mask = np.array(boolean_mask, dtype=np.bool)
     if len(x_coors) == 0:
         return None, None, None
@@ -1715,20 +1738,213 @@ def free_position_for_drone_and_target(objects, mode):
         if len(target_y) == 0:
             continue
         target_x = x_coors[mask]
-        target_index = np.random.randint(0, len(target_y), 1)[0]
-        nonzeros = np.nonzero(mask)[0]
-        small_objects_target_index = nonzeros[target_index]
-        objects_drone_index = boolean_mask_nonzeros[i]
-        objects_target_index = boolean_mask_nonzeros[small_objects_target_index]
-        m = np.ones(len(objects), dtype=np.bool)
-        m[objects_drone_index] = False
-        m[objects_target_index] = False
-        return [x_coors[i], y_coors[i]], [target_x[target_index], target_y[target_index]], objects[m]
+        target_permutation = np.random.permutation(len(target_y))
+        for target_index in target_permutation:
+            # target_index = np.random.randint(0, len(target_y), 1)[0]
+            nonzeros = np.nonzero(mask)[0]
+            small_objects_target_index = nonzeros[target_index]
+            for height in range(4, 12):
+                drone_target_distance = np.sqrt(
+                    np.square(x_coors[i] - target_x[target_index]) + np.square(
+                        y_coors[i] - target_y[target_index]) + np.square(height - 1))
+                drone_configuration = [x_coors[i], y_coors[i], height, 0.0,
+                                       0.0, 0]
+                objects_drone_index = boolean_mask_nonzeros[i]
+                objects_target_index = boolean_mask_nonzeros[small_objects_target_index]
+                m = np.ones(len(objects), dtype=np.bool)
+                m[objects_drone_index] = False
+                m[objects_target_index] = False
+                if is_target_visible(drone_configuration, vfov, hfov, camera_range,
+                                     [target_x[target_index], target_y[target_index], 1], tree, corners_height[m]):
+                    return [x_coors[i], y_coors[i], height], [target_x[target_index], target_y[target_index], 1], \
+                           objects[m]
+    return None, None, None
 
+
+def in_hull(points, point):
+    hull = ConvexHull(points, incremental=True)
+    area = hull.area
+    hull.add_points(np.array([point]))
+    return abs(area - hull.area) < 0.5
+
+
+def is_target_visible(position, vfov, hfov, max_range, target_position, tree, objects):
+    height = 0.2
+    h_angles = [position[5] - hfov / 2.0, position[5] + hfov / 2.0]
+    v_angles = np.clip([position[4] - vfov / 2.0, position[4] + vfov / 2.0],
+                       (0, 0), (np.pi / 2, np.pi / 2))
+    angles = [[v_angles[0], h_angles[0]],  # bottom left
+              [v_angles[1], h_angles[0]],  # upper left
+              [v_angles[1], h_angles[1]],  # upper right
+              [v_angles[0], h_angles[1]]]  # bottom right
+    r = R.from_euler('yz', angles)
+    start_point = np.array([position[0], position[1], position[2]])
+    vectors = r.apply(np.array([1, 0, 0]))
+    t = np.abs(height + (-position[2] / vectors[:, 2]))
+    t = np.nan_to_num(t)
+    t = np.clip(t, None, max_range)
+    visible_points = np.empty((4, 2))
+    visible_points[:, 0] = t * vectors[:, 0] + position[0]
+    visible_points[:, 1] = t * vectors[:, 1] + position[1]
+    if not in_hull(visible_points, [target_position[0], target_position[1]]):
+        return False
+    # find corners
+    ii = np.array(tree.query_ball_point([start_point[:2]], max_range)[0]).astype(np.int32)
+    ii = ii[ii < len(objects)]
+    if len(ii) == 0:
+        return True
+    else:
+        mask = np.zeros(len(objects), np.bool)
+        mask[ii] = True
+        selected_objects = objects[mask]
+        for selected_object in selected_objects:
+            corners = selected_object[0]
+            height = selected_object[1]
+            cs = np.zeros((4, 3))
+            cs[:, :2] = selected_object[0]
+            cs[:, 2] = selected_object[1]
+            vectors = cs - start_point
+            t = np.abs(height + (-position[2] / vectors[:, 2]))
+            t = np.nan_to_num(t)
+            t = np.clip(t, None, max_range)
+            xyz = np.empty((8, 2))
+            xyz[:4, 0], xyz[:4, 1] = cs[:, 0], cs[:, 1]
+            xyz[4:, 0], xyz[4:, 1] = t * vectors[:, 0] + position[0], t * vectors[:, 1] + position[1]
+            if in_hull(xyz, [target_position[0], target_position[1]]):
+                return False
+        return True
+
+
+def generate_drone_launch_file(file_path, world_name="basic", drone_place=None, extra_localization="false",
+                               slam="false"):
+    if drone_place is None:
+        drone_place = [0.0, 0.0, 0.1]
+    text = """<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+    <arg name="world_name" default="{}" />
+    <arg name="drone_x" default="{}" />
+    <arg name="drone_y" default="{}" />
+    <arg name="drone_z" default="{}" />
+    <arg name="extra_localization" default="{}" />
+    <arg name="slam" default="{}" />
+    
+
+
+    <!-- Gazebo -->
+    <include file="$(find velocity_controller)/launch/bebop_cmd_vel.launch">
+        <arg name="extra_localization" value="$(arg extra_localization)" />
+        <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="world_path" value="$(find pesat_resources)/worlds"/>
+        <arg name="x" default="$(arg drone_x)" />
+        <arg name="y" default="$(arg drone_y)" />
+        <arg name="z" default="$(arg drone_z)" />
+    </include>
+
+    <!-- map server -->
+    <group ns="bebop2">
+        <!-- Moveit -->
+        <include file="$(find central_system)/launch/drone_moveit.launch"/>
+        <include file="$(find central_system)/launch/map_planning_server.launch"/>
+    </group>
+
+
+    <!-- Robot localization package -->
+    <include file="$(find central_system)/launch/localization.launch" if="$(arg extra_localization)"/>
+
+    <!-- SLAM -->
+    <include file="$(find central_system)/launch/orb_slam2_gazebo_mono.launch" if="$(arg slam)">
+        <arg name="namespace" value="bebop2" />
+    </include>
+
+</launch>
+    """.format(world_name, drone_place[0], drone_place[1], drone_place[2], extra_localization, slam)
+    with open(file_path, "w") as file:
+        file.write(text)
+
+
+def generate_target_launch_file(file_path, target_position=None, target="true", targetloc="true", cctv="true"):
+    if target_position is None:
+        target_position = [5.0, 0.0, 1.5]
+    if len(target_position) == 2:
+        target_position.append(1.5)
+    text = """<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+    <!-- target section-->
+	<arg name="target" default="{}" />
+	<arg name="targetloc" default="{}" />
+	<arg name="cctv" default="{}" />
+	<arg name="target_x" default="{}"/>
+    <arg name="target_y" default="{}"/>
+    <arg name="target_z" default="{}"/>
+
+    <group ns="target">
+        <!-- Target localization -->
+        <include file="$(find target_localization)/launch/target_loc.launch" if="$(arg targetloc)">
+            <!--<arg name="image_topic" value="/bebop2/camera_base/image_raw"/>-->
+        </include>
+
+        <!-- Target ball -->
+        <group if="$(arg target)">
+            <include file="$(find target_ball)/launch/target_moveit.launch" />
+            <include file="$(find target_ball)/launch/target.launch">
+                <arg name="x" default="$(arg target_x)"/>
+                <arg name="y" default="$(arg target_y)"/>
+                <arg name="z" default="$(arg target_z)"/>
+            </include>
+        </group>
+
+    </group>
+    <group ns="environment">
+        <!-- CCTV cameras for filling database of drone, support for searching -->
+        <include file="$(find cctv_system)/launch/cctv_system.launch" if="$(arg cctv)">
+        </include>
+    </group>
+</launch>
+    """.format(target, targetloc, cctv, target_position[0], target_position[1], target_position[2])
+    with open(file_path, "w") as file:
+        file.write(text)
+
+
+def generate_environment_configuration_file(file_path, obstacles_file_name, world_folder_path):
+    text = """environment_configuration:
+  map:
+    frame: map
+    obstacles_file: {}.json
+    section_file: {}.section_file.pickle
+    size: 10
+  world:
+    path: $(find pesat_resources)/worlds
+    name: box_world
+  properties:
+    extra_localization: false
+  watchdog:
+    cameras_file: .
+    camera_shot_topic: "/cctv/shot"
+    camera_registration_service: "/cctv/registration"
+    camera_update_topic: "/cctv/update"
+    camera_notification_topic: "/cctv/notifications"
+    camera_switch_topic: "/cctv/switch\"""".format(obstacles_file_name, world_folder_path)
+    with open(file_path, "w") as file:
+        file.write(text)
 
 if __name__ == "__main__":
     # generate_experiments_submaps()
+    name, drone_position, target_position = generate_random_map_from_submaps(100, 0.4, -1, "n", "n", 123456789)
+    path = "/home/patik/Diplomka/dp_ws/src/pesat_core/launch/"
+    ending="drone.launch"
+    abs_path = path + ending
+    doubled_name = name + "/" + name
+    generate_drone_launch_file(abs_path, doubled_name, drone_position)
+    ending = "target.launch"
+    abs_path = path + ending
+    generate_target_launch_file(abs_path, target_position)
+    world_path = "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/"
+    world_folder_path = world_path +  name
+    obstacles_file_name = world_path + doubled_name
+    path = "/home/patik/Diplomka/dp_ws/src/pesat_resources/config/"
+    environment_configuration_file_name = "environment_configuration.yaml"
+    abs_path = path + environment_configuration_file_name
+    generate_environment_configuration_file(abs_path, obstacles_file_name, world_folder_path)
     # generate_random_maps_from_submaps()
     # grid_map = Building.grid_map()
-    dynamic_avoidance_map()
-
+    # dynamic_avoidance_map()

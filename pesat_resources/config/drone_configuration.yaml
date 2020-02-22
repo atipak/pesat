@@ -30,9 +30,9 @@ drone_configuration:
     position_in_time_service: /bebop2/position_in_time
   control:
     cmd_vel_topic: "/bebop2/cmd_vel"
-    video_max_horizontal_speed: 1.0 # 6.0 # m/s
+    video_max_horizontal_speed: 6.0 # 6.0 # m/s
     max_horizontal_speed: 16.0 # m/s
-    video_max_vertical_speed: 1.0 # m/s
+    video_max_vertical_speed: 3 # 3.0 m/s
     max_vertical_speed: 6.0 # m/s
     max_rotation_speed: 3.491 # rad/s
     video_max_rotation_speed: 0.349 # rad/s

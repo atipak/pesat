@@ -11,6 +11,9 @@
   <arg name="paused" default="true"/>
   <arg name="extra_localization" default="false" />
   <arg name="world_path" default="$(find rotors_gazebo)/worlds" />
+  <arg name="x" default="0.0"/>
+  <arg name="y" default="0.0"/>
+  <arg name="z" default="0.1"/>
   <!-- The following line causes gzmsg and gzerr messages to be printed to the console
       (even when Gazebo is started through roslaunch) -->
   <arg name="verbose" default="false"/>
@@ -34,6 +37,9 @@
     <include file="$(find velocity_controller)/launch/spawn_mav_from_urdf.launch">
       <arg name="mav_name" value="$(arg mav_name)" />
       <arg name="model" value="$(find pesat_resources)/urdf/$(arg mav_name).urdf" />
+      <arg name="x" default="$(arg x)"/>
+      <arg name="y" default="$(arg y)"/>
+      <arg name="z" default="$(arg z)"/>
     </include>
     <node name="lee_position_controller_node" pkg="rotors_control" type="lee_position_controller_node" output="screen">
       <rosparam command="load" file="$(find rotors_gazebo)/resource/lee_controller_$(arg mav_name).yaml" />

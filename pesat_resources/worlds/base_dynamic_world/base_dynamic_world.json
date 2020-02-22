@@ -29,10 +29,10 @@
                 "x_size": 4.24,
                 "y_size": 4.24,
                 "z_size": 5,
-                "red": 0.9987331647653881,
-                "green": 0.6574377972774668,
-                "blue": 0.0196078431372549,
-                "texture_name": "mossy.png"
+                "red": 0.4,
+                "green": 0.4,
+                "blue": 0.4,
+                "texture_name": "colour_pattern.png"
             },
             {
                 "name": "box_1",
@@ -45,10 +45,10 @@
                 "x_size": 0.5,
                 "y_size": 20,
                 "z_size": 13,
-                "red": 0.253993024908972,
-                "green": 0.8804275406672822,
-                "blue": 0.050980392156862744,
-                "texture_name": "mossy.png"
+                "red": 0.4,
+                "green": 0.4,
+                "blue": 0.4,
+                "texture_name": "colour_pattern.png"
             }
         ]
     },

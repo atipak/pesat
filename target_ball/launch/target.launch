@@ -4,7 +4,15 @@
     <rosparam command="load" file="$(find pesat_resources)/config/target_configuration.yaml" />
     <rosparam command="load" file="$(find pesat_resources)/config/drone_configuration.yaml" />
     <rosparam command="load" file="$(find pesat_resources)/config/environment_configuration.yaml" />
-    <include file="$(find target_ball)/launch/spawn_target_from_urdf.launch"></include>
+    <arg name="x" default="5.0"/>
+    <arg name="y" default="0.0"/>
+    <arg name="z" default="1.5"/>
+
+    <include file="$(find target_ball)/launch/spawn_target_from_urdf.launch">
+      <arg name="x" default="$(arg x)"/>
+      <arg name="y" default="$(arg y)"/>
+      <arg name="z" default="$(arg z)"/>
+    </include>
     <arg name="namespace" value="/target" />
     <node name="target_node" pkg="target_ball" type="target.py" output="screen">
         <remap from="/collision_object" to="/$(arg namespace)/collision_object"/>

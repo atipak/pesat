@@ -713,9 +713,15 @@ class SectionAlgorithm(pm.PredictionAlgorithm):
         super(SectionAlgorithm, self).__init__()
         environment_configuration = rospy.get_param("environment_configuration")
         section_file = environment_configuration["map"]["section_file"]
-        sections = SectionMap.unpickle_sections(section_file)
-        self._algorithm = SectionsAlgrotihms(sections, mapa)
+        try:
+            self._sections = SectionMap.unpickle_sections(section_file)
+            self._algorithm = SectionsAlgrotihms(self._sections, mapa)
+        except IOError as ioerror:
+            print(ioerror)
+            self._sections = None
+
         self._first_update = False
+
 
     def state_variables(self, drone_positions, target_positions, map, **kwargs):
         return {}
@@ -723,22 +729,32 @@ class SectionAlgorithm(pm.PredictionAlgorithm):
     def pose_from_parameters(self, drone_positions, target_positions, map, **kwargs):
         drone_position = drone_positions[0]
         target_position = target_positions[0]
-        # current_drone_position = utils.DataStructures.pointcloud2_to_pose_stamped(drone_position)
-        # current_drone_position = np.array([
-        #    current_drone_position.pose.position.x,
-        #    current_drone_position.pose.position.y,
-        #    current_drone_position.pose.position.z,
-        #    current_drone_position.pose.orientation.x,
-        #    current_drone_position.pose.orientation.y,
-        #    current_drone_position.pose.orientation.z
-        # ])
-        target_probability_map = utils.DataStructures.array_to_image(
-            utils.DataStructures.pointcloud2_to_array(target_position), map.width, map.height, map.resolution)
-        self._algorithm.update_probability_map(target_probability_map)
-        if not self._first_update:
-            self._algorithm.update_scores()
-        current_drone_position = None
-        if "current_position" in kwargs:
-            current_drone_position = kwargs["current_position"]
-        position = self._algorithm.next_point(current_drone_position)
-        return np.array([position])
+        if self._sections is not None:
+            # current_drone_position = utils.DataStructures.pointcloud2_to_pose_stamped(drone_position)
+            # current_drone_position = np.array([
+            #    current_drone_position.pose.position.x,
+            #    current_drone_position.pose.position.y,
+            #    current_drone_position.pose.position.z,
+            #    current_drone_position.pose.orientation.x,
+            #    current_drone_position.pose.orientation.y,
+            #    current_drone_position.pose.orientation.z
+            # ])
+            target_probability_map = utils.DataStructures.array_to_image(
+                utils.DataStructures.pointcloud2_to_array(target_position), map.width, map.height, map.resolution)
+            self._algorithm.update_probability_map(target_probability_map)
+            if not self._first_update:
+                self._algorithm.update_scores()
+            current_drone_position = None
+            if "current_position" in kwargs:
+                current_drone_position = kwargs["current_position"]
+            position = self._algorithm.next_point(current_drone_position)
+            return np.array([position])
+        else:
+            current_drone_position = None
+            if "current_position" in kwargs:
+                current_drone_position = kwargs["current_position"]
+                current_drone_position.append(0)
+                current_drone_position = np.array(current_drone_position)
+            else:
+                current_drone_position = drone_position
+            return current_drone_position

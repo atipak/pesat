@@ -21,6 +21,7 @@ from algorithms.target_reactive import PredictionNaive
 from algorithms.target_particles import PredictionWithParticles
 from sensor_msgs.msg import PointCloud2
 import time
+import traceback
 
 lowerBound0 = np.array([0, 100, 90])
 upperBound0 = np.array([10, 255, 255])
@@ -110,7 +111,7 @@ class PredictionLocalization(pm.PredictionManagement):
         target_configuration = rospy.get_param("target_configuration")
         drone_configuration = rospy.get_param("drone_configuration")
         environment_configuration = rospy.get_param("environment_configuration")
-        self._prediction_systems = [PredictionWithParticles(), PredictionNaive(), PredictionNetwork(1)]
+        self._prediction_systems = [PredictionWithParticles()] #, PredictionNaive(), PredictionNetwork(1)]
         self.prepare_structures()
         self._default_system = 0
         opponent_service_name = drone_configuration["localization"]["position_in_time_service"]
@@ -642,6 +643,7 @@ class VisionLocalisation(object):
                 self._drone_tf_frame = trans
                 self._pub_shot.publish(shot)
             except Exception as e:
+                traceback.print_exc()
                 rospy.loginfo("Problem with drone camera shot. " + str(e))
         self._last_tf_frame = tf_frame
 

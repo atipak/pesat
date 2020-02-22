@@ -1,33 +1,39 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
+    <arg name="world_name" default="sworld-100-0_3981--1-n--1-n-123456789/sworld-100-0_3981--1-n--1-n-123456789" />
+    <arg name="drone_x" default="-47.727950036525726" />
+    <arg name="drone_y" default="-14.879679441452026" />
+    <arg name="drone_z" default="5" />
     <arg name="extra_localization" default="false" />
-	<arg name="slam" default="false" />
+    <arg name="slam" default="false" />
+    
 
 
     <!-- Gazebo -->
-	<include file="$(find velocity_controller)/launch/bebop_cmd_vel.launch">
-		<arg name="extra_localization" value="$(arg extra_localization)" />
-		<!--<arg name="world_name" value="avoidance"/>-->
-		<!--<arg name="world_name" value="basic"/>
-		<arg name="world_name" value="box_world/box_world"/>-->
-		<arg name="world_name" value="base_dynamic_world/base_dynamic_world"/>
-		<arg name="world_path" value="$(find pesat_resources)/worlds"/>
-	</include>
+    <include file="$(find velocity_controller)/launch/bebop_cmd_vel.launch">
+        <arg name="extra_localization" value="$(arg extra_localization)" />
+        <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="world_path" value="$(find pesat_resources)/worlds"/>
+        <arg name="x" default="$(arg drone_x)" />
+        <arg name="y" default="$(arg drone_y)" />
+        <arg name="z" default="$(arg drone_z)" />
+    </include>
 
-	<!-- map server -->
-	<group ns="bebop2">
+    <!-- map server -->
+    <group ns="bebop2">
         <!-- Moveit -->
         <include file="$(find central_system)/launch/drone_moveit.launch"/>
         <include file="$(find central_system)/launch/map_planning_server.launch"/>
-	</group>
+    </group>
 
 
-	<!-- Robot localization package -->
-	<include file="$(find central_system)/launch/localization.launch" if="$(arg extra_localization)"/>
+    <!-- Robot localization package -->
+    <include file="$(find central_system)/launch/localization.launch" if="$(arg extra_localization)"/>
 
-	<!-- SLAM -->
-	<include file="$(find central_system)/launch/orb_slam2_gazebo_mono.launch" if="$(arg slam)">
-	    <arg name="namespace" value="bebop2" />
-	</include>
+    <!-- SLAM -->
+    <include file="$(find central_system)/launch/orb_slam2_gazebo_mono.launch" if="$(arg slam)">
+        <arg name="namespace" value="bebop2" />
+    </include>
 
 </launch>
+    

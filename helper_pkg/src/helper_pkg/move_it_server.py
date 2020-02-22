@@ -100,7 +100,7 @@ class MoveitServer(object):
             if os.path.isfile(self.obstacles_file):
                 with open(self.obstacles_file, "r") as file:
                     f = json.load(file)
-                    self.obstacles = f["objects"]
+                    self.obstacles = f["objects"]["statical"]
                     self.world = f["world"]
                     self.create_outside_world(self.world["width"], self.world["height"], self.world["maximal_height"])
                 index = 0
@@ -160,18 +160,32 @@ class MoveitServer(object):
             diff_x = c_state.multi_dof_joint_state.transforms[0].translation.x - end_position.position.x
             diff_y = c_state.multi_dof_joint_state.transforms[0].translation.y - end_position.position.y
             diff_z = c_state.multi_dof_joint_state.transforms[0].translation.z - end_position.position.z
-            self._workspace_size = abs(diff_x) + abs(diff_y) + abs(diff_z)
+            self._workspace_size = abs(diff_x) + abs(diff_y) + abs(diff_z) + 1
+            print(self._workspace_size)
             self.move_group.set_workspace(
                 [-self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.x,
                  -self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.y,
                  -self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.z,
                  self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.x,
                  self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.y,
-                 self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.x +
-                 c_state.multi_dof_joint_state.transforms[0].translation.z])
+                 self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.z])
             target_joints = self.get_target_joints(end_position)
             self.move_group.set_joint_value_target(target_joints)
             self.move_group.set_start_state(c_state)
+            explicit_quat = [c_state.multi_dof_joint_state.transforms[0].rotation.x,
+                             c_state.multi_dof_joint_state.transforms[0].rotation.y,
+                             c_state.multi_dof_joint_state.transforms[0].rotation.z,
+                             c_state.multi_dof_joint_state.transforms[0].rotation.w]
+            (_, _, yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
+            rospy.loginfo("Start configuration x: {}, y: {}, z: {}, yaw: {}".format(
+                c_state.multi_dof_joint_state.transforms[0].translation.x,
+                c_state.multi_dof_joint_state.transforms[0].translation.y,
+                c_state.multi_dof_joint_state.transforms[0].translation.z,
+                yaw))
+            rospy.loginfo("End configuration x: {}, y: {}, z: {}, yaw: {}".format(end_position.position.x,
+                                                                                  end_position.position.y,
+                                                                                  end_position.position.z,
+                                                                                  end_position.orientation.z))
             plan = self.move_group.plan()
             for point in plan.multi_dof_joint_trajectory.points:
                 for transform in point.transforms:

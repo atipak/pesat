@@ -211,7 +211,7 @@ class CornersMove(CustomMove):
             self._tree = None
         else:
             self._tree = cKDTree(self._map.corners)
-        series = np.arange(0,2*np.pi, np.pi/10)
+        series = np.arange(0, 2 * np.pi, np.pi / 10)
         self._const = 1.5
         self._circle = np.array(zip(self._const * np.cos(series), self._const * np.sin(series)))
 
@@ -275,7 +275,7 @@ class CornersMove(CustomMove):
                 index = np.random.choice(range(len(corners_in_directions)), 1, p=probabilities)
                 corner = np.array(corners_in_directions)[index][0]
                 center_of_rec = self.center_of_rec_from_corner(corner)
-                vector = np.array([corner[0] - center_of_rec[0] , corner[1] - center_of_rec[1]])
+                vector = np.array([corner[0] - center_of_rec[0], corner[1] - center_of_rec[1]])
                 vector = utils.Math.normalize(vector)
                 position = self.get_position(corner, vector, current_position)
                 if position is not None:
@@ -450,6 +450,9 @@ class Target():
         self.next_change = 0
         rospy.Subscriber("/gazebo/model_states", ModelStates, self.callback_target_state)
         rospy.Subscriber("/user/target/strategy", Int64, self.callback_strategy_choice)
+        file_map_id = int(self._obstacles_file_path.split("/")[-2].split("-")[-1])
+        self.f = open("tracking_test/target_log_file_{}.txt".format(file_map_id), "a")
+        self.f.write("------------------------------\n")
 
     def pick_strategy(self):
         if self._is_fusion_active:
@@ -586,6 +589,8 @@ class Target():
         while not rospy.is_shutdown():
             current_position = self.get_current_position()
             if current_position is not None:
+                self.f.write("{}, {}, {}, {}\n".format(self._strategy, rospy.Time.now().to_sec(),
+                                                       current_position.x, current_position.y))
                 if self._destination_position is None:
                     velocity = self._current_velocity
                     direction = self._current_direction

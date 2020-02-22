@@ -13,6 +13,8 @@ import helper_pkg.utils as utils
 import helper_pkg.PredictionManagement as pm
 from helper_pkg.utils import Constants
 
+# head -n $(grep -n "^0" avoidance_log_file.txt | tail -1 | grep -o -E '[0-9]+' | head -1) avoidance_log_file.txt 
+
 
 class AvoidanceAlgorithm(pm.PredictionAlgorithm):
     DRONE_POSITIONS = 2
@@ -29,13 +31,14 @@ class AvoidanceAlgorithm(pm.PredictionAlgorithm):
         self._low_bound = logic_configuration["avoiding"]["low_bound"]
         self._minimum_distance = logic_configuration["avoiding"]["minimum_distance"]
         self._max_height = logic_configuration["conditions"]["max_height"]
+        maximal_speed = drone_configuration["control"]["video_max_horizontal_speed"]
         self._shift_constant = 1
         self._smaller_shift_constant = 0.1
         self._drone_size = drone_configuration["properties"]["size"]
         self._sonar_change_limit = 0.3
         self._collision_change_limit = 0.1
         self._timeout = 50
-        self.f = open("avoidance_log_file.txt", "a")
+        self.f = open("avoidance_test/log_file_{}_{}.txt".format("colour", "big"), "a")
         self.f.write("------------------------------\n")
 
     def pose_from_parameters(self, drone_positions, target_positions, map, **kwargs):
@@ -146,7 +149,7 @@ class AvoidanceAlgorithm(pm.PredictionAlgorithm):
         # to 1
         if collision_probability > self._low_bound and state != 1 and (state == 2 or state == 0):
             print("To 1")
-            if stable_point is None or (abs(stable_point.x - drone_position[0, 0]) > 0.2 and abs(
+            if stable_point is None or (abs(stable_point.x - drone_position[0, 0]) > 0.2 or abs(
                     stable_point.y - drone_position[0, 1]) > 0.2):
                 stable_point = Point()
                 stable_point.x = drone_position[0, 0]
@@ -172,15 +175,15 @@ class AvoidanceAlgorithm(pm.PredictionAlgorithm):
             # print("sonar data {}, {}".format(sensor_data, older_sensor_data))
             collision_change_time = 0
             state = 3
-            if stable_point is None or (abs(stable_point.x - drone_position[0, 0]) > 0.2 and abs(
+            if stable_point is None or (abs(stable_point.x - drone_position[0, 0]) > 0.2 or abs(
                     stable_point.y - drone_position[0, 1]) > 0.2):
                 stable_point = Point()
                 stable_point.x = drone_position[0, 0]
                 stable_point.y = drone_position[0, 1]
                 stable_point.z = drone_position[0, 5]
         # to 4
-        elif collision_change_time == 0 and sonar_change < 0 and abs(
-                older_sensor_data - sensor_data) > self._sonar_change_limit and state != 0 and state != 2 and state == 3:
+        elif collision_change_time == 0 and sonar_change >= 0 and abs(
+                older_sensor_data - sensor_data) > self._sonar_change_limit and older_sensor_data - sensor_data < 0 and state != 0 and state != 2 and state == 3:
             if stable_point is not None and np.sqrt(
                     np.square(stable_point.x - drone_position[0, 0]) + np.square(
                         stable_point.y - drone_position[0, 1])) < 0.5:
@@ -280,7 +283,23 @@ class AvoidingManagment(pm.PredictionManagement):
     def add_sonar_record(self, cycle_passed):
         avg_prob = np.average(self._last_sonar_predictions)
         if cycle_passed:
-            self._sonar_records.append(avg_prob)
+            add_new_value = True
+            try:
+                trans_map_drone = self._tfBuffer.lookup_transform(self._map_frame, self._drone_base_link_frame,
+                                                                  rospy.Time())
+                explicit_quat = [trans_map_drone.transform.rotation.x, trans_map_drone.transform.rotation.y,
+                                 trans_map_drone.transform.rotation.z, trans_map_drone.transform.rotation.w]
+                (drone_roll, drone_pitch, drone_yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
+                if abs(drone_roll) > 0.9 or abs(drone_pitch) > 0.9:
+                    add_new_value = False
+            except (
+                    tf2_ros.LookupException, tf2_ros.ConnectivityException,
+                    tf2_ros.ExtrapolationException) as excs:
+                pass
+            if add_new_value or len(self._sonar_records) == 0:
+                self._sonar_records.append(avg_prob)
+            else:
+                self._sonar_records.append(self._sonar_records[-1])
 
     def step(self):
         if self._next_estimate < rospy.Time.now().to_sec() and rospy.Time.now().to_sec() - 2 > 0:

@@ -7,10 +7,10 @@ material vrc/minors_box_0
 		{
 			texture_unit
 			{
-				texture mossy.png
+				texture colour_pattern.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.6289308176100629 0.5333333333333333
+				scale 3.5333192000565323 2.9962546816479403
 			}
 		}
 	}
@@ -24,10 +24,10 @@ material vrc/majors_box_0
 		{
 			texture_unit
 			{
-				texture mossy.png
+				texture colour_pattern.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.6289308176100629 0.5333333333333333
+				scale 3.5333192000565323 2.9962546816479403
 			}
 		}
 	}
@@ -41,10 +41,10 @@ material vrc/minors_box_1
 		{
 			texture_unit
 			{
-				texture mossy.png
+				texture colour_pattern.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.13333333333333333 0.20512820512820515
+				scale 0.7490636704119851 1.1524056467876693
 			}
 		}
 	}
@@ -58,10 +58,10 @@ material vrc/majors_box_1
 		{
 			texture_unit
 			{
-				texture mossy.png
+				texture colour_pattern.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 5.333333333333333 0.20512820512820515
+				scale 29.9625468164794 1.1524056467876693
 			}
 		}
 	}
@@ -75,10 +75,10 @@ material vrc/minors_world_side
 		{
 			texture_unit
 			{
-				texture mossy.png
+				texture colour_pattern.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.02666666666666667 0.13333333333333333
+				scale 0.149812734082397 0.7490636704119851
 			}
 		}
 	}
@@ -92,10 +92,10 @@ material vrc/majors_world_side
 		{
 			texture_unit
 			{
-				texture mossy.png
+				texture colour_pattern.png
 				filtering anistropic
 				max_anisotropy 16
-				scale 0.02666666666666667 0.13333333333333333
+				scale 0.149812734082397 0.7490636704119851
 			}
 		}
 	}

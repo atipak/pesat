@@ -53,6 +53,9 @@ class CenralSystem(object):
         self._stay_fly_timeout = 1.0
         self._stay_time = 0.0
         self._fly_time = 0.0
+        self._seen = False
+        self._start_phase = True
+        self._target_information = None
 
         rospy.Subscriber(logic_configuration["avoiding"]["recommended_altitude_topic"], Float32,
                          self.callback_recommended_altitude)
@@ -146,6 +149,20 @@ class CenralSystem(object):
         response = self.get_drone_position_in_time(service, data.header.stamp.to_sec(), data.center, data.refresh)
         return [response]
 
+    def callback_target_information(self, data):
+        self._target_information = data
+
+    def is_target_seen_by_drone(self):
+        if self._target_information is None:
+            self._seen = False
+            return False
+        if self._target_information.quotient > 0.7:
+            self._seen = True
+            return True
+        else:
+            self._seen = False
+            return False
+
     def safe_sat_service_acquisition(self):
         if self._tracker_next_point_srv is None:
             try:
@@ -193,10 +210,10 @@ class CenralSystem(object):
             desired_positions = np.array(
                 [x_next, y_next, z_next, camera_horientation_next, camera_vorientation_next, yaw_next])
             dif = desired_positions - current_positions
-            print("Current, desired position, {}, {}".format(current_positions, desired_positions))
-            print(
-                "difference: x: {}, y: {}, z: {}, horizontal {}, vertical: {}, yaw: {}".format(dif[0], dif[1], dif[2],
-                                                                                               dif[3], dif[4], dif[5]))
+            # print("Current, desired position, {}, {}".format(current_positions, desired_positions))
+            # print(
+            #    "difference: x: {}, y: {}, z: {}, horizontal {}, vertical: {}, yaw: {}".format(dif[0], dif[1], dif[2],
+            #                                                                                   dif[3], dif[4], dif[5]))
             if abs(dif[5]) > 0.1 or abs(dif[2]) > 0.2:
                 # desired_positions = self.rotate_lift_move(desired_positions, current_positions)
                 pass
@@ -280,7 +297,7 @@ class CenralSystem(object):
             self._state = self._states.avoiding
             self._emergency_state = True
         elif self._collision_probability < self._low_collision_limit and self._state == self._states.avoiding:
-            self._emergency_state = True
+            # self._emergency_state = True
             self._state = self._states.sat
 
     def get_current_drone_state(self):
@@ -321,13 +338,14 @@ class CenralSystem(object):
 
     def loop(self):
         # print("loop")
+        self.is_target_seen_by_drone()
         if self.is_emergency():
             self.execute_emergency_actions()
             return
         self.change_state()
         time = rospy.Time.now().to_sec() + 0.5
         # response = self.real_case(time)
-        response = self.avoiding_test(time)
+        response = self.tracking_test(time)
         # response = self.pid_tunning()
         # print("response {}".format(response))
         if response is None:
@@ -340,7 +358,6 @@ class CenralSystem(object):
             #                                                  response.position.z, response.orientation.z))
             if self._plan is None or len(self._plan) == 0 or not self.are_poses_similiar(self._plan[-1], response):
                 # print("response {}, self._last_pose: {}".format(response, self._last_pose))
-                print("not similiar")
                 if current is not None:
                     if self._state == self._states.avoiding:
                         plan = [response]
@@ -453,7 +470,7 @@ class CenralSystem(object):
         if self._plan_index == 0 and len(self._plan) > 1:
             x_dif = abs(np.round(self._plan[self._plan_index].position.x, 2) - np.round(current_pose.position.x, 2))
             y_dif = abs(np.round(self._plan[self._plan_index].position.y, 2) - np.round(current_pose.position.y, 2))
-            if x_dif + y_dif == 0.0:
+            if x_dif + y_dif < 0.1:
                 desired_yaw = current_pose.orientation.z
             else:
                 desired_yaw = utils.Math.calculate_yaw_from_points(
@@ -650,6 +667,32 @@ class CenralSystem(object):
             pose_stamped.pose = next_pose
             pr.pose_stamped = pose_stamped
             return pr
+        return None
+
+    def tracking_test(self, time):
+        if self._start_phase and not self._seen:
+            return self.take_off()
+        else:
+            self._start_phase = False
+            service = self.safe_right_service_acquisition()
+            response = self.get_drone_position_in_time(service, time, None, False)
+            print("response: {}".format(response))
+            if response is not None:
+                response = utils.DataStructures.array_to_pose(utils.DataStructures.pointcloud2_to_array(response))
+            return response
+
+    def take_off(self):
+        drone_state = self.get_current_drone_state()
+        if drone_state is not None:
+            next_pose = Pose()
+            next_pose.position.x = drone_state.position.x
+            next_pose.position.y = drone_state.position.y
+            next_pose.position.z = 10
+            next_pose.orientation.x = 0
+            next_pose.orientation.y = 0
+            next_pose.orientation.z = 0
+            # print(drone_state, next_pose)
+            return next_pose
         return None
 
     def avoiding_test(self, time):

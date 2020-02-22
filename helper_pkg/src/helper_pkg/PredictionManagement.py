@@ -14,6 +14,8 @@ import tf2_ros
 from helper_pkg.utils import Constants
 from collections import deque
 import traceback
+from scipy.spatial import cKDTree
+import cv2
 
 
 class PredictionAlgorithm(object):
@@ -27,6 +29,7 @@ class PredictionAlgorithm(object):
         super(PredictionAlgorithm, self).__init__()
         env_configuration = rospy.get_param("environment_configuration")
         self._map_frame = env_configuration["map"]["frame"]
+        self._obstacles_file_path = env_configuration["map"]["obstacles_file"]
         self._prediction_algorithm_name = "Unknown algorithm"
         self._map_width = 680
         self._map_height = 680
@@ -135,22 +138,29 @@ class Database(object):
         self.items = deque([], maxlen=minimal_time)
         self.times = deque([], maxlen=minimal_time)
 
-    def init_db(self, world_map, particles_count=10, max_values=(3, 2, 0.5), frames_count=3,
+    def init_db(self, world_map, particles_count=200, max_values=(3, 2, 0.5), frames_count=3,
                 init_frames=None):
         rounded_time = utils.Math.rounding(rospy.Time.now().to_sec())
         if rounded_time - frames_count * 0.5 < 0:
             rounded_time = frames_count * 0.5
         if init_frames is None:
             frame = np.zeros((particles_count, 7))
-            i = 0
-            while i < particles_count:
-                x = np.random.uniform(- world_map.real_width / 2.0, world_map.real_width / 2.0, 1)[0]
-                y = np.random.uniform(-world_map.real_height / 2.0, world_map.real_height / 2.0, 1)[0]
-                z = np.random.uniform(0.5, max_values[2], 1)[0]
-                map_point = world_map.map_point_from_real_coordinates(x, y, z)
-                if world_map.is_free_for_target(map_point):
-                    frame[i, :3] = [x, y, z]
-                    i += 1
+            positions = np.array(np.nonzero(world_map.target_obstacle_map))
+            imgray = world_map.target_obstacle_map.astype(np.uint8)
+            im2, contours, hierarchy = cv2.findContours(imgray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            print(len(contours))
+            img = np.zeros((world_map.target_obstacle_map.shape[0], world_map.target_obstacle_map.shape[0], 3),
+                           dtype=np.uint8)
+            for contour in contours:
+                cv2.drawContours(img, [contour], -1, np.random.randint(0,255,3), thickness=cv2.FILLED)
+            cv2.imwrite("image.png", img)
+            # print("shape", world_map.target_obstacle_map.shape)
+            points = zip(positions[0, :], positions[1, :])
+            tree = cKDTree(points)
+            positions_indices = np.random.randint(0, len(positions[0]), particles_count)
+            frame[:, 0] = positions[0, positions_indices] + np.random.uniform(0, 0.5, (particles_count))
+            frame[:, 1] = positions[1, positions_indices] + np.random.uniform(0, 0.5, (particles_count))
+            frame[:, 2] = np.random.uniform(0.5, max_values[2], particles_count)
             frame[:, 5] = np.random.uniform(0, 2 * np.pi, particles_count)
             frame[:, 6] = np.arange(0, particles_count)
             self.times.append(rounded_time - 0.5 * (frames_count))
@@ -159,19 +169,17 @@ class Database(object):
             for i in range(frames_count - 1):
                 self.times.append(rounded_time - 0.5 * (frames_count - 1 - i))
                 new_frame = np.zeros((particles_count, 7))
-                j = 0
-                while j < particles_count:
-                    shift = np.random.uniform(-max_values[0], max_values[0], (1, 3))[0]
-                    shift += np.random.uniform(-max_values[1], max_values[1], (1, 3))[0]
-                    positions = shift + frame[j, :3]
-                    positions[2] = np.clip(positions[2], 0.5, max_values[2])
-                    map_point = world_map.map_point_from_real_coordinates(positions[0], positions[1], positions[2])
-                    if world_map.is_free_for_target(map_point):
-                        yaw = utils.Math.calculate_yaw_from_points(0, 0, shift[0], shift[1])
-                        new_frame[j, :3] = positions
-                        new_frame[j, 5] = yaw
-                        j += 1
-                new_frame[:, 6] = np.arange(0, particles_count)
+                ii = tree.query_ball_point(frame[:, :2], max_values[0])
+                for j in range(len(ii)):
+                    i = ii[j]
+                    index = np.random.choice(i, 1)
+                    new_frame[j, 0] = positions[0, index] + np.random.uniform(0, 0.5, 1)[0]
+                    new_frame[j, 1] = positions[1, index] + np.random.uniform(0, 0.5, 1)[0]
+                    new_frame[j, 2] = np.random.uniform(0.5, max_values[2], 1)[0]
+                    yaw = utils.Math.calculate_yaw_from_points(0, 0, frame[j, 0] - new_frame[j, 0],
+                                                               frame[j, 1] - new_frame[j, 1])
+                    new_frame[j, 5] = yaw
+                    new_frame[j, 6] = j
                 frame = new_frame
                 pointcloud = utils.DataStructures.array_to_pointcloud2(frame, rospy.Time.from_sec(self.times[-1]))
                 self.items.append(pointcloud)

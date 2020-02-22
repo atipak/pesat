@@ -17,6 +17,7 @@ from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.geometry import Point as ShapelyPoint
 import cv2
 from scipy.stats import multivariate_normal
+import traceback
 
 
 class Constants():
@@ -556,7 +557,7 @@ class Map():
             with open(file_name, "r") as file:
                 information = json.load(file)
             try:
-                m = Building.create_map_from_objects(information["objects"], information["world"]["width"],
+                m = Building.create_map_from_objects(information["objects"]["statical"], information["world"]["width"],
                                                      information["world"]["height"],
                                                      information["world"]["maximal_height"], resolution)
                 map = Map(m, m, max_altitude=information["world"]["maximal_height"])
@@ -567,6 +568,7 @@ class Map():
                 map._file_path = file_name
                 return map
             except Exception as e:
+                traceback.print_exc()
                 print("Exception occurred: ", e)
         else:
             print("File doesn't exist")

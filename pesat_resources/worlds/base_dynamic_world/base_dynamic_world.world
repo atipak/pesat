@@ -104,8 +104,8 @@
             </box>
           </geometry>
           <material>
-                        <ambient>0.9987331647653881 0.6574377972774668 0.0196078431372549 1</ambient>
-            <diffuse>0.9987331647653881 0.6574377972774668 0.0196078431372549 1</diffuse>
+                        <ambient>0.4 0.4 0.4 1</ambient>
+            <diffuse>0.4 0.4 0.4 1</diffuse>
           </material>
         </visual>
         <gravity>false</gravity>
@@ -286,8 +286,8 @@
             </box>
           </geometry>
           <material>
-                        <ambient>0.253993024908972 0.8804275406672822 0.050980392156862744 1</ambient>
-            <diffuse>0.253993024908972 0.8804275406672822 0.050980392156862744 1</diffuse>
+                        <ambient>0.4 0.4 0.4 1</ambient>
+            <diffuse>0.4 0.4 0.4 1</diffuse>
           </material>
         </visual>
         <gravity>false</gravity>

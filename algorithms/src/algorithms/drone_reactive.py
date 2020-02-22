@@ -40,6 +40,9 @@ class ReactivePrediction(pm.PredictionAlgorithm):
         self.set_min_max_dist(1)
         self.set_camera_angle_limits()
         self.track_restrictions()
+        file_map_id = int(self._obstacles_file_path.split("/")[-2].split("-")[-1])
+        self.f = open("tracking_test/drone_log_file_{}.txt".format(file_map_id), "a")
+        self.f.write("------------------------------\n")
 
     def set_min_max_dist(self, r):
         mi, ma = 0, 0
@@ -80,7 +83,6 @@ class ReactivePrediction(pm.PredictionAlgorithm):
         ratio = (recommended_dist - self._min_dist) / (self._max_dist - self._min_dist)
         numerator = max_v - min_v
         return ratio * numerator + min_v
-
 
     def recommended_ground_dist_alt(self, recommended_dist, alt):
         # print("Min_v, max_v", min_v, max_v)
@@ -219,6 +221,26 @@ class ReactivePrediction(pm.PredictionAlgorithm):
         if not map.is_free_for_drone(map_point):
             pose.position.x = target_positions[1].pose.position.x
             pose.position.y = target_positions[1].pose.position.y
+        self.f.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(drone_positions[0].pose.position.x,
+                                                                                   drone_positions[0].pose.position.y,
+                                                                                   drone_positions[0].pose.position.z,
+                                                                                   drone_positions[
+                                                                                       0].pose.orientation.x,
+                                                                                   drone_positions[
+                                                                                       0].pose.orientation.y,
+                                                                                   drone_positions[
+                                                                                       0].pose.orientation.z,
+                                                                                   int(
+                                                                                       target_information.quotient > 0.7),
+                                                                                   target_positions[0].pose.position.x,
+                                                                                   target_positions[0].pose.position.y,
+                                                                                   target_positions[0].pose.position.z,
+                                                                                   target_positions[
+                                                                                       0].pose.orientation.x,
+                                                                                   target_positions[
+                                                                                       0].pose.orientation.y,
+                                                                                   target_positions[
+                                                                                       0].pose.orientation.z))
         return pose
 
     def state_variables(self, drone_positions, target_positions, map, **kwargs):
