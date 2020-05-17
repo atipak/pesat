@@ -111,7 +111,7 @@ class PredictionLocalization(pm.PredictionManagement):
         target_configuration = rospy.get_param("target_configuration")
         drone_configuration = rospy.get_param("drone_configuration")
         environment_configuration = rospy.get_param("environment_configuration")
-        self._prediction_systems = [PredictionWithParticles()] #, PredictionNaive(), PredictionNetwork(1)]
+        self._prediction_systems = [PredictionWithParticles()]  # , PredictionNaive(), PredictionNetwork(1)]
         self.prepare_structures()
         self._default_system = 0
         opponent_service_name = drone_configuration["localization"]["position_in_time_service"]
@@ -122,6 +122,10 @@ class PredictionLocalization(pm.PredictionManagement):
         self._target_position_offset = 1
         self._drone_position_offset = 1
         self._observation = None
+        self._last_seen = False
+        self._seen_brake = False
+        self._request_for_update_time = 0
+        self._observation_time = 0
         self._count_publisher = rospy.Publisher(target_configuration["localization"]["items_count_topic"],
                                                 Float32, queue_size=10)
         self._earliest_time_publisher = rospy.Publisher(target_configuration["localization"]["earliest_time_topic"],
@@ -131,8 +135,11 @@ class PredictionLocalization(pm.PredictionManagement):
         rospy.Subscriber(environment_configuration["watchdog"]["camera_notification_topic"], PointCloud2,
                          self.callback_notify)
         self._db.init_db(self.map)
+        self._vision_information = None
+        self._samples_length = None
 
     def callback_notify(self, data):
+        self._observation_time = rospy.Time.now().to_sec()
         self._observation = utils.DataStructures.pointcloud2_to_array(data)
 
     def opponent_service_for_drone_positions_necessary(self):
@@ -145,7 +152,24 @@ class PredictionLocalization(pm.PredictionManagement):
         return 0
 
     def prepare_kwargs(self, time, drone_positions, target_positions, world_map):
-        return {"observation": self._observation}
+        seen = False
+        if self._seen_brake:
+            self._last_seen = seen
+            self._seen_brake = False
+            return {"observation": self._observation, "seen": seen}
+        if self._vision_information is not None and self._samples_length is not None:
+            if self._vision_information.quotient > 0.7 and self._samples_length > 0:
+                seen = True
+        # reset
+        if self._last_seen == seen and self._request_for_update_time > 0:
+            self._request_for_update_time = 0
+        if self._last_seen != seen and seen and self._request_for_update_time == 0:
+            self._request_for_update_time = rospy.Time.now().to_sec()
+        if seen and self._request_for_update_time > 0 and np.abs(
+                self._request_for_update_time - rospy.Time.now().to_sec()) < 0.2:
+            seen = not seen
+        self._last_seen = seen
+        return {"observation": self._observation, "seen": seen}
 
     def get_main_type(self):
         return self._target_type
@@ -161,13 +185,16 @@ class PredictionLocalization(pm.PredictionManagement):
         positions = self._db.get_time(rounded_time)
         return positions
 
-    def update_structure_from_information_message(self):
-        # print("---------------------------------------------------------------------------------------")
+    def update_structure_from_information_message(self, information, samples_length,seen):
+        # print("-------------------------------------------------111--------------------------------------")
+        self._vision_information = information
+        self._samples_length = samples_length
+        if self._last_seen and not seen:
+            self._seen_brake = True
         time = rospy.Time.now().to_sec()
         # add predicted value
         if len(self._prediction_systems) > 0 and self._default_system < len(self._prediction_systems):
             current_position, _ = self.get_position_in_time(rospy.Time.now().to_sec())
-            # print(current_position)
             if current_position is not None:
                 self._db.add(current_position)
                 return True
@@ -228,6 +255,7 @@ class VisionLocalisation(object):
         super(VisionLocalisation, self).__init__()
         rospy.init_node('vision', anonymous=False)
         _camera_configuration = rospy.get_param("drone_configuration")["camera"]
+        _drone_configuration = rospy.get_param("drone_configuration")
         vision_configuration = rospy.get_param("target_configuration")
         environment_configuration = rospy.get_param("environment_configuration")
         self.hfov = _camera_configuration["hfov"]
@@ -267,12 +295,16 @@ class VisionLocalisation(object):
         self._last_tf_frame = None
         self._drone_tf_frame = None
         self._radius = 50
-        self._min_location_accuracy = 5
-        self._max_location_accuracy = 0.2
+        self._min_location_accuracy = 0.2
+        self._max_location_accuracy = 3
         self._max_likelihood = 0.98
         self._min_likelihood = 0.7
+        self._min_recognition_error = 0.01
+        self._max_recognition_error = 0.1
+        self._recognition_error_difference = self._max_recognition_error - self._min_recognition_error
         self._step_likelihood = (self._max_likelihood - self._min_likelihood) / self._radius
         self._step_location_accuracy = (self._max_location_accuracy - self._min_location_accuracy) / self._radius
+        self._max_fly_speed = _drone_configuration["control"]["video_max_horizontal_speed"]
         self._map_frame = "map"
         self._camera_base_link = "bebop2/camera_base_link"
         self._vision_target_position_frame = vision_configuration["localization"]["target_position"]
@@ -287,6 +319,7 @@ class VisionLocalisation(object):
     def callback_image(self, data):
         try:
             if not self.lock:
+                self._image_header = data.header
                 self.newest_image = self.bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
         except CvBridgeError as e:
             print(e)
@@ -431,7 +464,7 @@ class VisionLocalisation(object):
             if len(circles) > 0 or labels == 0:
                 try:
                     trans = self.tfBuffer.lookup_transform("map", 'bebop2/camera_base_optical_link',
-                                                           rospy.Time())
+                                                           self._image_header.stamp, rospy.Duration(0.1))
                     explicit_quat = [trans.transform.rotation.x, trans.transform.rotation.y,
                                      trans.transform.rotation.z, trans.transform.rotation.w]
                     (roll, pitch, yaw) = tf_ros.transformations.euler_from_quaternion(explicit_quat)
@@ -580,16 +613,33 @@ class VisionLocalisation(object):
         tf_frame = self.publish_tf_frame()
         # print("publish", rospy.Time.now().to_sec() - start_time)
         start_time = rospy.Time.now().to_sec()
-        self.send_camera_shot(tf_frame)
+        samples_lenght, seen = self.send_camera_shot(tf_frame)
         if information is not None:
             self.information_count += 1
         if tf_frame is not None:
             self.tf_frames_count += 1
         # rospy.loginfo("Counts: " +str(self.information_count) + ", " + str(self.tf_frames_count))
         self._iteration += 1
-        return information, tf_frame
+        return information, tf_frame, samples_lenght, seen
+
+    def nearest_possible(self, tf_frame, current_position):
+        real_vector = np.array([current_position.transform.translation.x - tf_frame.transform.translation.x,
+                                current_position.transform.translation.y - tf_frame.transform.translation.y])
+        normalized_real_vector = utils.Math.normalize(real_vector)
+        t = real_vector / normalized_real_vector
+        shifted_real_vector = np.array([tf_frame.transform.translation.x, tf_frame.transform.translation.y])
+        current_t = 0
+        while abs(current_t - t) > self._map.box_size:
+            point = self._map.get_index_on_map(shifted_real_vector[0], shifted_real_vector[1], 1)
+            if self._map.is_free_on_target_map(point[0], point[1]):
+                return shifted_real_vector
+            shifted_real_vector += 0.5 * normalized_real_vector
+            current_t += 0.5
+        return np.array([tf_frame.transform.translation.x, tf_frame.transform.translation.y])
 
     def send_camera_shot(self, tf_frame):
+        samples_lenght = 0
+        seen = False
         if self._camera_id is not None or (self._camera_id is None and self.try_register_camera()):
             try:
                 trans = self.tfBuffer.lookup_transform(self._map_frame, self._camera_base_link, rospy.Time())
@@ -604,7 +654,9 @@ class VisionLocalisation(object):
                 position.orientation.y = pitch
                 position.orientation.z = yaw
                 begin = time.time()
-                coordinates = self._map.rectangle_ray_tracing_3d(position, self.vfov, self.hfov, self.camera_range)
+                coordinates = self._map.faster_rectangle_ray_tracing_3d(position, self.vfov, self.hfov,
+                                                                        self.camera_range)
+                # utils.Plotting.plot_map(coordinates, self._map.target_obstacle_map)
                 # print("tracing", time.time() - begin)
                 shot = CameraShot()
                 shot.camera_id = int(self._camera_id)
@@ -612,6 +664,8 @@ class VisionLocalisation(object):
                     dist = utils.Math.euclidian_distance(utils.Math.Point(position.position.x, position.position.y),
                                                          utils.Math.Point(tf_frame.transform.translation.x,
                                                                           tf_frame.transform.translation.y))
+                    print("location: {}, {}".format(tf_frame.transform.translation.x,
+                                                    tf_frame.transform.translation.y))
                     map_x, map_y = self._map.get_index_on_map(tf_frame.transform.translation.x,
                                                               tf_frame.transform.translation.y)
                     begin = time.time()
@@ -625,19 +679,25 @@ class VisionLocalisation(object):
                     else:
                         velocity = [0, 0]
                     shot.likelihood = self.current_likelihood(dist)
+                    seen = True
                     rospy.loginfo("Object was seen by drone.")
                 else:
                     velocity = [0, 0]
                     speed = 0.0
                     if self._drone_tf_frame is not None:
-                        speed = np.hypot(self._drone_tf_frame.transform.translation.x - trans.transform.translation.x,
-                                         self._drone_tf_frame.transform.translation.y - trans.transform.translation.y)
-                    shot.likelihood = self.get_recognition_error(speed, coordinates)
+                        diff_time = np.abs(self._drone_tf_frame.header.stamp.to_sec() - trans.header.stamp.to_sec())
+                        speed = np.hypot(
+                            (self._drone_tf_frame.transform.translation.x - trans.transform.translation.x) / diff_time,
+                            (self._drone_tf_frame.transform.translation.y - trans.transform.translation.y) / diff_time)
+                    shot.likelihood = self.get_recognition_error(coordinates,
+                                                                 self.get_visible_pixel_probability(speed, coordinates))
                     begin = time.time()
                     samples = utils.CameraCalculation.generate_particles_object_out_of_fov(coordinates)
                     # print("samples out", time.time() - begin)
+                    seen = False
                     rospy.loginfo("Object wasn't seen by drone.")
                 # position_samples = utils.CameraCalculation.generate_position_samples(samples, velocity, np.pi / 4)
+                samples_lenght = len(samples)
                 pointcloud = utils.DataStructures.array_to_pointcloud2(samples, rospy.Time.now(), self._map_frame)
                 shot.pointcloud = pointcloud
                 self._drone_tf_frame = trans
@@ -646,6 +706,7 @@ class VisionLocalisation(object):
                 traceback.print_exc()
                 rospy.loginfo("Problem with drone camera shot. " + str(e))
         self._last_tf_frame = tf_frame
+        return samples_lenght, seen
 
     def current_likelihood(self, distance_from_target):
         return self._min_likelihood + distance_from_target * self._step_likelihood
@@ -656,10 +717,13 @@ class VisionLocalisation(object):
     def get_location_accuracy(self, distance_from_target):
         return self._min_location_accuracy + distance_from_target * self._step_location_accuracy
 
-    def get_recognition_error(self, speed, coordinates):
-        prob_px = 0.95 / (self._map.free_target_pixels*2*np.clip(speed, 1, None))
-        prob_px *= coordinates.shape[0]
-        return prob_px
+    def get_recognition_error(self, coordinates, visible_pixel_probability):
+        return coordinates.shape[0] / visible_pixel_probability
+
+    def get_visible_pixel_probability(self, speed, coordinates):
+        pb_v = self._min_recognition_error + self._recognition_error_difference * np.clip(speed, 0, self._max_fly_speed)
+        visible_pixel_probability = coordinates.shape[0] + (self._map.free_target_pixels - coordinates.shape[0]) / pb_v
+        return visible_pixel_probability
 
     def try_register_camera(self):
         try:
@@ -701,9 +765,9 @@ class TargetPositioning(object):
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             start_time = rospy.Time.now().to_sec()
-            _, _ = self._vision_localization.get_new_data()
+            information, _, samples_length, seen = self._vision_localization.get_new_data()
             start_time = rospy.Time.now().to_sec()
-            self._prediction_localization.update_structure_from_information_message()
+            self._prediction_localization.update_structure_from_information_message(information, samples_length, seen)
             self._prediction_localization.update_database_topics()
             rate.sleep()
 

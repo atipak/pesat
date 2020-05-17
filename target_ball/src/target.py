@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from abc import abstractmethod
 from builtins import super
+import os
 
 import rospy
 from collections import namedtuple
@@ -18,7 +19,7 @@ from helper_pkg.move_it_server import MoveitServer
 class TargetMoveit(MoveitServer):
     def __init__(self):
         target_configuration = rospy.get_param("target_configuration")
-        super(TargetMoveit, self).__init__(target_configuration)
+        super(TargetMoveit, self).__init__(target_configuration, 0.0)
         self.open_world_box()
         self._srv_point_height = rospy.Service(target_configuration["map_server"]["point_height_service"], PointFloat,
                                                self.callback_get_height)
@@ -218,6 +219,7 @@ class CornersMove(CustomMove):
     def corners_in_sector_and_distance(self, position, direction, points_distance, angle, radius):
         corners_in_directions = []
         distances_of_corners = []
+        # print("Tree", self._tree)
         if self._tree is not None:
             indicies = self._tree.query_ball_point([position], r=points_distance)
             while abs(angle) < np.pi:
@@ -278,13 +280,15 @@ class CornersMove(CustomMove):
                 vector = np.array([corner[0] - center_of_rec[0], corner[1] - center_of_rec[1]])
                 vector = utils.Math.normalize(vector)
                 position = self.get_position(corner, vector, current_position)
+                # print("Position: {}".format(position))
                 if position is not None:
                     p = Point()
                     p.x = position[0]
                     p.y = position[1]
+                    # print("Point {}, {}".format(p.x, p.y))
                     if position is not None and self.moveit.is_admissible(p):
                         return p, self.calculate_new_direction(current_position, p)
-
+        # print("Returns None")
         return None, self.choose_random_direction()
 
 
@@ -322,6 +326,7 @@ class ZigzagMove(CornersMove):
             p.y = pos[1]
             if self.moveit.is_admissible(p):
                 return pos
+        # print("Returns None in ZigZag move")
         return None
 
     def next_position(self, current_position, original_direction, original_velocity):
@@ -364,6 +369,7 @@ class BehindCornersMove(CornersMove):
             index = np.random.randint(0, len(plausible_positions))
             goal_position = plausible_positions[index]
             return goal_position
+        # print("Returns None in Behind corners move")
         return None
 
     def next_position(self, current_position, original_direction, original_velocity):
@@ -374,15 +380,23 @@ class BehindCornersMove(CornersMove):
 class PlanningMove(CustomMove):
     def __init__(self, moveit, map):
         super(PlanningMove, self).__init__(moveit, map)
+        positions_y, positions_x = np.array(np.nonzero(map.target_obstacle_map))
+        self._points = zip(positions_x, positions_y)
+        self._tree = cKDTree(self._points)
+        self._map = map
 
     def next_position(self, current_position, original_direction, original_velocity):
-        position = self.choose_random_position()
+        position = self.choose_random_position(current_position)
         return position, original_direction, original_velocity
 
-    def choose_random_position(self):
+    def choose_random_position(self, current_position):
+        map_point = self._map.map_point_from_real_coordinates(current_position.x, current_position.y, 1.5)
+        ii = self._tree.query_ball_point([map_point.x, map_point.y], 15 * self._map.resolution)
+        index = ii[np.random.randint(0, len(ii), 1)[0]]
+        mp = self._map.map_point_from_map_coordinates(self._points[index][0], self._points[index][1], real_z=1.5)
         point = Point()
-        point.x = np.random.uniform(-self._map_size, self._map_size)
-        point.y = np.random.uniform(-self._map_size, self._map_size)
+        point.x = mp.real_x
+        point.y = mp.real_y
         return point
 
 
@@ -429,14 +443,16 @@ class Target():
         self._map = utils.Map.get_instance(self._obstacles_file_path)
         self._strategies = strategies_enum(0, 1, 2, 3, 4, 5)
         self._strategies_list = [
-            ManualMove(self.moveit, self._map),
-            AnimalsMove(self.moveit, self._max_velocity, self._map),
-            DirectMove(self.moveit, self._map),
-            PlanningMove(self.moveit, self._map),
-            BehindCornersMove(self.moveit, self._map),
-            ZigzagMove(self.moveit, self._map)
+            ManualMove(self.moveit, self._map), # 0
+            AnimalsMove(self.moveit, self._max_velocity, self._map), # 1
+            DirectMove(self.moveit, self._map), # 2
+            PlanningMove(self.moveit, self._map), # 3
+            BehindCornersMove(self.moveit, self._map), # 4
+            ZigzagMove(self.moveit, self._map) # 5
+            # fusion 6
         ]
         self._invalid_counter = 0
+        self._strategy_invalid_counter = 0
         self._is_fusion_active = False
         self._strategy = self._strategies.Manual
         self._target_state = None
@@ -444,15 +460,14 @@ class Target():
         self._plan = []
         self._plan_index = 0
         self._destination_position = None
-        self._current_velocity = 0.2
+        self._current_velocity = 3.0
         self._current_direction = Point()
         self._pub_set_model = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=10)
         self.next_change = 0
         rospy.Subscriber("/gazebo/model_states", ModelStates, self.callback_target_state)
         rospy.Subscriber("/user/target/strategy", Int64, self.callback_strategy_choice)
-        file_map_id = int(self._obstacles_file_path.split("/")[-2].split("-")[-1])
-        self.f = open("tracking_test/target_log_file_{}.txt".format(file_map_id), "a")
-        self.f.write("------------------------------\n")
+        file_name = os.path.split(self._obstacles_file_path)[1][7:]
+        self.f = open("searching_test/target_log_file_{}.txt".format(file_name), "w")
 
     def pick_strategy(self):
         if self._is_fusion_active:
@@ -551,8 +566,8 @@ class Target():
             if abs(current_position.x - self._plan[-1].position.x) < 0.01 and abs(
                     current_position.y - self._plan[-1].position.y) < 0.01:
                 self._plan_index += 1
-            print("direction", direction, "plan index", self._plan_index, "velocity", self._current_velocity, "f",
-                  update_f)
+            #print("direction", direction, "plan index", self._plan_index, "velocity", self._current_velocity, "f",
+            #      update_f)
             self.publish_pose(direction[0], direction[1])
 
     def fahrtest_position(self, current_position, maximal):
@@ -592,20 +607,26 @@ class Target():
                 self.f.write("{}, {}, {}, {}\n".format(self._strategy, rospy.Time.now().to_sec(),
                                                        current_position.x, current_position.y))
                 if self._destination_position is None:
-                    velocity = self._current_velocity
+                    velocity = 3.0# self._current_velocity
                     direction = self._current_direction
                     if self._invalid_counter >= 3:
                         direction = self.pick_strategy().choose_random_direction()
+                        self._invalid_counter = 0
+                    if self._strategy_invalid_counter >= 50:
+                        self.next_change = rospy.Time.now().to_sec() - 1
+                        self._strategy_invalid_counter = 0
                     next_position, next_direction, next_velocity = self.pick_strategy().calculate_position(
                         current_position, direction, velocity)
                     plan = []
-                    print(next_position)
+                    # print(next_position)
                     if next_position is not None:
                         plan = self.moveit.get_plan_from_poses(self.point_to_pose(current_position),
                                                                self.point_to_pose(next_position))
                     self._plan_index = 0
                     self._invalid_counter += 1
+                    self._strategy_invalid_counter += 1
                     if len(plan) > 0:
+                        self._strategy_invalid_counter = 0
                         self._invalid_counter = 0
                     self._destination_position = next_position
                     self._current_velocity = next_velocity

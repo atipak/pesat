@@ -84,7 +84,7 @@ class PredictionAlgorithm(object):
         input_drone_positions = self.prepare_data_for_input(drone_positions)
         input_target_positions = self.prepare_data_for_input(target_positions)
         data = self.pose_from_parameters(input_drone_positions, input_target_positions, map, **kwargs)
-        state_variables = self.state_variables(input_drone_positions, input_target_positions, map, **kwargs)
+        state_variables = self.state_variables(data, input_drone_positions, input_target_positions, map, **kwargs)
         output_data = self.prepare_data_for_output(data,
                                                    self.get_samples_count(drone_positions, target_positions,
                                                                           **kwargs))
@@ -137,25 +137,18 @@ class Database(object):
     def __init__(self, minimal_time):
         self.items = deque([], maxlen=minimal_time)
         self.times = deque([], maxlen=minimal_time)
+        self._first_iteration = True
 
-    def init_db(self, world_map, particles_count=200, max_values=(3, 2, 0.5), frames_count=3,
+    def init_db(self, world_map, particles_count=2000, max_values=(3, 2, 0.5), frames_count=3,
                 init_frames=None):
         rounded_time = utils.Math.rounding(rospy.Time.now().to_sec())
         if rounded_time - frames_count * 0.5 < 0:
             rounded_time = frames_count * 0.5
         if init_frames is None:
-            frame = np.zeros((particles_count, 7))
+            frame = np.zeros((particles_count, len(utils.DataStructures.point_cloud_name())))
             positions = np.array(np.nonzero(world_map.target_obstacle_map))
-            imgray = world_map.target_obstacle_map.astype(np.uint8)
-            im2, contours, hierarchy = cv2.findContours(imgray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            print(len(contours))
-            img = np.zeros((world_map.target_obstacle_map.shape[0], world_map.target_obstacle_map.shape[0], 3),
-                           dtype=np.uint8)
-            for contour in contours:
-                cv2.drawContours(img, [contour], -1, np.random.randint(0,255,3), thickness=cv2.FILLED)
-            cv2.imwrite("image.png", img)
             # print("shape", world_map.target_obstacle_map.shape)
-            points = zip(positions[0, :], positions[1, :])
+            points = zip(positions[1, :], positions[0, :])
             tree = cKDTree(points)
             positions_indices = np.random.randint(0, len(positions[0]), particles_count)
             frame[:, 0] = positions[0, positions_indices] + np.random.uniform(0, 0.5, (particles_count))
@@ -163,23 +156,31 @@ class Database(object):
             frame[:, 2] = np.random.uniform(0.5, max_values[2], particles_count)
             frame[:, 5] = np.random.uniform(0, 2 * np.pi, particles_count)
             frame[:, 6] = np.arange(0, particles_count)
+            frame[:, 7] = 1
             self.times.append(rounded_time - 0.5 * (frames_count))
             pointcloud = utils.DataStructures.array_to_pointcloud2(frame, rospy.Time.from_sec(self.times[-1]))
             self.items.append(pointcloud)
             for i in range(frames_count - 1):
                 self.times.append(rounded_time - 0.5 * (frames_count - 1 - i))
-                new_frame = np.zeros((particles_count, 7))
-                ii = tree.query_ball_point(frame[:, :2], max_values[0])
+                new_frame = np.zeros((particles_count, len(utils.DataStructures.point_cloud_name())))
+                ii = tree.query_ball_point(frame[:, :2], max_values[0] * world_map.resolution)
                 for j in range(len(ii)):
                     i = ii[j]
-                    index = np.random.choice(i, 1)
-                    new_frame[j, 0] = positions[0, index] + np.random.uniform(0, 0.5, 1)[0]
-                    new_frame[j, 1] = positions[1, index] + np.random.uniform(0, 0.5, 1)[0]
-                    new_frame[j, 2] = np.random.uniform(0.5, max_values[2], 1)[0]
-                    yaw = utils.Math.calculate_yaw_from_points(0, 0, frame[j, 0] - new_frame[j, 0],
-                                                               frame[j, 1] - new_frame[j, 1])
-                    new_frame[j, 5] = yaw
+                    if len(i) == 0:
+                        new_frame[j, 0] = frame[j, 0]
+                        new_frame[j, 1] = frame[j, 1]
+                        new_frame[j, 2] = frame[j, 2]
+                        new_frame[j, 5] = frame[j, 5]
+                    else:
+                        index = np.random.choice(i, 1)
+                        new_frame[j, 0] = positions[0, index] + np.random.uniform(0, 0.5, 1)[0]
+                        new_frame[j, 1] = positions[1, index] + np.random.uniform(0, 0.5, 1)[0]
+                        new_frame[j, 2] = np.random.uniform(0.5, max_values[2], 1)[0]
+                        yaw = utils.Math.calculate_yaw_from_points(0, 0, frame[j, 0] - new_frame[j, 0],
+                                                                   frame[j, 1] - new_frame[j, 1])
+                        new_frame[j, 5] = yaw
                     new_frame[j, 6] = j
+                    new_frame[:, 7] = 1
                 frame = new_frame
                 pointcloud = utils.DataStructures.array_to_pointcloud2(frame, rospy.Time.from_sec(self.times[-1]))
                 self.items.append(pointcloud)
@@ -189,6 +190,7 @@ class Database(object):
                 self.items.append(init_frames[i])
 
     def get_time(self, time):
+        self.recalculate_times()
         index = int(((utils.Math.rounding(self.times[-1])) - utils.Math.rounding(time)) / 0.5)
         if len(self.items) > index > -1:
             # print(index, "index for time", time)
@@ -196,18 +198,28 @@ class Database(object):
         return None
 
     def add(self, notification):
+        self.recalculate_times()
         rounded_time = utils.Math.rounding(rospy.Time.now().to_sec())
         if len(self.times) == 0 or self.times[len(self.times) - 1] != rounded_time:
             self.times.append(rounded_time)
             self.items.append(notification)
 
     def get_time_boundaries(self):
+        self.recalculate_times()
         if len(self.items) > 0:
-            # print("time", rospy.Time.now().to_sec())
             return utils.Math.rounding(self.times[-1] - len(self.times) * 0.5), \
-                   utils.Math.rounding(self.times[-1]), len(self.times)
+                   utils.Math.rounding(self.times[-1]), \
+                   len(self.times)
         else:
             return -1, -1, 0
+
+    def recalculate_times(self):
+        rounded_time = utils.Math.rounding(rospy.Time.now().to_sec())
+        if len(self.times) == 3 and self._first_iteration and rounded_time > 1.5:
+            self._first_iteration = False
+            for i in range(len(self.times)):
+                self.times[i] = rounded_time - 0.5 * (len(self.times) - i)
+                self.items[i].header.stamp = rospy.Time.from_sec(self.times[i])
 
 
 class PredictionManagement(object):
@@ -297,6 +309,7 @@ class PredictionManagement(object):
 
     def prepare_drone_positions(self, last_time, positions_count):
         service = None
+        #print("Drone positions")
         if self.opponent_service_for_target_positions_necessary():
             service = self._drone_position_service
         return self.prepare_positions(last_time, positions_count, self._drone_position_offset, service)
@@ -311,7 +324,8 @@ class PredictionManagement(object):
                 position = service(header, -1, False, None)
                 position = position.pointcloud
             else:
-                position, _ = self.recursive_get_position_in_time(past_time)
+                #print("Prepare {}".format(past_time))
+                position, _ = self.recursive_get_position_in_time(past_time, preparation=True)
             # print("pos", position)
             if position is None:
                 positions = None
@@ -392,18 +406,21 @@ class PredictionManagement(object):
             earliest = latest_time
         if not ret_value_latest:
             latest = earliest_time
+        #print("Latest time {}".format(latest))
         latest = utils.Math.floor_rounding(latest)
         earliest = utils.Math.floor_rounding(earliest)
         count = (latest_time - earliest) / 0.5
+        #print("Rounded latest: {}".format(utils.Math.floor_rounding(latest)))
         return utils.Math.ceiling_rounding(earliest), utils.Math.floor_rounding(latest), count
 
-    def get_time(self, time, frame):
+    def get_time(self, time, frame, silence=True):
         try:
             rospy_time = rospy.Time.from_sec(time)
             t = self._tfBuffer.lookup_transform(self._map_frame, frame, rospy_time)
             return t.header.stamp.to_sec(), True
         except (tf2_ros.ExtrapolationException) as excs:
-            # print(excs)
+            if not silence:
+                print("Retrieving time from ros_tf database based on: {}".format(excs))
             digits = [float(s) for s in re.findall("\d+\.\d+", str(excs))]
             return digits[1], False
         except Exception as e:
@@ -462,35 +479,42 @@ class PredictionManagement(object):
     def set_recommended_prediction_alg(self):
         self._default_system = self.compute_recommended_prediction_alg()
 
-    def predict_object_pose(self, time, renew=False):
+    def predict_object_pose(self, time, renew=False, preparation=False):
         rounded_time = utils.Math.rounding(time)
         self.object_prediction_poses_check(renew)
         if self.get_latest_player_position_time(self.get_main_type()) >= rounded_time - 0.5:
-            # print("Direct request", rounded_time - 0.5)
-            predicted_position, state_variables = self.predict_for_given_time(rounded_time, False)
+            #print("Direct request", rounded_time - 0.5)
+            predicted_position, state_variables = self.predict_for_given_time(rounded_time, False, preparation)
             return predicted_position, state_variables
         else:
             object_prediction_poses = self._predicted_positions[self._default_system]
             object_state_variables = self._state_variables[self._default_system]
             latest_prediction_time = len(object_prediction_poses) * 0.5 + self._last_prediction_update_time[
                 self._default_system]
-            # print("latest prediction time", latest_prediction_time, "len(object_prediction_poses)",
-            #     len(object_prediction_poses), "self._last_prediction_update_time[self._default_system]",
-            #     self._last_prediction_update_time[self._default_system], "rounded_time", rounded_time)
-            while latest_prediction_time <= rounded_time:
-                # print("latest prediction time inside while", latest_prediction_time)
-                predicted_position, state_variables = self.predict_for_given_time(latest_prediction_time, renew)
+            """print("latest prediction time", latest_prediction_time, "len(object_prediction_poses)",
+                 len(object_prediction_poses), "self._last_prediction_update_time[self._default_system]",
+                 self._last_prediction_update_time[self._default_system], "rounded_time", rounded_time)"""
+            # while latest_prediction_time <= rounded_time:
+            next_prediction_time = latest_prediction_time + 0.5
+            while next_prediction_time <= rounded_time:
+                # print("latest prediction time inside while", next_prediction_time)
+                if next_prediction_time < rounded_time:
+                    preparation = True
+                else:
+                    preparation = False
+                predicted_position, state_variables = self.predict_for_given_time(next_prediction_time, renew, preparation)
                 if predicted_position is None:
-                    # print("Predicted position is none for time ", latest_prediction_time)
+                    rospy.logwarn("Predicted position is none for time ", next_prediction_time)
                     return None, {}
                 object_prediction_poses.append(predicted_position)
                 object_state_variables.append(state_variables)
-                latest_prediction_time += 0.5
-            index = int((rounded_time - self._last_prediction_update_time[self._default_system]) / 0.5)
+                next_prediction_time += 0.5
+            index = int((rounded_time - self._last_prediction_update_time[self._default_system]) / 0.5) - 1
+            #print("Index {}".format(index))
             if index < len(object_prediction_poses):
                 return object_prediction_poses[index], object_state_variables[index]
             else:
-                # print("index >=  len(object_prediction_poses)")
+                rospy.logwarn("index >=  len(object_prediction_poses)")
                 return None, {}
 
     def get_opponent_position_in_time(self, time, type, service):
@@ -504,20 +528,23 @@ class PredictionManagement(object):
             rospy.logwarn("Service did not process request: " + str(exc))
         return None
 
-    def predict_for_given_time(self, time, renew):
+    def predict_for_given_time(self, time, renew, preparation):
+        #print("predict for given time {}".format(time))
         object_prediction_mechanism = self._prediction_systems[self._default_system]
         input_data, kwargs = self.prepare_input_data_for_prediction_algorithm(
-            object_prediction_mechanism.get_algorithm_parameters(), time, renew)
+            object_prediction_mechanism.get_algorithm_parameters(), time, renew, preparation)
         predicted_position = None
         state_variables = {}
         try:
             predicted_position, state_variables = object_prediction_mechanism.predict_pose(*input_data, **kwargs)
+            predicted_position.header.stamp = rospy.Time.from_sec(time)
         except AttributeError as ae:
             rospy.loginfo("Problem with prediction for time " + str(time) + " : " + str(ae))
             rospy.loginfo(traceback.format_exc())
+        #print("Predict for given time: state variables {}".format(state_variables))
         return predicted_position, state_variables
 
-    def prepare_input_data_for_prediction_algorithm(self, parameter, time, renew):
+    def prepare_input_data_for_prediction_algorithm(self, parameter, time, renew, preparation):
         # input type
         map_presence = parameter[3] == Constants.MapPresenceParameter.yes
         # drone positions
@@ -527,15 +554,16 @@ class PredictionManagement(object):
         # map presence
         world_map = self.prepare_map(time, map_presence)
         kwargs = self.prepare_kwargs(time, drone_positions, target_positions, world_map)
+        kwargs["final_prediction"] = preparation
         return [drone_positions, target_positions, world_map], kwargs
 
     def get_position_in_time(self, time, requested_type=Constants.InputOutputParameterType.pointcloud, renew=False,
                              unchecked=False, **kwargs):
         time = utils.Math.rounding(time)
         if not unchecked and not self.is_prediction_possible():
-            # print("checking failed")
+            rospy.logwarn("checking failed")
             return None, {}
-        # print("position in time")
+        #print("position in time")
         position, state_variables = self.recursive_get_position_in_time(time, renew)
         array = utils.DataStructures.pointcloud2_to_array(position)
         if position is not None:
@@ -559,17 +587,17 @@ class PredictionManagement(object):
         pose_stamped.pose = pose
         return pose_stamped
 
-    def recursive_get_position_in_time(self, time, renew=False):
-        # print("time", time, "earliest", self.get_earliest_player_position_time(self.get_main_type()),
-        #      "last_position_time", self.get_latest_player_position_time(self.get_main_type()))
+    def recursive_get_position_in_time(self, time, renew=False, preparation=False):
+        """print("time", time, "earliest", self.get_earliest_player_position_time(self.get_main_type()),
+              "last_position_time", self.get_latest_player_position_time(self.get_main_type()))"""
         poses, state_variables = None, {}
         if time > self.get_latest_player_position_time(self.get_main_type()):
             # print("Position prediction.")
-            poses, state_variables = self.predict_object_pose(time, renew)
+            poses, state_variables = self.predict_object_pose(time, renew, preparation)
         else:
-            # print("History position.")
+            #print("History position.")
             if self.get_earliest_player_position_time(self.get_main_type()) > time:
-                # print("earliest position problem")
+                #print("earliest position problem")
                 return None, {}
             poses = self.get_position_from_history(time)
         return poses, state_variables

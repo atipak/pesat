@@ -35,6 +35,9 @@ class PredictionLocalization(pm.PredictionManagement):
         opponent_service_name = target_configuration["localization"]["position_in_time_service"]
         self.load_target_position_service(opponent_service_name)
         self._target_information = None
+        self._last_predicted_time = None
+        self._last_predicted_position = None
+        # self._ignore_true_prediction = 1
         self._target_position_offset = 0
         self._drone_position_offset = 1
         self._target_under_supervision = True
@@ -44,6 +47,7 @@ class PredictionLocalization(pm.PredictionManagement):
         self._planning_timeout = logic_configuration["planning"]["timeout"]
         self._target_earliest_time = rospy.Time.now().to_sec()
         self._target_latest_time = rospy.Time.now().to_sec()
+        self._returned_kwargs = {}
         self._items_count = 0
         # earliest
         rospy.Subscriber(target_configuration["localization"]["earliest_time_topic"], Float32,
@@ -78,7 +82,7 @@ class PredictionLocalization(pm.PredictionManagement):
             self._state = self._states.tracking
         elif self._state == self._states.tracking and change_state:
             self._state = self._states.searching
-        if self._state == self._states.tracking or True:
+        if self._state == self._states.tracking and False:
             return 0
         else:
             return 2
@@ -105,20 +109,21 @@ class PredictionLocalization(pm.PredictionManagement):
 
     def prepare_kwargs(self, time, drone_positions, target_positions, world_map):
         kwargs = {}
-        if time == utils.Math.rounding(rospy.Time.now().to_sec() + 0.5):
-            try:
-                trans_drone_camera = self._tfBuffer.lookup_transform(self._drone_base_link_frame,
-                                                                     self._camera_base_link_frame, rospy.Time())
-                explicit_quat = [trans_drone_camera.transform.rotation.x, trans_drone_camera.transform.rotation.y,
-                                 trans_drone_camera.transform.rotation.z, trans_drone_camera.transform.rotation.w]
-                (_, camera_pitch, camera_yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
-                kwargs["camera_yaw"] = camera_yaw
-                kwargs["camera_pitch"] = camera_pitch
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as excs:
-                rospy.loginfo("Exception during calculating of camera position:\n" + str(excs))
-                kwargs["camera_yaw"] = 0
-                kwargs["camera_pitch"] = 0
-            kwargs["target_information"] = self._target_information
+        # if time == utils.Math.rounding(rospy.Time.now().to_sec() + 0.5):
+        try:
+            trans_drone_camera = self._tfBuffer.lookup_transform(self._drone_base_link_frame,
+                                                                 self._camera_base_link_frame, rospy.Time())
+            explicit_quat = [trans_drone_camera.transform.rotation.x, trans_drone_camera.transform.rotation.y,
+                             trans_drone_camera.transform.rotation.z, trans_drone_camera.transform.rotation.w]
+            (_, camera_pitch, camera_yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
+            kwargs["camera_yaw"] = camera_yaw
+            kwargs["camera_pitch"] = camera_pitch
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as excs:
+            rospy.loginfo("Exception during calculating of camera position:\n" + str(excs))
+            kwargs["camera_yaw"] = 0
+            kwargs["camera_pitch"] = 0
+        # print("addng ti kwarks: {}".format(self._target_information))
+        kwargs["target_information"] = self._target_information
         try:
             trans_drone = self._tfBuffer.lookup_transform(self._map_frame,
                                                           self._drone_base_link_frame, rospy.Time())
@@ -135,6 +140,7 @@ class PredictionLocalization(pm.PredictionManagement):
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as excs:
             rospy.loginfo("Exception during calculating of camera position:\n" + str(excs))
+        kwargs.update(self._returned_kwargs)
         return kwargs
 
     def get_position_from_history(self, time):
@@ -163,7 +169,8 @@ class PredictionLocalization(pm.PredictionManagement):
             return utils.DataStructures.array_to_pointcloud2(np.array([[pose_stamped.pose.position.x,
                                                                         pose_stamped.pose.position.y,
                                                                         pose_stamped.pose.position.z,
-                                                                        camera_yaw, camera_pitch, drone_yaw, 0]]))
+                                                                        camera_yaw, camera_pitch, drone_yaw, 0]]),
+                                                             pose_stamped.header.stamp)
         except (
                 tf2_ros.LookupException, tf2_ros.ConnectivityException,
                 tf2_ros.ExtrapolationException) as excs:
@@ -192,23 +199,28 @@ class PredictionLocalization(pm.PredictionManagement):
         return positions
 
     def callback_target_information(self, data):
+        # print("Callback: {}".format(data))
         self._target_information = data
 
     def next_position_callback(self, data):
         rounded_time = utils.Math.rounding(data.header.stamp.to_sec())
+        if self._last_predicted_time is not None and rounded_time == self._last_predicted_time and self._last_predicted_position is not None:
+            rospy.loginfo("Returned value for time {}".format(self._last_predicted_time))
+            return self._last_predicted_position
+        rospy.loginfo("Predicted time {}".format(rospy.Time.now().to_sec()))
         # print(rounded_time)
         self.set_default_prediction_alg(data.algorithm_index)
-        print(data.algorithm_index)
-        position, _ = self.get_position_in_time(rounded_time, renew=data.refresh)
+        self._last_predicted_position , self._returned_kwargs = self.get_position_in_time(rounded_time, renew=data.refresh)
+        # print("Returned kwargs: {}".format(self._returned_kwargs))
         self.set_recommended_prediction_alg()
-        print("track", position)
-        return [position]
+        self._last_predicted_time = rounded_time
+        return [self._last_predicted_position]
 
     def is_target_supervision_by_drone(self):
         if self._target_information is None:
             return False
         if self._target_information.quotient > 0.7:
-            self._strategy_pub.publish(6)
+            # self._strategy_pub.publish(6)
             return True
         else:
             return False
@@ -223,7 +235,7 @@ class PredictionLocalization(pm.PredictionManagement):
         rate = rospy.Rate(20)
         while not rospy.is_shutdown():
             self._target_under_supervision = self.is_target_supervision_by_drone()
-            print(self._target_under_supervision)
+            # print(self._target_under_supervision)
             self.update_last_position_time(rospy.Time.now().to_sec())
             rate.sleep()
 

@@ -12,7 +12,7 @@ from std_msgs.msg import Float32, Bool, Float64, Header, UInt32, Int32
 import sys
 import helper_pkg.utils as utils
 from helper_pkg.utils import Constants
-from pesat_msgs.msg import JointStates
+from pesat_msgs.msg import JointStates, ImageTargetInfo
 from pesat_msgs.srv import PositionRequest
 import matplotlib.pyplot as plt
 
@@ -22,6 +22,7 @@ class CenralSystem(object):
         rospy.init_node('central_system', anonymous=False)
         logic_configuration = rospy.get_param("logic_configuration")
         drone_configuration = rospy.get_param("drone_configuration")
+        target_configuration = rospy.get_param("target_configuration")
         environment_configuration = rospy.get_param("environment_configuration")
         self._tfBuffer = tf2_ros.Buffer()
         self._tfListener = tf2_ros.TransformListener(self._tfBuffer)
@@ -49,6 +50,7 @@ class CenralSystem(object):
         self._plan = []
         self._plan_index = 0
         self._last_pose = None
+        self._last_predicted_time = rospy.Time.now().to_sec()
         self.map = utils.Map.get_instance(self._map_file)
         self._stay_fly_timeout = 1.0
         self._stay_time = 0.0
@@ -118,6 +120,8 @@ class CenralSystem(object):
 
         # test settings
         self._tunning_state = 0
+        rospy.Subscriber(target_configuration["localization"]["target_information"], ImageTargetInfo,
+                         self.callback_target_information)
 
     # callbacks
     def callback_da_collision(self, data):
@@ -210,10 +214,10 @@ class CenralSystem(object):
             desired_positions = np.array(
                 [x_next, y_next, z_next, camera_horientation_next, camera_vorientation_next, yaw_next])
             dif = desired_positions - current_positions
-            # print("Current, desired position, {}, {}".format(current_positions, desired_positions))
-            # print(
-            #    "difference: x: {}, y: {}, z: {}, horizontal {}, vertical: {}, yaw: {}".format(dif[0], dif[1], dif[2],
-            #                                                                                   dif[3], dif[4], dif[5]))
+            print("Current, desired position, {}, {}".format(current_positions, desired_positions))
+            print(
+               "difference: x: {}, y: {}, z: {}, horizontal {}, vertical: {}, yaw: {}".format(dif[0], dif[1], dif[2],
+                                                                                              dif[3], dif[4], dif[5]))
             if abs(dif[5]) > 0.1 or abs(dif[2]) > 0.2:
                 # desired_positions = self.rotate_lift_move(desired_positions, current_positions)
                 pass
@@ -224,7 +228,7 @@ class CenralSystem(object):
         else:
             vel = self.get_zero_velocity()
         self.publish_cmd_velocity(vel)
-        # print("velocity: x: {}, y: {}, z: {}, yaw: {}".format(vel[0], vel[1], vel[2], vel[5]))
+        print("velocity: x: {}, y: {}, z: {}, vertical: {}, yaw: {}".format(vel[0], vel[1], vel[2], vel[4], vel[5]))
         # print(current_positions)
 
     def rotate_lift_move(self, desired_positions, current_positions):
@@ -345,7 +349,11 @@ class CenralSystem(object):
         self.change_state()
         time = rospy.Time.now().to_sec() + 0.5
         # response = self.real_case(time)
-        response = self.tracking_test(time)
+        if np.abs(rospy.Time.now().to_sec() - self._last_predicted_time) > 0.3:
+            response = self.tracking_test(time)
+            self._last_predicted_time = rospy.Time.now().to_sec()
+        else:
+            response = self._last_pose
         # response = self.pid_tunning()
         # print("response {}".format(response))
         if response is None:
@@ -354,8 +362,10 @@ class CenralSystem(object):
         else:
             current = self.get_current_drone_state()
             # print("response", response)
-            # print("resp: x: {}, y: {}, z: {}, yaw: {}".format(response.position.x, response.position.y,
-            #                                                  response.position.z, response.orientation.z))
+            """
+            print("resp: x: {}, y: {}, z: {}, yaw: {}".format(response.position.x, response.position.y,
+                                                              response.position.z, response.orientation.z))
+                                                              """
             if self._plan is None or len(self._plan) == 0 or not self.are_poses_similiar(self._plan[-1], response):
                 # print("response {}, self._last_pose: {}".format(response, self._last_pose))
                 if current is not None:
@@ -369,6 +379,9 @@ class CenralSystem(object):
                         self.publish_cmd_velocity(self.get_zero_velocity())
                         return
                     self._plan = self.find_states(plan)
+                    print("________________")
+                    for p in self._plan:
+                        print(p)
                     self._plan_index = 0
                 else:
                     self.publish_cmd_velocity(self.get_zero_velocity())
@@ -376,7 +389,11 @@ class CenralSystem(object):
             pose = self.next_plan_point(response)
             # print("Central system, pose", pose)
             self.fly_to_next_point(pose, current)
-            self._last_pose = response
+            if pose is None:
+                self._last_pose = None
+                self._plan = None
+            else:
+                self._last_pose = response
 
     def find_states(self, plan):
         if len(plan) < 3:
@@ -391,15 +408,24 @@ class CenralSystem(object):
             if np.linalg.norm(coors[start] - coors[middle]) + np.linalg.norm(
                     coors[middle] - coors[end]) >= np.linalg.norm(coors[start] - coors[end]) + e:
                 new_coors.append(middle)
-        states = [plan[i] for i in range(len(plan)) if i in new_coors]
+        states = []
+        for i in range(len(plan)):
+            if i in new_coors:
+                explicit_quat = [plan[i].orientation.x, plan[i].orientation.y, plan[i].orientation.z,
+                                 plan[i].orientation.w]
+                (_, _, yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
+                states.append(Pose())
+                states[-1].position = plan[i].position
+                states[-1].orientation.z = yaw
+                states[-1].orientation.w = 1
         states.append(states[-1])
         path = []
         for i in range(len(states) - 1):
             self.split_states(states[i], states[i + 1], path)
         path.append(utils.DataStructures.copy_pose(states[-1]))
-        explicit_quat = [path[-1].orientation.x, path[-1].orientation.y, path[-1].orientation.z, path[-1].orientation.w]
-        (_, _, yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
-        path[-1].orientation.z = yaw
+        # explicit_quat = [path[-1].orientation.x, path[-1].orientation.y, path[-1].orientation.z, path[-1].orientation.w]
+        # (_, _, yaw) = tf.transformations.euler_from_quaternion(explicit_quat)
+        # path[-1].orientation.z = yaw
         if False:
             for i in range(len(plan)):
                 print("plan {}: x:{}, y:{}, z:{}, yaw:{}".format(i, plan[i].position.x, plan[i].position.y,
@@ -408,6 +434,7 @@ class CenralSystem(object):
                 print("states {}: x:{}, y:{}, z:{}, yaw:{}".format(i, states[i].position.x, states[i].position.y,
                                                                    states[i].position.z, states[i].orientation.z))
 
+            """
             xs = []
             ys = []
             zs = []
@@ -420,9 +447,13 @@ class CenralSystem(object):
             ax.scatter(xs, ys, zs, marker="*")
             plt.show()
             raise Exception()
+            """
         for i in range(len(path)):
+            pass
+            """
             print("path {}: x:{}, y:{}, z:{}, yaw:{}".format(i, path[i].position.x, path[i].position.y,
                                                              path[i].position.z, path[i].orientation.z))
+                                                             """
 
         return path
 
@@ -541,6 +572,8 @@ class CenralSystem(object):
             p.orientation.z = 0.0
             return p
         desired_position = self.desired_position(pose, current_pose)
+        if desired_position is None:
+            return None
         # print("current plan {}: x:{}, y:{}, z:{}, yaw:{}".format(self._plan_index,
         #                                                         self._plan[self._plan_index].position.x,
         #                                                         self._plan[self._plan_index].position.y,
@@ -670,15 +703,15 @@ class CenralSystem(object):
         return None
 
     def tracking_test(self, time):
-        if self._start_phase and not self._seen:
+        if self._start_phase and not self._seen and False:
             return self.take_off()
         else:
             self._start_phase = False
             service = self.safe_right_service_acquisition()
             response = self.get_drone_position_in_time(service, time, None, False)
-            print("response: {}".format(response))
             if response is not None:
                 response = utils.DataStructures.array_to_pose(utils.DataStructures.pointcloud2_to_array(response))
+                # print(response)
             return response
 
     def take_off(self):

@@ -25,5 +25,5 @@ class PredictionNetwork(pm.PredictionAlgorithm):
         pose = Pose()
         return pose
 
-    def state_variables(self, drone_positions, target_positions, map, **kwargs):
+    def state_variables(self,data, drone_positions, target_positions, map, **kwargs):
         return {}

@@ -3,7 +3,7 @@ import numpy as np
 import helper_pkg.utils as utils
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import dijkstra
-from section_map_creator import SectionMapObject
+from section_algorithm_utils import SectionMapObject
 import rospy
 from collections import defaultdict
 import graph_tool.all as gt
@@ -36,12 +36,18 @@ class TSPath(ExtendedOrderingFunction):
 
     def extended_select(self, selected_objects, scored_objects, objects, properties, start_position_index,
                         end_position_index=None):
+        print("TSPath")
         if len(end_position_index) > 1:
             return np.array([])
         distances = properties["distances"]
         dist_sum = np.sum(distances)
         ids = np.sort(np.array([i for (i, object) in objects.items()]))
-        start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        try:
+            start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        except IndexError as e:
+            print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index,
+                                                                          end_position_index))
+            raise Exception("Start index in ids not found.")
         selected_objects_list = list(selected_objects)
         if start_index not in selected_objects_list:
             selected_objects_list.append(start_index)
@@ -55,9 +61,9 @@ class TSPath(ExtendedOrderingFunction):
         e = np.in1d(selected_objects_list, [end_index]).nonzero()[0][0]
         # tour = self.graphtoolway(selected_objects_list, distances, dist_sum, end_index, start_index, s)
         path = self.scikitopt("ga", selected_objects_list, s, e, distances, dist_sum)
+        path = np.array(selected_objects_list)[path]
         # tour = self.scikitopt("sa", selected_objects_list, s, e, distances, dist_sum)
         # tour = self.scikitopt("aca", selected_objects_list, s, e, distances, dist_sum)
-        print(start_position_index, end_position_index, ids[path])
         return ids[path]
 
     def graphtoolway(self, selected_objects_list, distances, dist_sum, end_index, start_index, s):
@@ -89,7 +95,6 @@ class TSPath(ExtendedOrderingFunction):
         ###################
         if end_index != start_index:
             end_node = g.vertex(np.in1d(selected_objects_list, end_index).nonzero()[0][0])
-            print(int(end_node))
             e2 = g.add_edge(start_node, int(end_node))
             weight[e2] = 0
             e2 = g.add_edge(int(end_node), start_node)
@@ -139,12 +144,10 @@ class TSPath(ExtendedOrderingFunction):
             points = self.satsp(distance_matrix)
         if typ == "aca":
             points = self.acatsp(distance_matrix)
-        print(points)
         index = np.in1d(points, [0]).nonzero()[0][0]
         points = np.roll(points, -index)[1:] - 1
         if points[0] != begin_index:
             points = points[::-1]
-        print(points)
         return points
 
     def gatsp(self, distance_matrix):
@@ -201,6 +204,7 @@ class NeighboursPath(ExtendedOrderingFunction):
 
     def extended_select(self, selected_objects, scored_objects, objects, properties, start_position_index,
                         end_position_index=[]):
+        print("NeighboursPath")
         if len(end_position_index) > 1:
             return []
         # calculate distances for neighbours
@@ -216,7 +220,12 @@ class NeighboursPath(ExtendedOrderingFunction):
             i += 1
         graph = csr_matrix(dist)
         dist_matrix, predecessors = dijkstra(csgraph=graph, directed=False, return_predecessors=True)
-        start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        try:
+            start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        except IndexError as e:
+            print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index,
+                                                                          end_position_index))
+            raise Exception("Start index in ids not found.")
         # where we start and the way we will go
         lasts = [start_index]
         way = [start_index]
@@ -264,10 +273,16 @@ class DirectPath(ExtendedOrderingFunction):
 
     def extended_select(self, selected_objects, scored_objects, objects, properties, start_position_index,
                         end_position_index=[]):
+        print("DirectPath")
         object_distances = properties["distances"]
         # where we start and the way we will go
         ids = np.sort(np.array([i for (i, object) in objects.items()]))
-        start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        try:
+            start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        except IndexError as e:
+            print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index,
+                                                                          end_position_index))
+            raise Exception("Start index in ids not found.")
         lasts = [start_index]
         way = [start_index]
         # if end position is not None, then we have to end up in this position
@@ -378,9 +393,13 @@ class AStarSearch(ExtendedOrderingFunction):
             self.predecessors[target_v] = int(source_v)
 
         def time_score_function(self, time, maximal_time, value, min_value):
+            if maximal_time == 0:
+                return value
             return value - np.clip(time / float(maximal_time), 0, 1) * (value - min_value)
 
         def time_entropy_function(self, time, maximal_time, value, max_value):
+            if maximal_time == 0:
+                return value
             return value + np.clip(time / float(maximal_time), 0, 1) * (max_value - value)
 
         def set_new_relaxed_weights(self, relaxed_edge):
@@ -445,6 +464,7 @@ class AStarSearch(ExtendedOrderingFunction):
 
     def extended_select(self, selected_objects, scored_objects, objects, properties, start_position_index,
                         end_position_index=[]):
+        print("AStarSearch")
         distances = np.copy(properties["distances"])
         inner_distances = np.copy(properties["inner_distances"]).astype(np.float32)
         battery_life = properties["battery_life"] * self.max_battery_life_in_flight
@@ -490,7 +510,12 @@ class AStarSearch(ExtendedOrderingFunction):
 
         # vertices properties
         ###################
-        start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        try:
+            start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        except IndexError as e:
+            print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index, end_position_index))
+            raise Exception("Start index in ids not found.")
+
         for v_index in range(len(objects)):
             v = g.vertex(v_index)
             v_visibilities[v] = visibility[v_index]
@@ -593,11 +618,16 @@ class AStarSearch(ExtendedOrderingFunction):
             argmin = np.where(dist.a == min)[0][0]
             v = g.vertex(argmin)
         path = []
+        iteration = 0
         while v != g.vertex(start_index):
+            iteration += 1
+            if iteration > len(pred.a) * 2:
+                raise Exception("Loop in A* found. Distance matrix {}, predecessors matrix {}".format(dist.a, pred.a))
             path.append(int(v))
             v = g.vertex(pred[v])
         path.append(int(v))
         path = path[::-1]
+        path[path == len(ids)] = start_index
         return ids[path]
 
 

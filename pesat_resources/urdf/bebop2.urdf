@@ -306,15 +306,15 @@
     <origin rpy="0 0 0" xyz="0.1 0 0"/>
     <parent link="bebop2/base_link"/>
     <child link="bebop2/camera_rotator_base_link"/>
-    <axis xyz="0 1 0"/>
-    <limit effort="0.02" lower="-0.523598775598" upper="0.523598775598" velocity="0.02"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="0.02" lower="-0.523598775598" upper="0.523598775598" velocity="1.0"/>
   </joint>
   <joint name="bebop2/camera_base_joint" type="revolute">
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <parent link="bebop2/camera_rotator_base_link"/>
     <child link="bebop2/camera_base_link"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="0.02" lower="-0.523598775598" upper="0.523598775598" velocity="0.02"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="0.02" lower="-0.523598775598" upper="0.523598775598" velocity="1.0"/>
   </joint>
   <link name="bebop2/camera_base_optical_link"/>
   <joint name="bebop2/camera_base_optical_joint" type="fixed">

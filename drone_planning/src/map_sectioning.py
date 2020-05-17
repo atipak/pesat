@@ -92,7 +92,7 @@ def create_sections_regions_and_points(map_file):
                 position.position.z = point[2]
                 position.orientation.y = point[3]
                 position.orientation.z = point[4]
-                coordinates = world_map.rectangle_ray_tracing_3d(position, vfov, hfov, camera_range)
+                coordinates = world_map.faster_rectangle_ray_tracing_3d(position, vfov, hfov, camera_range)
                 point_object = SectionMapObject()
                 point_object.type = SectionMapObjectTypes.Point
                 point_object.object_id = point_index
@@ -378,7 +378,7 @@ def locations_under_vision(world_map, environment_configuration):
                 hfov = camera[5]
                 vfov = camera[6]
                 camera_range = camera[7]
-                coordinates, _ = world_map.ray_tracing_3d(position, vfov, hfov, camera_range)
+                coordinates, _ = world_map.faster_rectangle_ray_tracing_3d(position, vfov, hfov, camera_range)
                 sectors_map = utils.CameraCalculation.write_coordinates(coordinates, sectors_map)
     return sectors_map
 
@@ -847,7 +847,7 @@ def get_unseen_pixels(world_map, xy, points, free_pixels, section_map):
         position.position.z = np.round(points[triangle_index, 1])
         position.orientation.y = points[triangle_index, 2]
         position.orientation.z = points[triangle_index, 3]
-        coordinates = world_map.rectangle_ray_tracing_3d(position, vfov, hfov, camera_range)
+        coordinates = world_map.faster_rectangle_ray_tracing_3d(position, vfov, hfov, camera_range)
         # print(coordinates)
         seen_pixels[coordinates[:, 0], coordinates[:, 1]] = 1
     seen_pixels_from_section = np.logical_and(seen_pixels, section_map)

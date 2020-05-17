@@ -12,6 +12,7 @@ import multiprocessing as mp
 import time
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial import cKDTree, ConvexHull
+import datetime
 
 box = namedtuple("box", ["center_x", "center_y", "width", "length", "height", "orientation"])
 loaded_box = None
@@ -275,6 +276,7 @@ class Building(object):
                                                                                                      1] * map_resolution), int(
                 current_part[2] * map_resolution), int(current_part[3] * map_resolution)
             im = image[p_start_j: p_start_j + p_height, p_start_i:p_start_i + p_width]
+            cv2.imwrite("img_im.png", im)
             v, rso, sh, int_sh_pts, int_pts, b = building.check_new_object(object, current_part[2], current_part[3],
                                                                            map_resolution, im, target_size, 0.9)
             if not v:
@@ -426,6 +428,8 @@ class Building(object):
         original_count = np.count_nonzero(shadow[min_y:max_y + 1, min_x:max_x + 1])
         for i in range(len(shadow_points)):
             cv2.fillConvexPoly(shadow, int_shadow_points[i], 0)
+        cv2.imwrite("orifinal_image.png", image)
+        cv2.imwrite("shadow.png", shadow)
         changed_count = np.count_nonzero(shadow[min_y:max_y + 1, min_x:max_x + 1])
         if changed_count < original_count:
             return False, None, None, [], [], b
@@ -781,7 +785,7 @@ class Building(object):
             points = np.array(points)
             points /= (1.0 / resolution)
             points = points.astype(np.int32)
-            points += [width / 2, height / 2]
+            points += [int(width / 2), int(height / 2)]
             axis = Building.calculate_center_of_object(object)
             for i in range(len(points)):
                 cv2.fillConvexPoly(height_map, points[i], int((object[0].height / float(world_altitude)) * 255))
@@ -1178,10 +1182,10 @@ def set_drone_target_on_map(size, placing):
         target_start_position = None
         if placing == "n":
             # 5
-            max_x = np.clip(drone_x + 30, drone_x + 1, size / 2.0 - 1.2)
-            max_y = np.clip(drone_y + 15, drone_y + 1, size / 2.0 - 1.2)
-            min_y = np.clip(drone_y - 15, -size / 2.0 + 1.2, drone_y - 1)
-            target_x = np.random.uniform(drone_x + 1, max_x, 1)[0]
+            max_x = np.clip(drone_x + 30, drone_x + 3, size / 2.0 - 1.5)
+            max_y = np.clip(drone_y + 1.5, drone_y + 0, size / 2.0 - 1.5)
+            min_y = np.clip(drone_y - 1.5, -size / 2.0 + 1.5, drone_y - 1)
+            target_x = np.random.uniform(drone_x + 3, max_x, 1)[0]
             target_y = np.random.uniform(min_y, max_y, 1)[0]
             target_start_position = [target_x, target_y]
         else:
@@ -1347,10 +1351,9 @@ def base_maps():
                 target_size = 1.5
                 target_start_position = [5, 0]
                 random_map = Building.generate_random_map(world_name, width, height, built_up, maximal_width,
-                                                          minimal_width,
-                                                          maximal_height, minimal_height, maximal_orientation,
-                                                          minimal_orientation,
-                                                          map_resolution, drone_size, drone_start_position, target_size,
+                                                          minimal_width, maximal_height, minimal_height,
+                                                          maximal_orientation, minimal_orientation, map_resolution,
+                                                          drone_size, drone_start_position, target_size,
                                                           target_start_position)
 
 
@@ -1442,6 +1445,85 @@ def grmfs(a):
 def generate_random_map_from_submaps(size, build_up, height, position, dynamical_obstacles, index):
     start = time.time()
     statical_objects, dynamical_objects, all_objects, drone_position, target_position, final_built_up = generate_map_from_submaps(
+        size, build_up, height, position, dynamical_obstacles)
+    print("Time {}".format(time.time() - start))
+    start = time.time()
+    world_name = "sworld-{}-{}-{}-{}-{}-{}-{}".format(size, str(np.round(final_built_up, 4)).replace(".", "_"),
+                                                      str(height).replace(".", "_"), position,
+                                                      str(-1).replace(".", "_"), dynamical_obstacles, index)
+    maximal_width = min(size / 2.0, 20.0)
+    minimal_width = min(size / 10.0, 2.0)
+    maximal_orientation = np.pi
+    minimal_orientation = 0
+    if height == -1:
+        maximal_height = min(size / 2.0, 20.0)
+        minimal_height = min(size / 10.0, 2.0)
+    else:
+        maximal_height = height
+        minimal_height = height
+    create_world(world_name, statical_objects, dynamical_objects, all_objects, drone_position, target_position,
+                 size, final_built_up, maximal_width, minimal_width, maximal_height, minimal_height,
+                 maximal_orientation, minimal_orientation)
+    print("Time {}".format(time.time() - start))
+    return world_name, drone_position, target_position
+
+
+def generate_map_by_standard_method(size, build_up, height, position, dynamical_obstacles):
+    b = Building()
+    maximal_width = min(size / 2.0, 20.0)
+    minimal_width = min(size / 10.0, 2.0)
+    if height == -1:
+        maximal_height = 20
+        minimal_height = 2
+    else:
+        maximal_height = height
+        minimal_height = height
+    maximal_orientation = np.pi
+    minimal_orientation = 0
+    ### target drone placing
+    drone_start_position, target_start_position = set_drone_target_on_map(size, position)
+
+    drone_size = 1.0
+    target_size = 1.5
+    map_resolution = 100
+    pixel_width = size * map_resolution
+    pixel_height = size * map_resolution
+    pixels_count = pixel_width * pixel_height
+    building = Building()
+    image = np.zeros((pixel_width, pixel_height), dtype=np.uint8)
+    # insert places for target and drone
+    drone_position = [
+        box(drone_start_position[0] + size / 2, drone_start_position[1] + size / 2, drone_size, drone_size,
+            drone_size, 0)]
+    target_position = [
+        box(target_start_position[0] + size / 2, target_start_position[1] + size / 2, target_size, target_size,
+            target_size, 0)]
+    drone_target_line = [
+        box((target_start_position[0] + size + drone_start_position[0]) / 2,
+            (target_start_position[1] + size + drone_start_position[1]) / 2,
+            (target_start_position[1] + size + drone_start_position[1]), target_size,
+            target_size, 0)]
+    drone_position_points = (Building.split_to_points(drone_position) / (1.0 / map_resolution)).astype('int64')
+    target_position_points = (Building.split_to_points(target_position) / (1.0 / map_resolution)).astype('int64')
+    drone_target_line_points = (Building.split_to_points(drone_target_line) / (1.0 / map_resolution)).astype('int64')
+    cv2.fillConvexPoly(image, drone_position_points[0], 255)
+    cv2.fillConvexPoly(image, target_position_points[0], 255)
+    cv2.fillConvexPoly(image, drone_target_line_points[0], 255)
+    cv2.imwrite("td.png", image)
+
+    statical_map, image, statical_objects = Building.random_map(size, size, build_up, maximal_width, minimal_width,
+                                                                maximal_height, minimal_height, maximal_orientation,
+                                                                minimal_orientation, map_resolution, image, target_size,
+                                                                -200, 1200)
+    final_build_up = cv2.countNonZero(statical_map - 255) / float(pixels_count)
+    drone_position = [drone_position[0].center_x - size / 2, drone_position[0].center_y - size / 2, 2]
+    target_position = [target_position[0].center_x - size / 2, target_position[0].center_y - size / 2, 1]
+    return statical_objects, [], statical_objects, drone_position, target_position, final_build_up
+
+
+def generate_random_map_by_origin_method(size, build_up, height, position, dynamical_obstacles, index):
+    start = time.time()
+    statical_objects, dynamical_objects, all_objects, drone_position, target_position, final_built_up = generate_map_by_standard_method(
         size, build_up, height, position, dynamical_obstacles)
     print("Time {}".format(time.time() - start))
     start = time.time()
@@ -1639,11 +1721,12 @@ def create_world(world_name, s_objects, d_objects, right_objects, drone_position
     tringles, connectivity = b.triangulation_connectivity(all_objects, [box(0, 0, width, height, maximal_height, 0)])
     print("Triangulation {}".format(time.time() - start))
     start = time.time()
-    boxes = b.create_world_file_from_planes(world_name, all_objects, width, height, maximal_height)
+    max_world_height = max(maximal_height, 20)
+    boxes = b.create_world_file_from_planes(world_name, all_objects, width, height, max_world_height)
     print("Boxes {}".format(time.time() - start))
     start = time.time()
     world_info = b.create_world_info(world_name, width, height, built_up, maximal_width, minimal_width,
-                                     maximal_width, minimal_width, maximal_height, minimal_height,
+                                     maximal_width, minimal_width, max_world_height, minimal_height,
                                      maximal_orientation, minimal_orientation)
     statical_map_boxes = boxes[:len(statical_objects)]
     dynamical_map_boxes = boxes[len(statical_objects):]
@@ -1691,6 +1774,7 @@ def convolution_method(boxes, target_size, drone_size, map_resolution):
 
 
 def free_position_for_drone_and_target(objects, mode):
+    boolean_mode_near = mode == "n"
     hfov = 1.7
     image_height = 480
     image_width = 856
@@ -1725,14 +1809,14 @@ def free_position_for_drone_and_target(objects, mode):
     perm_drone = np.random.permutation(len(x_coors))
     boolean_mask_nonzeros = np.nonzero(boolean_mask)[0]
     max_x = 30
-    min_x = 1.5
+    min_x = 5
     min_y = -15
     max_y = 15
     for i in perm_drone:
         y_mask = np.logical_and(y_coors > y_coors[i] + min_y, y_coors < y_coors[i] + max_y)
         x_mask = np.logical_and(x_coors > x_coors[i] + min_x, x_coors < x_coors[i] + max_x)
         mask = np.logical_and(y_mask, x_mask)
-        if mode == "f":
+        if not boolean_mode_near:
             mask = ~mask
         target_y = y_coors[mask]
         if len(target_y) == 0:
@@ -1754,8 +1838,9 @@ def free_position_for_drone_and_target(objects, mode):
                 m = np.ones(len(objects), dtype=np.bool)
                 m[objects_drone_index] = False
                 m[objects_target_index] = False
-                if is_target_visible(drone_configuration, vfov, hfov, camera_range,
-                                     [target_x[target_index], target_y[target_index], 1], tree, corners_height[m]):
+                vis = is_target_visible(drone_configuration, vfov, hfov, camera_range,
+                                        [target_x[target_index], target_y[target_index], 0.2], tree, corners_height[m])
+                if (vis and boolean_mode_near) or (not vis and not boolean_mode_near):
                     return [x_coors[i], y_coors[i], height], [target_x[target_index], target_y[target_index], 1], \
                            objects[m]
     return None, None, None
@@ -1763,9 +1848,12 @@ def free_position_for_drone_and_target(objects, mode):
 
 def in_hull(points, point):
     hull = ConvexHull(points, incremental=True)
+    plt.plot([point[0]], [point[1]], 'o')
+    for simplex in hull.simplices:
+        plt.plot(points[simplex, 0], points[simplex, 1], 'k-')
     area = hull.area
     hull.add_points(np.array([point]))
-    return abs(area - hull.area) < 0.5
+    return abs(area - hull.area) < 0.1
 
 
 def is_target_visible(position, vfov, hfov, max_range, target_position, tree, objects):
@@ -1780,13 +1868,15 @@ def is_target_visible(position, vfov, hfov, max_range, target_position, tree, ob
     r = R.from_euler('yz', angles)
     start_point = np.array([position[0], position[1], position[2]])
     vectors = r.apply(np.array([1, 0, 0]))
-    t = np.abs(height + (-position[2] / vectors[:, 2]))
+    t = height + (-position[2] / vectors[:, 2])
     t = np.nan_to_num(t)
+    t[t < 0] = max_range
     t = np.clip(t, None, max_range)
     visible_points = np.empty((4, 2))
     visible_points[:, 0] = t * vectors[:, 0] + position[0]
     visible_points[:, 1] = t * vectors[:, 1] + position[1]
     if not in_hull(visible_points, [target_position[0], target_position[1]]):
+        plt.clf()
         return False
     # find corners
     ii = np.array(tree.query_ball_point([start_point[:2]], max_range)[0]).astype(np.int32)
@@ -1798,20 +1888,28 @@ def is_target_visible(position, vfov, hfov, max_range, target_position, tree, ob
         mask[ii] = True
         selected_objects = objects[mask]
         for selected_object in selected_objects:
-            corners = selected_object[0]
-            height = selected_object[1]
+            # height = selected_object[1]
             cs = np.zeros((4, 3))
             cs[:, :2] = selected_object[0]
             cs[:, 2] = selected_object[1]
             vectors = cs - start_point
-            t = np.abs(height + (-position[2] / vectors[:, 2]))
+            t = height + (-position[2] / vectors[:, 2])
             t = np.nan_to_num(t)
+            t[t < 0] = max_range
             t = np.clip(t, None, max_range)
+            if (vectors[:, 2] == 0).any():
+                color = 'r'
+            else:
+                color = 'b'
             xyz = np.empty((8, 2))
             xyz[:4, 0], xyz[:4, 1] = cs[:, 0], cs[:, 1]
             xyz[4:, 0], xyz[4:, 1] = t * vectors[:, 0] + position[0], t * vectors[:, 1] + position[1]
+            plt.fill(cs[:, 0], cs[:, 1], color, alpha=0.3)
             if in_hull(xyz, [target_position[0], target_position[1]]):
+                plt.clf()
                 return False
+        plt.plot([position[0]], [position[1]], 'x')
+        plt.show()
         return True
 
 
@@ -1910,7 +2008,7 @@ def generate_environment_configuration_file(file_path, obstacles_file_name, worl
   map:
     frame: map
     obstacles_file: {}.json
-    section_file: {}.section_file.pickle
+    section_file: {}/section_file.json
     size: 10
   world:
     path: $(find pesat_resources)/worlds
@@ -1927,24 +2025,52 @@ def generate_environment_configuration_file(file_path, obstacles_file_name, worl
     with open(file_path, "w") as file:
         file.write(text)
 
+
+def create_maps_searching():
+    types = [[100, 0.1, -1, 2], [100, 0.3, 0, 2], [100, 0.1, 20, 2], [100, 0.3, 20, 2]]
+    create_section_file = True
+    for t in types:
+        for i in range(t[3]):
+            create_new_map(False, True, t[0], t[1], t[2], "f", "n")
+
+
+def create_new_map(substitute_paths, create_section_file, size, built, height, position, dynamical_obstacle):
+    t1 = datetime.datetime.now()
+    name, drone_position, target_position = generate_random_map_from_submaps(size, built, height, position,
+                                                                             dynamical_obstacle,
+                                                                             "{}_{}_{}".format(t1.hour, t1.minute,
+                                                                                               t1.second))
+    print("Map with name {} was created.".format(name))
+    world_path = "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/"
+    world_folder_path = world_path + name
+    if substitute_paths:
+        path = "/home/patik/Diplomka/dp_ws/src/pesat_core/launch/"
+        ending = "drone.launch"
+        abs_path = path + ending
+        doubled_name = name + "/" + name
+        generate_drone_launch_file(abs_path, doubled_name, drone_position)
+        ending = "target.launch"
+        abs_path = path + ending
+        generate_target_launch_file(abs_path, target_position)
+        obstacles_file_name = world_path + doubled_name
+        path = "/home/patik/Diplomka/dp_ws/src/pesat_resources/config/"
+        environment_configuration_file_name = "environment_configuration.yaml"
+        abs_path = path + environment_configuration_file_name
+        generate_environment_configuration_file(abs_path, obstacles_file_name, world_folder_path)
+    if create_section_file:
+        from algorithms.src.algorithms import section_map_creator
+        rvalue = section_map_creator.create_section_from_file(world_folder_path)
+        if rvalue:
+            print("Section file was created without errors.")
+        else:
+            print("During creating section file error occured. Check console for more information.")
+    return name
+
+
 if __name__ == "__main__":
     # generate_experiments_submaps()
-    name, drone_position, target_position = generate_random_map_from_submaps(100, 0.4, -1, "n", "n", 123456789)
-    path = "/home/patik/Diplomka/dp_ws/src/pesat_core/launch/"
-    ending="drone.launch"
-    abs_path = path + ending
-    doubled_name = name + "/" + name
-    generate_drone_launch_file(abs_path, doubled_name, drone_position)
-    ending = "target.launch"
-    abs_path = path + ending
-    generate_target_launch_file(abs_path, target_position)
-    world_path = "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/"
-    world_folder_path = world_path +  name
-    obstacles_file_name = world_path + doubled_name
-    path = "/home/patik/Diplomka/dp_ws/src/pesat_resources/config/"
-    environment_configuration_file_name = "environment_configuration.yaml"
-    abs_path = path + environment_configuration_file_name
-    generate_environment_configuration_file(abs_path, obstacles_file_name, world_folder_path)
+    create_new_map(True, True, 100,0.3,-1,"f","n")
+
     # generate_random_maps_from_submaps()
     # grid_map = Building.grid_map()
     # dynamic_avoidance_map()

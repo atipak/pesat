@@ -16,7 +16,7 @@ from moveit_msgs.srv import GetStateValidityRequest, GetStateValidity
 
 
 class MoveitServer(object):
-    def __init__(self, configuration):
+    def __init__(self, configuration, expand_constant=0.5):
         super(MoveitServer, self).__init__()
         moveit_commander.roscpp_initialize(sys.argv)
         environment_configuration = rospy.get_param("environment_configuration")
@@ -38,7 +38,7 @@ class MoveitServer(object):
                                                              PlanningScene,
                                                              queue_size=1)
         self.obstacles_file = environment_configuration["map"]["obstacles_file"]
-        self.load_obstacles()
+        self.load_obstacles(expand_constant)
         self._tfBuffer = tf2_ros.Buffer()
         self._tfListener = tf2_ros.TransformListener(self._tfBuffer)
         self.baselink_frame = configuration["properties"]["base_link"]
@@ -95,7 +95,7 @@ class MoveitServer(object):
                 planning_scene.is_diff = True
                 self.planning_scene_diff_publisher.publish(planning_scene)
 
-    def load_obstacles(self):
+    def load_obstacles(self, expand_constant):
         if self.obstacles is None:
             if os.path.isfile(self.obstacles_file):
                 with open(self.obstacles_file, "r") as file:
@@ -106,7 +106,7 @@ class MoveitServer(object):
                 index = 0
                 rospy.sleep(2)
                 for obstacle in self.obstacles:
-                    if self.add_box(obstacle, index):
+                    if self.add_box(obstacle, index, expand_constant):
                         print("Obstacle with index " + str(index) + " was added.")
                     else:
                         print("Obstacle with index " + str(index) + " wasn't added.")
@@ -161,14 +161,13 @@ class MoveitServer(object):
             diff_y = c_state.multi_dof_joint_state.transforms[0].translation.y - end_position.position.y
             diff_z = c_state.multi_dof_joint_state.transforms[0].translation.z - end_position.position.z
             self._workspace_size = abs(diff_x) + abs(diff_y) + abs(diff_z) + 1
-            print(self._workspace_size)
             self.move_group.set_workspace(
-                [-self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.x,
-                 -self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.y,
-                 -self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.z,
-                 self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.x,
-                 self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.y,
-                 self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.z])
+                [np.clip(-self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.x, -self.world["width"] / 2.0, None),
+                 np.clip(-self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.y, -self.world["height"]/ 2.0, None),
+                 np.clip(-self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.z, 0, None),
+                 np.clip(self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.x, None, self.world["width"] / 2.0),
+                 np.clip(self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.y, None, self.world["height"]/ 2.0),
+                 np.clip(self._workspace_size + c_state.multi_dof_joint_state.transforms[0].translation.z, None, self.world["maximal_height"])])
             target_joints = self.get_target_joints(end_position)
             self.move_group.set_joint_value_target(target_joints)
             self.move_group.set_start_state(c_state)
@@ -214,7 +213,7 @@ class MoveitServer(object):
             [pose2.position.x, pose2.position.y, pose2.position.z, pose2.orientation.x, pose2.orientation.y,
              pose2.orientation.z])
 
-    def add_box(self, obstacle, i, timeout=4):
+    def add_box(self, obstacle, i, timeout=4, expand_constant=0.5):
         pose = Pose()
         pose.position.x = obstacle["x_pose"]
         pose.position.y = obstacle["y_pose"]
@@ -229,7 +228,6 @@ class MoveitServer(object):
         box_pose.header.frame_id = self.robot.get_planning_frame()
         box_pose.pose = pose
         box_name = "obstacle_" + str(i)
-        expand_constant = 0.5
         self.scene.add_box(box_name, box_pose,
                            size=(obstacle["x_size"] + expand_constant, obstacle["y_size"] + expand_constant,
                                  obstacle["z_size"] + expand_constant))

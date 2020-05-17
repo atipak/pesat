@@ -83,21 +83,28 @@ class CameraServer():
                                 utils.DataStructures.pointcloud2_to_array(shot.positions), self._map.width,
                                 self._map.height)
                             predicted_pixels_count = np.count_nonzero(probs_map)
-                            tiles_outside = tiles - self._obstacles_pixels - predicted_pixels_count
-                            rest_probs = 1.0 - shot.likelihood
-                            rest_probs /= tiles_outside
-                            mask = np.bitwise_and(self._obstacles_map == 1, probs_map == 0)
-                            cameras_shots[key, mask] = rest_probs
-                            probs_map_mask = probs_map > 0
-                            cameras_shots[key, probs_map_mask] = probs_map[probs_map_mask] * shot.likelihood
-                            continue
+                            if predicted_pixels_count > 0:
+                                tiles_outside = tiles - self._obstacles_pixels - predicted_pixels_count
+                                rest_probs = 1.0 - shot.likelihood
+                                rest_probs /= tiles_outside
+                                mask = np.bitwise_and(self._obstacles_map == 1, probs_map == 0)
+                                cameras_shots[key, mask] = rest_probs
+                                probs_map_mask = probs_map > 0
+                                cameras_shots[key, probs_map_mask] = probs_map[probs_map_mask] * shot.likelihood
+                                continue
                 cameras_shots[key, :] = np.copy(self._obstacles_map)
         if cameras_shots.shape[0] == 0:
             shots_product = np.copy(self._obstacles_map)
         else:
             shots_product = cameras_shots.prod(0)
+        shots_product = np.nan_to_num(shots_product)
         shots_sum = np.sum(shots_product)
+        nonnegative = np.count_nonzero(shots_product >= 0) == shots_product.size
+        if shots_sum == 0 or not nonnegative:
+            shots_product = np.copy(self._obstacles_map)
+            shots_sum = np.sum(shots_product)
         shots_product /= shots_sum
+        #utils.Plotting.plot_probability(shots_product, "tracking_test/probability/shots_{}.png".format(rospy.Time.now().to_sec()))
         begin = t.time()
         pointcloud_msg = utils.DataStructures.array_to_pointcloud2(
             shots_product)  # , tiles, 1.0 / self._map.resolution, 0.5, np.pi))
@@ -163,7 +170,7 @@ class Cctv():
         position.orientation.y, camera_range, vfov, hfov = camera[3], camera[4], camera[5], camera[6]
         location_accuracy, recognition_error = camera[7], camera[8]
         camera_id = self.registration_camera_srv(-1, True)
-        coordinates = self._map.rectangle_ray_tracing_3d(position, vfov, hfov, camera_range)
+        coordinates = self._map.faster_rectangle_ray_tracing_3d(position, vfov, hfov, camera_range)
         for item in coordinates:
             if item[0] not in self._cameras_in_coordinates:
                 self._cameras_in_coordinates[item[0]] = {}

@@ -21,5 +21,5 @@ class DeepPrediction(pm.PredictionAlgorithm):
         p = Pose()
         return p
 
-    def state_variables(self, drone_positions, target_positions, map, **kwargs):
+    def state_variables(self,data, drone_positions, target_positions, map, **kwargs):
         return {}

@@ -396,6 +396,7 @@ bool apply_velocity_to_camera() {
     vertical.data = clipped_rho;
     std_msgs::Float64 horizontal;
     horizontal.data = clipped_pi;
+    //ROS_INFO("Camera msg: clipped_rho: %f, clipped_pi: %f, x - orientation camera: %f, y - orientation camera: %f, x - vel: %f, y - vel: %f", clipped_rho, clipped_pi, orientation_camera.getX(), orientation_camera.getY(), orientation_camera_velocity.getX(), orientation_camera_velocity.getY());
     vertical_camera_controller_pub.publish(vertical);
     horizontal_camera_controller_pub.publish(horizontal);
 }

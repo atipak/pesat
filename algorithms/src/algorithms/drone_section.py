@@ -3,18 +3,21 @@ from builtins import super
 
 import rospy
 import numpy as np
+import os
+import sys
 from geometry_msgs.msg import Pose
 import helper_pkg.utils as utils
 from helper_pkg.utils import Constants
 import helper_pkg.PredictionManagement as pm
 from scipy.spatial import distance, cKDTree
+from scipy.stats import entropy
 from replaning_functions import NAllReplaning, NNeighboursMAllReplaning, NNeighboursReplaning, NoReplaning
 from ordering_functions import DirectPath, NeighboursPath, DirectPathPlanning, NeighboursPathPlanning, AStarSearch
 from ordering_functions import TSPath
 from selection_functions import RatioElements, NElements, AboveAverage, BigDrop, AboveMinimum
 from fitness_functions import DistanceScore, Neighbour, Maximum, Median
-from section_map_creator import SectionMapObjectTypes
-from algorithms.section_map_creator import SectionMap
+from section_algorithm_utils import SectionMapObjectTypes
+from section_algorithm_utils import SectionUtils
 
 
 class ModeTypes:
@@ -24,10 +27,14 @@ class ModeTypes:
     PLANING = 3
 
 
+np.set_printoptions(threshold=sys.maxsize)
+
+
 class SectionsAlgrotihms(object):
     # init
     def __init__(self, sections, world_map):
         super(SectionsAlgrotihms, self).__init__()
+        self.level = 0
         self.sections = sections
         self.world_map = world_map
         self._region_plan, self._region_index = [], 0
@@ -74,7 +81,7 @@ class SectionsAlgrotihms(object):
         self._region_starts = {}
         self._section_starts = {}
         self.drone_localization_map = self.create_drone_localization_map()
-        self._silent = True
+        self._silent = False
 
     # inner states
     def update_probability_map(self, target_positions):
@@ -99,6 +106,9 @@ class SectionsAlgrotihms(object):
                         coordinates[coor[0]][coor[1]].append([section_index, region_index, point_index])
         return coordinates
 
+    def calculate_entropy(self, value):
+        return np.clip(np.nan_to_num(-np.log2(value)), 0, None) * value
+
     def update_scores(self, sections=None):
         if self._probability_map is None:
             return
@@ -118,9 +128,7 @@ class SectionsAlgrotihms(object):
                         for (_, coor) in point.objects.items():
                             point.score += self._probability_map[coor[0], coor[1]]
                             if self._probability_map[coor[0], coor[1]] > 0:
-                                point.entropy += np.clip(-np.log2(self._probability_map[coor[0], coor[1]]), 0, None) * \
-                                                 self._probability_map[
-                                                     coor[0], coor[1]]
+                                point.entropy += self.calculate_entropy(self._probability_map[coor[0], coor[1]])
                         region.score += point.score
                         region.entropy += point.entropy
                     section.score += region.score
@@ -180,7 +188,7 @@ class SectionsAlgrotihms(object):
         section_distances = np.array(distance.cdist(sections_centroids, sections_centroids))
         region_distances = np.array([distance.cdist(regions, regions) for regions in regions_centroids])
         point_distances = np.array(
-            [[distance.cdist(points, points) for points in regions] for regions in points_centroids])
+            [np.array([distance.cdist(points, points) for points in regions]) for regions in points_centroids])
         inner_section_distances = np.array([region.sum(axis=1).min() for region in region_distances])
         inner_region_distances = np.array(
             [[point.sum(axis=1).min() for point in regions] for regions in point_distances])
@@ -195,12 +203,12 @@ class SectionsAlgrotihms(object):
         for si in range(len(sections_ids)):
             pd[sections_ids[si]] = {}
             for ri in range(len(regions_ids[si])):
-                pd[sections_ids[si]][regions_ids[si][ri]] = point_distances[si, ri]
+                pd[sections_ids[si]][regions_ids[si][ri]] = point_distances[si][ri]
         ipd = {}
         for si in range(len(sections_ids)):
             ipd[sections_ids[si]] = {}
             for ri in range(len(regions_ids[si])):
-                ipd[sections_ids[si]][regions_ids[si][ri]] = inner_point_distances[si, ri]
+                ipd[sections_ids[si]][regions_ids[si][ri]] = inner_point_distances[si][ri]
         point_distances = pd
         region_distances = rd
         inner_region_distances = ird
@@ -212,7 +220,7 @@ class SectionsAlgrotihms(object):
                 for pi in range(len(points_ids[si][ri])):
                     point_centers.append(self.sections[sections_ids[si]].objects[regions_ids[si][ri]].objects[
                                              points_ids[si][ri][pi]].centroid)
-                    point_mapping.append([sections_ids[si], regions_ids[si][ri]])
+                    point_mapping.append([sections_ids[si], regions_ids[si][ri], points_ids[si][ri][pi]])
         points_centroids_tree = cKDTree(point_centers)
         return {"sections": section_distances, "regions": region_distances, "points": point_distances}, {
             "sections": inner_section_distances, "regions": inner_region_distances,
@@ -247,6 +255,13 @@ class SectionsAlgrotihms(object):
         drone_localization_map = np.zeros((self.world_map.width, self.world_map.height, 3), dtype=np.int32)
         for x in xrange(self.world_map.width):
             for y in xrange(self.world_map.height):
+                real_x, real_y = self.world_map.get_coordination_from_map_indices_vectors(np.array([x]), np.array([y]))
+                dd, ii = self._points_tree.query([[real_x[0], real_y[0]]], 1)
+                [s, r, p] = self._points_region_section_mapping[ii[0]]
+                if ii[0] != p:
+                    self.log_info("diff {},{}".format(ii[0], p))
+                drone_localization_map[x, y, :] = [s, r, p]
+                """
                 if x in self.coordinates and y in self.coordinates[x]:
                     drone_localization_map[x, y, :] = np.array(self.coordinates[x][y][0]).astype(np.int32)
                 else:
@@ -257,26 +272,34 @@ class SectionsAlgrotihms(object):
                     idy_arg = (np.abs(y_key_array - y)).argmin()
                     idy = y_key_array[idy_arg]
                     drone_localization_map[x, y, :] = np.array(self.coordinates[idx][idy][0]).astype(np.int32)
+                """
         return drone_localization_map
 
     def get_drone_section_region_point(self):
         if self.drone_last_position is not None:
             map_point = self.world_map.map_point_from_real_coordinates(self.drone_last_position[0],
                                                                        self.drone_last_position[1], 0)
+            srp = self.drone_localization_map[map_point.x, map_point.y]
+            self.log_info("Drone loc: {}".format(srp))
+            self.log_info("Centroid {}".format(self.sections[srp[0]].objects[srp[1]].objects[srp[2]].centroid))
             return self.drone_localization_map[map_point.x, map_point.y]
         else:
+            self.log_info("Drone loc wasnt found: {}".format("None"))
             return [None, None, None]
 
     def init_section_closest(self):
         drone_section, drone_region, drone_point = self.get_drone_section_region_point()
+        self.log_info("Init section closest point {}".format(drone_section))
         return (None, drone_section)
 
     def init_region_closest(self):
         drone_section, drone_region, drone_point = self.get_drone_section_region_point()
+        self.log_info("Init region closest point {}".format(drone_region))
         return (None, drone_region)
 
     def init_point_closest(self):
         drone_section, drone_region, drone_point = self.get_drone_section_region_point()
+        self.log_info("Init point closest point {}".format(drone_point))
         return (None, drone_point)
 
     def get_start_id(self, object_type, object_id):
@@ -312,28 +335,39 @@ class SectionsAlgrotihms(object):
                 m = minimum
                 # m_index = (index, np.argmin(dist[index, np.r_[0:index, index + 1:len(centroids2)]]))
                 m_index = (index, np.argmin(dist[index]))
-        return [ids1[m_index[0]], ids2[m_index[1]]]
+        res = [ids1[m_index[0]], ids2[m_index[1]]]
+        self.log_info("Find closest res {}".format(res))
+        return res
 
     def find_closest_for_centroid(self, centroid, next_object):
         centroids1 = np.array([np.array(o.centroid) for (key, o) in next_object.objects.items()])
         ids = np.array([key for key in next_object.objects])
         dist = distance.cdist(np.array([np.array(centroid)]), centroids1, 'euclidean')
-        return ids[np.argmin(dist)]
+        res = ids[np.argmin(dist)]
+        self.log_info("Find closest for centroids res {}".format(res))
+        return res
 
     def find_end_points(self, map_object, next_map_object):
         if map_object.object_id == next_map_object.object_id:
             ids = [i for i in map_object.objects]
             return np.random.choice(ids, 1)
         if next_map_object.object_id in map_object.neighbors:
-            return np.unique(
+            res = np.unique(
                 [item[0] for item in map_object.neighbors[next_map_object.object_id] if item[0] in map_object.objects])
+            self.log_info("Find end points res {}".format(res))
+            return res
         else:
-            return [self.find_closest(map_object, next_map_object)[0]]
+            res = [self.find_closest(map_object, next_map_object)[0]]
+            self.log_info("Find end points res {}".format(res))
+            return res
+
 
     def find_start_point(self, last_map_object, current_map_object, end_point):
+        self.log_info("Find start point {}, {}, {}".format(last_map_object.object_id, current_map_object.object_id, end_point))
         if current_map_object.object_id in last_map_object.neighbors:
             for item in last_map_object.neighbors[current_map_object.object_id]:
                 if end_point == item[0]:
+                    self.log_info("Find start point item {}".format(item[1]))
                     return item[1]
         else:
             return self.find_closest_for_centroid(last_map_object.objects[end_point].centroid, current_map_object)
@@ -351,13 +385,14 @@ class SectionsAlgrotihms(object):
             else:
                 ordering_function = 2
         scores = [o.score for (_, o) in objects.items()]
-        sorted = np.sort(scores)
+        sorted = np.sort(scores)[::-1]
         s = np.sum(sorted[:first_obstacles])
         # Median(), Maximum(), Neighbour(), DistanceScore()
         if s > minimum_score:
-            entropies = [o.entropy for o in objects]
-            max_entropies = [o.maximal_entropy for o in objects]
-            mask = scores > sorted[first_obstacles]
+            entropies = np.array([o.entropy for (_, o) in objects.items()])
+            max_entropies = np.array([o.maximal_entropy for (_, o) in objects.items()])
+            mask = scores > sorted[min(len(sorted), first_obstacles) - 1]
+            self.log_info("First obstacles {}, minimum score {}, mask {}".format(sorted[:first_obstacles], minimum_score, mask))
             selected_entropies = entropies[mask]
             selected_max_entropies = max_entropies[mask]
             if np.sum(selected_entropies) < 1 / 3 * np.sum(selected_max_entropies):
@@ -381,21 +416,26 @@ class SectionsAlgrotihms(object):
         #      self._selection_algorithms_names[selection_function] + ", ordering: " +
         #      self._extended_selection_algorithms_names[ordering_function])
         # print("End positions ", end_positions)
+        self.log_info("Mechanism score fun {}, select fun {}, ordering fun {}".format(score_function, selection_function, ordering_function))
         return score_function, selection_function, ordering_function
 
     def section_map_object_selection(self, objects, properties, object_type, start_position, end_position):
+        self.log_info("Object type {}, objects ids {}, start_position {}, end position {}".format(object_type,
+                                                                                                  [o for o in objects],
+                                                                                                  start_position,
+                                                                                                  end_position))
         score_function, selection_function, ordering_function = self.decide_right_mechanism(objects, end_position,
                                                                                             object_type)
         scored_objects = self._score_algorithms[score_function].score(objects, properties)
-        # print("scored", scored_objects)
+        self.log_info("Scored {}".format(scored_objects))
         selected_objects = self._selection_algorithms[selection_function].select(objects, properties, scored_objects)
-        # print("select", selected_objects)
+        self.log_info("Select {}".format(selected_objects))
         exteded_objects = self._extended_selection_algorithms[ordering_function].extended_select(selected_objects,
                                                                                                  scored_objects,
                                                                                                  objects, properties,
                                                                                                  start_position,
                                                                                                  end_position)
-        # print("ordering", exteded_objects)
+        self.log_info("Ordering {}".format(exteded_objects))
         return exteded_objects
 
     # replannig
@@ -412,7 +452,7 @@ class SectionsAlgrotihms(object):
                 self._section_plan, self._section_index = self.section_map_object_selection(
                     self.sections, self.get_properties(), SectionMapObjectTypes.Section, drone_section, []), 0
                 if not self._silent:
-                    print("Sections replanned.")
+                    self.log_info("Sections replanned.")
                 return True
         return False
 
@@ -432,7 +472,7 @@ class SectionsAlgrotihms(object):
                     self.sections[section].objects, self.get_properties(section), SectionMapObjectTypes.Region,
                     r, self._region_end_position), 0
                 if not self._silent:
-                    print("Regions replanned.")
+                    self.log_info("Regions replanned.")
                 return True
         return False
 
@@ -452,7 +492,7 @@ class SectionsAlgrotihms(object):
                     current_region.objects, self.get_properties(section, region), SectionMapObjectTypes.Point,
                     p, self._point_end_position), 0
                 if not self._silent:
-                    print("Points replanned.")
+                    self.log_info("Points replanned.")
                 return True
         return False
 
@@ -463,7 +503,7 @@ class SectionsAlgrotihms(object):
     # planning
     def plan_i_section(self, i, save_section_variables=False):
         if not self._silent:
-            print("Request for section with index {}".format(i))
+            self.log_info("Request for section with index {}".format(i), 1)
         if i < 0:
             return None
         # print("plan " + str(i) + " section")
@@ -480,20 +520,22 @@ class SectionsAlgrotihms(object):
             start_section = section_plan[len(section_plan) - 1]
         if save_section_variables or len(self._section_plan) == 0:
             if not self._silent:
-                print("Section saved values:")
-                print("Current section plan iterations:", self._iterations_section)
-                print("Already planned:", self.replan_section_check)
-                print("Section plan:", self._section_plan)
-                print("Section index:", self._section_index)
+                self.log_info("Section saved values:")
+                self.log_info("Current section plan iterations: {}".format(self._iterations_section))
+                self.log_info("Already planned: {}".format(self.replan_section_check))
+                self.log_info("Section plan: {}".format(self._section_plan))
+                self.log_info("Section index: {}".format(self._section_index))
             self._iterations_section += 1
             self.replan_section_check = False
             self._section_plan = np.array(section_plan)
             self._section_index = index
+        if not self._silent:
+            self.log_info("End of request for section with index {}".format(i), -1)
         return section_plan[index]
 
     def plan_i_region(self, i, save_region_variables=False):
         if not self._silent:
-            print("Request for region with index {}".format(i))
+            self.log_info("Request for region with index {}".format(i), 1)
         if i < 0:
             return None, None
         # print("plan " + str(i) + " region")
@@ -526,19 +568,21 @@ class SectionsAlgrotihms(object):
             self._region_plan = region_plan
             self._region_index = index
             if not self._silent:
-                print("Region saved values:")
-                print("Current regions plan iterations:", self._iterations_region)
-                print("Already planned:", self.replan_region_check)
-                print("Last planned section:", self._last_planned_section)
-                print("Region end positions:", self._region_end_position)
-                print("Region start position:", self._region_start_position)
-                print("Region plan:", self._region_plan)
-                print("Region index:", self._region_index)
+                self.log_info("Region saved values:")
+                self.log_info("Current regions plan iterations: {}".format(self._iterations_region))
+                self.log_info("Already planned: {}".format(self.replan_region_check))
+                self.log_info("Last planned section: {}".format(self._last_planned_section))
+                self.log_info("Region end positions: {}".format(self._region_end_position))
+                self.log_info("Region start position: {}".format(self._region_start_position))
+                self.log_info("Region plan: {}".format(self._region_plan))
+                self.log_info("Region index: {}".format(self._region_index))
+        if not self._silent:
+            self.log_info("End of request for region with index {}".format(i), -1)
         return region_plan[index], section
 
     def plan_i_point(self, i, save_point_variables=False):
         if not self._silent:
-            print("Request for point with index {}".format(i))
+            self.log_info("Request for point with index {}".format(i), 1)
         if i < 0:
             return None, None, None
         # print("plan " + str(i) + " point")
@@ -571,17 +615,20 @@ class SectionsAlgrotihms(object):
             self._point_end_position = point_end_position
             self._point_start_position = point_start_position
             if not self._silent:
-                print("Point saved values:")
-                print("Current points plan iterations:", self._iterations_point)
-                print("Already planned:", self.replan_point_check)
-                print("Last planned region:", self._last_planned_region)
-                print("Point end positions:", self._point_end_position)
-                print("Point start position:", self._point_start_position)
-                print("Point plan:", self._point_plan)
-                print("Point index:", self._point_index)
+                self.log_info("Point saved values:")
+                self.log_info("Current points plan iterations: {}".format(self._iterations_point))
+                self.log_info("Already planned: {}".format(self.replan_point_check))
+                self.log_info("Last planned region: {}".format(self._last_planned_region))
+                self.log_info("Point end positions: {}".format(self._point_end_position))
+                self.log_info("Point start position: {}".format(self._point_start_position))
+                self.log_info("Point plan: {}".format(self._point_plan))
+                self.log_info("Point index: {}".format(self._point_index))
+        if not self._silent:
+            self.log_info("End of request for point with index {}".format(i), -1)
         return point_plan[index], region, section
 
     def delete_after_section_replan(self):
+        self.log_info("Delete after section replan")
         self._last_planned_section = -1
         self._region_plan = []
         self._region_index = 0
@@ -591,6 +638,7 @@ class SectionsAlgrotihms(object):
         self.delete_after_region_replan()
 
     def delete_after_region_replan(self):
+        self.log_info("Delete after region replan")
         self._last_planned_region = -1
         self._point_plan = []
         self._point_index = 0
@@ -599,16 +647,19 @@ class SectionsAlgrotihms(object):
         self._point_start_position = drone_point
 
     def point_start_point(self, region_1, section_1, current_region, point_plan, point_start_position):
+        self.log_info("Point start point {}, {}, {}, {}".format(region_1, section_1, point_plan, point_start_position))
         if region_1 is not None:
             last_region = self.sections[section_1].objects[region_1]
         else:
             last_region = None
         if len(point_plan) > 0 and last_region is not None:
             point_start_position = self.find_start_point(last_region, current_region, point_plan[- 1])
+        self.log_info("Planned point start position {}".format(point_start_position))
         return point_start_position
 
     def replan_start(self, section=None, region=None):
         [s, r, p] = self.get_drone_section_region_point()
+        self.log_info("Replanned start {}, {}, {}".format(s, r, p))
         if section is not None and s == section and region is not None and region == r:
             return s, r, p
         if section is not None and s == section and region is None:
@@ -620,21 +671,25 @@ class SectionsAlgrotihms(object):
     def find_current_drone_closest_point(self, section=None, region=None):
         dd, ii = self._points_tree.query(self.drone_last_position[:2], 100)
         for i in ii:
-            [s, r] = self._points_region_section_mapping[i]
+            [s, r, _] = self._points_region_section_mapping[i]
             if section is not None and s != section:
                 continue
             if region is not None and r != region:
                 continue
+            self.log_info("Current drone closest_point {},{},{}".format(s, r, i))
             return s, r, i
+        self.log_info("Current drone closest_point {}".format("None"))
         return None, None, None
 
     def point_end_point(self, i, current_region):
         region2, section2 = self.plan_i_region(i + 2)
         next_region = self.sections[section2].objects[region2]
+        self.log_info("Point end point region2 {}, section2 {}, next_region {}".format(region2, section2, next_region))
         return self.find_end_points(current_region, next_region)
 
     def region_end_point(self, i, current_section):
         next_section = self.sections[self.plan_i_section(i + 2)]
+        self.log_info("Point end point next_section {}".format(next_section))
         return self.find_end_points(current_section, next_section)
 
     def region_start_point(self, section_1, current_section, region_plan, region_start_position):
@@ -644,14 +699,16 @@ class SectionsAlgrotihms(object):
             last_section = None
         if len(region_plan) > 0 and last_section is not None:
             region_start_position = self.find_start_point(last_section, current_section, region_plan[- 1])
+        self.log_info("Region start point region_start_position {}".format(region_start_position))
         return region_start_position
 
     def are_close(self, drone_position, goal_position):
         dif = np.abs(goal_position - drone_position)
-        print("drone difference: x: {}, y: {}, z: {}, verical: {}, yaw: {}".format(dif[0], dif[1], dif[2], dif[3],
-                                                                                   dif[4]))
+        self.log_info(
+            "drone difference: x: {}, y: {}, z: {}, verical: {}, yaw: {}".format(dif[0], dif[1], dif[2], dif[3],
+                                                                                 dif[4]))
         if np.count_nonzero(dif < 0.1) == 5:
-            print("next")
+            self.log_info("next")
             return True
         return False
 
@@ -660,11 +717,11 @@ class SectionsAlgrotihms(object):
             current_drone_position = np.array(current_drone_position)
             self.update_drone_position(current_drone_position)
         if not self._silent:
-            print("################################")
+            self.log_info("################################")
         save = False
         if len(self._point_plan) == 0:
             if not self._silent:
-                print("Saving calculation: zero point plan")
+                self.log_info("Saving calculation: zero point plan")
             save = True
         point, region, section = self.plan_i_point(0, save)
         try:
@@ -673,22 +730,30 @@ class SectionsAlgrotihms(object):
             self.delete_after_section_replan()
             self.plan_i_point(0, True)
             return current_drone_position
+        self.log_info("INFO")
+        self.log_info("Drone last position {}".format(self.drone_last_position[np.r_[:3, 4:len(self.drone_last_position)]]))
+        self.log_info("Current point {}".format(current_point))
+        self.log_info(
+            "Are close {}".format(self.are_close(self.drone_last_position[np.r_[:3, 4:len(self.drone_last_position)]], current_point)))
         # (x position, y position, z position, vertical rotation of camera, yaw)
-        if self.are_close(self.drone_last_position[np.r_[:3, 4:len(self.drone_last_position)]], current_point):
+        converted_last_position = self.convert_to_correct_world_joints(
+            self.drone_last_position[np.r_[:3, 4:len(self.drone_last_position)]])
+        converted_current_point = self.convert_to_correct_world_joints(current_point)
+        if self.are_close(converted_current_point, converted_last_position):
             if self.replan_section():
                 self.delete_after_section_replan()
                 if not self._silent:
-                    print("Saving calculation: sections replaning")
+                    self.log_info("Saving calculation: sections replaning")
                 self.plan_i_point(0, True)
             elif self.replan_region():
                 self.delete_after_region_replan()
                 if not self._silent:
-                    print("Saving calculation: regions replaning")
+                    self.log_info("Saving calculation: regions replaning")
                 self.plan_i_point(0, True)
             else:
                 self.replan_point()
             if not self._silent:
-                print("Saving calculation: point replaning")
+                self.log_info("Saving calculation: point replaning")
             point, region, section = self.plan_i_point(1, True)
             current_point = self.sections[section].objects[region].objects[point].data
         # print("section index", self._section_index)
@@ -697,9 +762,25 @@ class SectionsAlgrotihms(object):
         # print("section plan", self._section_plan)
         # print("region plan", self._region_plan)
         # print("point plan", self._point_plan)
-        print("section index: {}, region index: {}, point index {}".format(self._section_index, self._region_index,
-                                                                           self._point_index))
-        return np.insert(current_point, 3, 0)
+        self.log_info(
+            "section index: {}, region index: {}, point index {}".format(self._section_index, self._region_index,
+                                                                         self._point_index))
+        self.level = 0
+        return self.convert_to_correct_world_joints(np.insert(current_point, 3, 0))
+
+    def convert_to_correct_world_joints(self, point):
+        yaw = point[-1] % (2 * np.pi)
+        if yaw > np.pi:
+            yaw -= (2 * np.pi)
+        point[-1] = yaw
+        return point
+
+    def log_info(self, string, level=0):
+        if level < 0:
+            self.level += level
+        rospy.loginfo("{}{}".format("".join(["  " for _ in range(self.level)]), str(string)))
+        if level > 0:
+            self.level += level
 
 
 class SectionAlgorithm(pm.PredictionAlgorithm):
@@ -714,16 +795,19 @@ class SectionAlgorithm(pm.PredictionAlgorithm):
         environment_configuration = rospy.get_param("environment_configuration")
         section_file = environment_configuration["map"]["section_file"]
         try:
-            self._sections = SectionMap.unpickle_sections(section_file)
+            self._sections = SectionUtils.unjson_sections(section_file)
             self._algorithm = SectionsAlgrotihms(self._sections, mapa)
+            rospy.loginfo("Section algorithm was loaded.")
         except IOError as ioerror:
             print(ioerror)
             self._sections = None
 
         self._first_update = False
+        self._saved_values = None
+        file_name = os.path.split(self._obstacles_file_path)[1][7:]
+        self.f = open("searching_test/drone_log_file_{}.txt".format(file_name), "w")
 
-
-    def state_variables(self, drone_positions, target_positions, map, **kwargs):
+    def state_variables(self, data, drone_positions, target_positions, map, **kwargs):
         return {}
 
     def pose_from_parameters(self, drone_positions, target_positions, map, **kwargs):
@@ -740,7 +824,8 @@ class SectionAlgorithm(pm.PredictionAlgorithm):
             #    current_drone_position.pose.orientation.z
             # ])
             target_probability_map = utils.DataStructures.array_to_image(
-                utils.DataStructures.pointcloud2_to_array(target_position), map.width, map.height, map.resolution)
+                utils.DataStructures.pointcloud2_to_array(target_position), map.real_width, map.real_height,
+                map.resolution)
             self._algorithm.update_probability_map(target_probability_map)
             if not self._first_update:
                 self._algorithm.update_scores()
@@ -748,6 +833,7 @@ class SectionAlgorithm(pm.PredictionAlgorithm):
             if "current_position" in kwargs:
                 current_drone_position = kwargs["current_position"]
             position = self._algorithm.next_point(current_drone_position)
+            self.log(kwargs, target_probability_map, current_drone_position, position)
             return np.array([position])
         else:
             current_drone_position = None
@@ -757,4 +843,41 @@ class SectionAlgorithm(pm.PredictionAlgorithm):
                 current_drone_position = np.array(current_drone_position)
             else:
                 current_drone_position = drone_position
+            self.log(kwargs, None, current_drone_position, current_drone_position)
             return current_drone_position
+
+    def log(self, kwargs, target_probability_map, drone_position, target_point):
+        ar = []
+        ar.append(rospy.Time.now().to_sec())
+        ent = 0
+        if target_probability_map is not None:
+            reshaped = target_probability_map.reshape(-1)
+            ent = np.sum(np.clip(np.nan_to_num(-np.log2(reshaped)), 0, None) * reshaped)
+        ar.append(ent)
+        plan_values = [[], [], []]
+        if (self._saved_values is not None and (
+                np.any(self._saved_values[0] != self._algorithm._section_plan) or np.any(self._saved_values[
+                                                                                             1] != self._algorithm._region_plan) or np.any(
+            self._saved_values[2] != self._algorithm._point_plan))) or self._saved_values is None:
+            plan_values = [self._algorithm._section_plan, self._algorithm._region_plan, self._algorithm._point_plan]
+            self._saved_values = plan_values
+        pv = []
+        for p in plan_values:
+            pv.append(self.convert_array_to_string(p, ":"))
+        ar.append(self.convert_array_to_string(pv))
+        current_drone_position = np.array([0, 0, 0, 0, 0, 0])
+        if "current_position" in kwargs:
+            current_drone_position = kwargs["current_position"]
+            current_drone_position.append(0)
+            current_drone_position = np.array(current_drone_position)
+        ar.append(self.convert_array_to_string(current_drone_position))
+        target_destination = np.array([0, 0, 0, 0, 0, 0])
+        if target_point is not None:
+            target_destination = target_point
+        ar.append(self.convert_array_to_string(target_destination))
+        self.f.write("{}\n".format(self.convert_array_to_string(ar, ",")))
+
+    def convert_array_to_string(self, array, delimiter=";"):
+        str_array = [str(a) for a in array]
+        s = delimiter.join(str_array)
+        return s

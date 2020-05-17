@@ -1,8 +1,8 @@
 environment_configuration:
   map:
     frame: map
-    obstacles_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_3981--1-n--1-n-123456789/sworld-100-0_3981--1-n--1-n-123456789.json
-    section_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_3981--1-n--1-n-123456789.section_file.pickle
+    obstacles_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_2999--1-f--1-n-10_7_32/sworld-100-0_2999--1-f--1-n-10_7_32.json
+    section_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_2999--1-f--1-n-10_7_32/section_file.json
     size: 10
   world:
     path: $(find pesat_resources)/worlds

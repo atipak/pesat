@@ -21,7 +21,7 @@ target_configuration:
     items_count_topic: "/target/items_count"
   properties:
     base_link: target/base_link
-    target_size: 1.0
+    target_size: 1.5
   strategies:
     max_srotate_angle: 15 # degrees
     slight_turn_dir_probability: 0.1

@@ -62,5 +62,5 @@ class PredictionNaive(pm.PredictionAlgorithm):
         pose.orientation.w = qt[3]
         return pose
 
-    def state_variables(self, drone_positions, target_positions, map, **kwargs):
+    def state_variables(self,data, drone_positions, target_positions, map, **kwargs):
         return {}
