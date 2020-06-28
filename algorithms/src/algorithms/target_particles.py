@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+import os
 import tf as tf_ros
 import numpy as np
 from geometry_msgs.msg import Pose
@@ -35,7 +36,8 @@ class PredictionWithParticles(pm.PredictionAlgorithm):
         self._slack = self.estimations - self._min_location_jittering - self._min_shift_jittering
         self._default_ratio = 0.995
         self._seen_ratio = 0.3
-        self.f = open("tracking_test/drone_log_file_{}.txt".format(231354), "w")
+        file_name = os.path.split(self._obstacles_file_path)[1][7:]
+        self.f = open("searching_test/target_prediction_log_file_{}.txt".format(file_name), "w")
 
     def pose_from_parameters(self, drone_positions, target_positions, map, **kwargs):
         start = time.time()
@@ -74,7 +76,22 @@ class PredictionWithParticles(pm.PredictionAlgorithm):
         np.min(observation_map[observation_map>0]))
         """
         rospy.loginfo("Target prediction proceeded:  {}".format(time.time() - base_start))
+        self.log(ratio)
         return chosen_particles
+
+    def log(self, ratio):
+        ar = []
+        ar.append(rospy.Time.now().to_sec())
+        if ratio == self._default_ratio:
+            ar.append(0)
+        else:
+            ar.append(1)
+        self.f.write("{}\n".format(self.convert_array_to_string(ar, ",")))
+
+    def convert_array_to_string(self, array, delimiter=";"):
+        str_array = [str(a) for a in array]
+        s = delimiter.join(str_array)
+        return s
 
     def choose_from_new_particles_result_set(self, probs_list, observation_map, samples_count, ratio, new_particles,
                                              positions, t_position, weight_index, map):

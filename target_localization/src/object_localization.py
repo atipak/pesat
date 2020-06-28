@@ -134,7 +134,7 @@ class PredictionLocalization(pm.PredictionManagement):
                                                       Float32, queue_size=10)
         rospy.Subscriber(environment_configuration["watchdog"]["camera_notification_topic"], PointCloud2,
                          self.callback_notify)
-        self._db.init_db(self.map)
+        self._db.init_db(self.map, target_position=environment_configuration["init_positions"]["target"])
         self._vision_information = None
         self._samples_length = None
 
@@ -261,6 +261,7 @@ class VisionLocalisation(object):
         self.hfov = _camera_configuration["hfov"]
         self._map_file = environment_configuration["map"]["obstacles_file"]
         self._map = utils.Map.get_instance(self._map_file)
+        print("Count", self._map.free_target_pixels)
         self.image_height = _camera_configuration["image_height"]
         self.image_width = _camera_configuration["image_width"]
         self.camera_range = _camera_configuration["camera_range"]

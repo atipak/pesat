@@ -13,16 +13,25 @@ class BigDrop(SelectionFunction):
 
     def select(self, objects, properties, scored_objects):
         print("Big drop")
-        sorted = np.sort(scored_objects)
-        diffs = sorted - np.roll(sorted, -1)
+        sorted = np.sort(scored_objects)[::-1]
+        print("sorted", sorted)
+        diffs = np.abs(sorted - np.roll(sorted, -1))[:-1]
+        print("Diffs", diffs)
         maximum = np.max(diffs)
-        median = np.median(diffs)
-        if maximum > 3 * median:
-            index = np.argmin(diffs > 3 * median)
+        mean = np.mean(diffs)
+        print("max, mean", maximum, mean)
+        if maximum > mean:
+            i = 1
+            while True:
+                if np.count_nonzero(diffs > i * mean) <= 1:
+                    break
+                i += 1
+            index = np.clip(np.argmax(diffs > i * mean), 0, None)
             value = sorted[index]
+            print("i, index, value", i, index, value)
             return np.array([a[0] for a in np.argwhere(scored_objects >= value)])
         else:
-            return np.arange(0, len(scored_objects))
+            return np.array([a[0] for a in np.argwhere(scored_objects > 0)])
 
 
 class AboveMinimum(SelectionFunction):

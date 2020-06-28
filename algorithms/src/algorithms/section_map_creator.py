@@ -5,7 +5,7 @@ import json
 from geometry_msgs.msg import Pose
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
-from scipy.sparse.csgraph import dijkstra
+from scipy.sparse.csgraph import dijkstra, shortest_path
 from scipy.cluster.hierarchy import fclusterdata
 from scipy.optimize import minimize
 from scipy.spatial import cKDTree, Voronoi, voronoi_plot_2d
@@ -41,6 +41,8 @@ from types import MethodType
 from section_algorithm_utils import SectionUtils
 from section_algorithm_utils import SectionMapObjectTypes
 from section_algorithm_utils import SectionMapObject
+
+import graph_tool.all as gt
 
 prefix = "../../../"
 logic_configuration_file = prefix + "pesat_resources/config/logic_configuration.yaml"
@@ -125,6 +127,7 @@ class SectionMap(object):
         print("World map was loaded", "during time", time.time() - begin)
         begin = time.time()
         sections, obstacles = self.create_sections(world_map, environment_configuration)
+        self.calculate_sections_transitions(sections, obstacles)
         print("Section were created:", len(sections), "during time", time.time() - begin)
         regions = self.create_regions(world_map, sections, obstacles)
         # regions = [section1: [cluster1: [point1: [x, y, z, vertical orientation of camera, yaw],
@@ -134,6 +137,7 @@ class SectionMap(object):
         region_index = 0
         point_index = 0
         point_coordinates = np.zeros((world_map.width, world_map.height))
+        point_occupancy = [[[] for _ in range(world_map.height)] for _ in range(world_map.width)]
         built_up_coefficient = world_map.map_details["built_up"]
         half_target_velocity = max_target_velocity / 2.0
         regions_id = []
@@ -196,7 +200,7 @@ class SectionMap(object):
                     else:
                         a = np.dstack(polygon.exterior.xy)[0]
                         d = np.max(distance.cdist(a, a))
-                region_object.maximal_time = d / ((1 - built_up_coefficient) * half_target_velocity)
+                # region_object.maximal_time = d / ((1 - built_up_coefficient) * half_target_velocity)
                 region_object.centroid = polygon.centroid
                 regions_centers.append(np.array(polygon.centroid))
                 # logging
@@ -206,6 +210,8 @@ class SectionMap(object):
                 # end logging
                 section_object.objects[region_object.object_id] = region_object
                 points_visibility = 0
+                points_times = []
+                points_times_centers = []
                 for point in region:
                     position = Pose()
                     position.position.x = point[0]
@@ -220,15 +226,19 @@ class SectionMap(object):
                     point_object.object_id = point_index
                     data_id = 0
                     for coor in coordinates:
-                        if section_map[coor[1], coor[0]] == 1 and point_coordinates[coor[0], coor[1]] != 1:
-                            point_object.objects[data_id] = [coor[1], coor[0]]
+                        if section_map[coor[1], coor[0]] == 1:  # and point_coordinates[coor[0], coor[1]] != 1:
+                            point_object.objects[data_id] = [coor[0], coor[1]]
+                            point_occupancy[coor[0]][coor[1]].append(point_object.object_id)
                             point_coordinates[coor[0], coor[1]] = 1
                             data_id += 1
                     point_object.centroid = point[:2]
                     points_centers.append(point[:2])
                     points_heights.append(point[2])
                     point_object.data = point
-                    point_object.maximal_time = 1
+                    point_object.maximal_time = self.calculate_time([o for i, o in point_object.objects.items()],
+                                                                    half_target_velocity)
+                    points_times.append(point_object.maximal_time)
+                    points_times_centers.append(point_object.centroid)
                     points_visibility += len(coordinates)
                     point_object.visibility = len(coordinates) * np.square(world_map.box_size)
                     point_object.maximal_entropy = np.clip(np.log2(len(coordinates)), 0, None)
@@ -242,11 +252,25 @@ class SectionMap(object):
                 region_visibility += points_visibility
                 region_object.visibility = points_visibility * np.square(world_map.box_size)
                 region_object.maximal_entropy = np.clip(np.log2(points_visibility), 0, None)
+                region_object.maximal_time = np.sum(np.sort(points_times)[:2])
+                if len(points_times) > 1:
+                    indices = np.argsort(points_times)[:2]
+                    region_object.maximal_time += Math.array_euclidian_distance(points_times_centers[indices[0]],
+                                                                                points_times_centers[
+                                                                                    indices[1]]) / half_target_velocity
                 points_centers_list.append(points_centers)
                 points_heights_list.append(points_heights)
             section_index += 1
             section_object.visibility = region_visibility * np.square(world_map.box_size)
             section_object.maximal_entropy = np.clip(np.log2(region_visibility), 0, None)
+            section_coordinates = np.nonzero(section_map)
+            rx, ry = [], []
+            for ri, ro in section_object.objects.items():
+                rx.append(ro.centroid.xy[0])
+                ry.append(ro.centroid.xy[1])
+            x, y = world_map.get_index_on_map(np.array(rx), np.array(ry))
+            section_object.maximal_time = self.calculate_time(list(zip(section_coordinates[1], section_coordinates[0])),
+                                                              half_target_velocity, list(zip(x, y)))
             self.points_centers_sections_list.append(points_centers_list)
             self.points_heights_sections_list.append(points_heights_list)
             self.regions_centers_list.append(regions_centers)
@@ -255,7 +279,274 @@ class SectionMap(object):
         self.non_seen_visible_pixels = point_coordinates.size - np.count_nonzero(point_coordinates) - len(
             world_map.obstacles_pixels[0])
         self.all_pixels = point_coordinates.size - len(world_map.obstacles_pixels[0])
+        # has to be before func fill_unfilled
+        self.section_intersections, self.region_intersections, self.point_intersections = self.calculate_objects_intersections(
+            point_occupancy, sections_objects)
+        self.fill_unfilled(world_map, point_occupancy)
+        self.calculate_points_transitions(point_occupancy, world_map, sections_objects)
+        self.section_transition, self.region_transition, self.point_transition = self.calculate_transition(sections,
+                                                                                                           obstacles,
+                                                                                                           point_occupancy,
+                                                                                                           world_map,
+                                                                                                           sections_objects)
         self.sections_objects = sections_objects
+
+    def fill_unfilled(self, world_map, point_occupancy):
+        for i in range(world_map.width):
+            for j in range(world_map.height):
+                if world_map.target_obstacle_map[i, j] == 0:
+                    point_occupancy[i][j].append(-1)
+        for i in range(world_map.width):
+            for j in range(world_map.height):
+                stack = []
+                points = []
+                if len(point_occupancy[i][j]) == 0:
+                    for i0 in [-1, 0, 1]:
+                        for j0 in [-1, 0, 1]:
+                            self.assign_into_right_stack(point_occupancy[i + i0][j + j0], [i + i0, j + j0], stack,
+                                                         points,
+                                                         [world_map.width, world_map.height])
+                for point in points:
+                    for s in stack:
+                        point_occupancy[point[0]][point[1]].append(s)
+
+    def assign_into_right_stack(self, value, point, stack, points, maxis):
+        if point[0] >= maxis[0] or point[0] < 0 or point[1] >= maxis[1] or point[1] < 0:
+            return
+        if len(value) == 1 and value[0] == -1:
+            return
+        if len(value) == 0:
+            if point not in points:
+                points.append(point)
+        if len(value) > 0:
+            for v in value:
+                if v not in stack:
+                    stack.append(v)
+        return
+
+    def calculate_objects_intersections(self, point_occupancy, sections_objects):
+        points = 0
+        regions = 0
+        mapping = {}
+        points_size = {}
+        region_size = {}
+        for index, section in sections_objects.items():
+            for region_index, region in section.objects.items():
+                regions += 1
+                region_index_string = str(region_index)
+                if region_index_string not in region_size:
+                    region_size[region_index_string] = 0
+                for point_index, point in region.objects.items():
+                    points += 1
+                    point_index_string = str(point_index)
+                    if point_index not in mapping:
+                        mapping[point_index] = region_index
+                    if point_index_string not in points_size:
+                        points_size[point_index_string] = len(point.objects)
+                    region_size[region_index_string] += len(point.objects)
+        point_intersections = np.zeros((points, points), dtype=np.int32)
+        region_intersections = [[[] for _ in range(regions)] for _ in range(regions)]
+        for i in range(len(point_occupancy)):
+            for j in range(len(point_occupancy[i])):
+                for k in range(len(point_occupancy[i][j])):
+                    for l in range(k, len(point_occupancy[i][j])):
+                        point_intersections[
+                            min(point_occupancy[i][j][k], point_occupancy[i][j][l]), max(point_occupancy[i][j][k],
+                                                                                         point_occupancy[i][j][l])] += 1
+                        rr = region_intersections[
+                            min(mapping[point_occupancy[i][j][k]], mapping[point_occupancy[i][j][l]])][max(
+                                mapping[point_occupancy[i][j][k]], mapping[point_occupancy[i][j][l]])]
+                        if [min(i, j), max(i, j)] not in rr:
+                            rr.append([min(i, j), max(i, j)])
+        pi = {}
+        ri = {}
+        si = {}
+        for i in range(len(sections_objects)):
+            section_index = str(i)
+            if section_index not in si:
+                si[section_index] = {}
+        for i in range(regions):
+            for j in range(regions):
+                if len(region_intersections[i][j]) > 0 and i != j:
+                    region_i_index = str(i)
+                    region_j_index = str(j)
+                    if region_i_index not in ri:
+                        ri[region_i_index] = {}
+                    if region_j_index not in ri[region_i_index]:
+                        ri[region_i_index][region_j_index] = len(region_intersections[i][j])
+                    else:
+                        print("Error {},{}".format(region_i_index, region_j_index))
+                    if region_j_index not in ri:
+                        ri[region_j_index] = {}
+                    if region_i_index not in ri[region_j_index]:
+                        ri[region_j_index][region_i_index] = len(region_intersections[i][j])
+                    else:
+                        print("Error {},{}".format(region_i_index, region_j_index))
+
+        x, y = np.nonzero(point_intersections)
+        for i in range(len(x)):
+            if x[i] == y[i]:
+                continue
+            point_i_index = str(x[i])
+            point_j_index = str(y[i])
+            if point_i_index not in pi:
+                pi[point_i_index] = {}
+            if point_j_index not in pi[point_i_index]:
+                pi[point_i_index][point_j_index] = 0
+
+            if point_j_index not in pi:
+                pi[point_j_index] = {}
+            if point_i_index not in pi[point_j_index]:
+                pi[point_j_index][point_i_index] = 0
+            pi[point_i_index][point_j_index] += point_intersections[x[i], y[i]]
+            pi[point_j_index][point_i_index] += point_intersections[x[i], y[i]]
+
+        """
+            region_i_index = str(mapping[x[i]])
+            region_j_index = str(mapping[y[i]])
+            if region_i_index not in ri:
+                ri[region_i_index] = {}
+            if region_j_index not in ri[region_i_index]:
+                ri[region_i_index][region_j_index] = 0
+
+            if region_j_index not in ri:
+                ri[region_j_index] = {}
+            if region_i_index not in ri[region_j_index]:
+                ri[region_j_index][region_i_index] = 0
+            ri[region_j_index][region_i_index] += point_intersections[x[i], y[i]]
+            ri[region_i_index][region_j_index] += point_intersections[x[i], y[i]]
+        """
+
+        for region in ri:
+            for region1 in ri[region]:
+                if ri[region][region1] > 0 and region != region1:
+                    ri[region][region1] = ri[region][region1] / region_size[region1]
+                else:
+                    raise Exception("This is exception")
+        for i in range(regions):
+            i_string = str(i)
+            if i_string not in ri:
+                ri[i_string] = {}
+        for point in pi:
+            for point1 in pi[point]:
+                if pi[point][point1] > 0 and point1 != point:
+                    pi[point][point1] = pi[point][point1] / points_size[point1]
+                else:
+                    raise Exception("This is exception")
+        for i in range(points):
+            i_string = str(i)
+            if i_string not in pi:
+                pi[i_string] = {}
+        return si, ri, pi
+
+    def calculate_sections_transitions(self, sections, obstacles):
+        points = {}
+        index = 0
+        for section in sections:
+            for point in section:
+                if point[0] not in points:
+                    points[point[0]] = {}
+                if point[1] not in points[point[0]]:
+                    points[point[0]][point[1]] = []
+                points[point[0]][point[1]].append(index)
+            index += 1
+        transitions = np.zeros((len(sections), len(sections)))
+        for section_index in range(len(sections)):
+            section = sections[section_index]
+            for index in range(len(section)):
+                point = section[index % len(section)]
+                next_point = section[(index + 1) % len(section)]
+                line = LineString([Point(point[0], point[1]), Point(next_point[0], next_point[1])])
+                if line.length <= 1:
+                    continue
+                intersection_indices = np.in1d(points[point[0]][point[1]], points[next_point[0]][next_point[1]])
+                intersection = np.array(points[point[0]][point[1]])[intersection_indices]
+                for obstacle in obstacles:
+                    res = line.difference(obstacle)
+                    for ii in intersection:
+                        if ii != section_index:
+                            transitions[section_index, ii] += res.length
+        tt = (transitions.T / transitions.sum(axis=0)).T
+        transition_dict = {}
+        for i in range(len(transitions)):
+            transition_dict[str(i)] = {}
+            for j in range(len(transitions)):
+                if tt[i, j] > 0:
+                    transition_dict[str(i)][str(j)] = tt[i, j]
+        return transition_dict
+
+    def calculate_points_transitions(self, point_occupancy, world_map, sections_objects):
+        occupancy = {}
+        for i in range(world_map.width):
+            for j in range(world_map.height):
+                for value in point_occupancy[i][j]:
+                    if value == -1:
+                        continue
+                    if value not in occupancy:
+                        occupancy[value] = {}
+                    for i0 in [-1, 0, 1]:
+                        for j0 in [-1, 0, 1]:
+                            if i + i0 >= world_map.width or i + i0 < 0 or j + j0 >= world_map.height or j + j0 < 0:
+                                continue
+                            if len(point_occupancy[i + i0][j + j0]) >= 1 and value not in point_occupancy[i + i0][
+                                j + j0]:
+                                for value1 in point_occupancy[i + i0][j + j0]:
+                                    if value1 != -1:
+                                        if value1 not in occupancy[value]:
+                                            occupancy[value][value1] = []
+                                        if [i + i0, j + j0] not in occupancy[value][value1]:
+                                            occupancy[value][value1].append([i + i0, j + j0])
+        point_borders = {}
+        for point in occupancy:
+            point_borders[point] = {}
+            point_dict = occupancy[point]
+            s = 0.0
+            for p1 in point_dict:
+                s += len(point_dict[p1])
+            for p1 in point_dict:
+                point_borders[point][p1] = len(point_dict[p1]) / s
+        region_borders = {}
+        regions = {}
+        points = {}
+        for index, section in sections_objects.items():
+            for region_index, region in section.objects.items():
+                for point_index, point in region.objects.items():
+                    if region_index not in regions:
+                        regions[region_index] = []
+                    if point_index not in points:
+                        points[point_index] = 0
+                    regions[region_index].append(point_index)
+                    points[point_index] = region_index
+        for region in regions:
+            if region not in region_borders:
+                region_borders[region] = {}
+            for point in regions[region]:
+                if point in occupancy:
+                    for point1 in occupancy[point]:
+                        region1 = points[point1]
+                        if region1 not in region_borders[region]:
+                            region_borders[region][region1] = []
+                        region_borders[region][region1].append(len(occupancy[point][point1]))
+        for index, section in sections_objects.items():
+            for region_index, region in section.objects.items():
+                if region_index not in region_borders:
+                    region_borders[region] = {}
+                for point_index, point in region.objects.items():
+                    if point_index not in point_borders:
+                        point_borders[point_index] = {}
+        for r in region_borders:
+            s = 0.0
+            for r1 in region_borders[r]:
+                s += np.sum(region_borders[r][r1])
+            for r1 in region_borders[r]:
+                region_borders[r][r1] = np.sum(region_borders[r][r1]) / s
+        return region_borders, point_borders
+
+    def calculate_transition(self, sections, obstacles, point_occupancy, world_map, sections_objects):
+        region_transition, point_transition = self.calculate_points_transitions(point_occupancy, world_map,
+                                                                                sections_objects)
+        section_transition = self.calculate_sections_transitions(sections, obstacles)
+        return section_transition, region_transition, point_transition
 
     def add_neighbours(self, points_into_voronoi, sections_objects, sections_id, regions_id, points_id, world_map):
         vor = Voronoi(np.array(points_into_voronoi))
@@ -309,8 +600,8 @@ class SectionMap(object):
                 sections_objects[s].neighbors[s1].append([r, r1, p, p1])
             if s not in sections_objects[s1].neighbors:
                 sections_objects[s1].neighbors[s] = []
-            if [r, r1, p, p1] not in sections_objects[s1].neighbors[s]:
-                sections_objects[s1].neighbors[s].append([r, r1, p, p1])
+            if [r1, r, p1, p] not in sections_objects[s1].neighbors[s]:
+                sections_objects[s1].neighbors[s].append([r1, r, p1, p])
         if r1 != r:
             if r1 not in sections_objects[s].objects[r].neighbors:
                 sections_objects[s].objects[r].neighbors[r1] = []
@@ -318,8 +609,8 @@ class SectionMap(object):
                 sections_objects[s].objects[r].neighbors[r1].append([p, p1])
             if r not in sections_objects[s1].objects[r1].neighbors:
                 sections_objects[s1].objects[r1].neighbors[r] = []
-            if [p, p1] not in sections_objects[s1].objects[r1].neighbors[r]:
-                sections_objects[s1].objects[r1].neighbors[r].append([p, p1])
+            if [p1, p] not in sections_objects[s1].objects[r1].neighbors[r]:
+                sections_objects[s1].objects[r1].neighbors[r].append([p1, p])
         if p != p1:
             if p1 not in sections_objects[s].objects[r].objects[p].neighbors:
                 sections_objects[s].objects[r].objects[p].neighbors[p1] = []
@@ -327,8 +618,8 @@ class SectionMap(object):
                 sections_objects[s].objects[r].objects[p].neighbors[p1].append([p, p1])
             if p not in sections_objects[s1].objects[r1].objects[p1].neighbors:
                 sections_objects[s1].objects[r1].objects[p1].neighbors[p] = []
-            if [p, p1] not in sections_objects[s1].objects[r1].objects[p1].neighbors[p]:
-                sections_objects[s1].objects[r1].objects[p1].neighbors[p].append([p, p1])
+            if [p1, p] not in sections_objects[s1].objects[r1].objects[p1].neighbors[p]:
+                sections_objects[s1].objects[r1].objects[p1].neighbors[p].append([p1, p])
 
     def create_sections(self, world_map, environment_configuration):
         begin = time.time()
@@ -596,6 +887,53 @@ class SectionMap(object):
         self.delimiters = np.array(delimiters)
         return self.vertices, self.delimiters
 
+    def calculate_time(self, coordinates, half_target_velocity, sources=None):
+        mapping_coor_to_vertex = {}
+        mapping_vertex_to_coor = []
+        index = 0
+        for o in coordinates:
+            if o[0] not in mapping_coor_to_vertex:
+                mapping_coor_to_vertex[o[0]] = {}
+            if o[1] not in mapping_coor_to_vertex[o[0]]:
+                mapping_coor_to_vertex[o[0]][o[1]] = index
+                mapping_vertex_to_coor.append(o)
+                index += 1
+        c = np.sqrt(2) * 0.5
+        graph = np.zeros((index, index))
+        for v_index in range(index):
+            coor = mapping_vertex_to_coor[v_index]
+            for i in [-1, 0, 1]:
+                for j in [-1, 0, 1]:
+                    if i == j:
+                        continue
+                    if (coor[0] + i) in mapping_coor_to_vertex and (coor[1] + j) in mapping_coor_to_vertex[
+                        (coor[0] + i)]:
+                        v1_index = mapping_coor_to_vertex[(coor[0] + i)][(coor[1] + j)]
+                        if np.sum(np.abs([i, j])) == 2:
+                            graph[v_index, v1_index] = c
+                            graph[v1_index, v_index] = c
+                        else:
+                            graph[v_index, v1_index] = 0.5
+                            graph[v1_index, v_index] = 0.5
+        graph = csr_matrix(graph)
+        dist_matrix = np.array(shortest_path(csgraph=graph, directed=False))
+        if sources is None:
+            indices = np.arange(0, index)
+        else:
+            indices = []
+            for coordinate_index in range(len(coordinates)):
+                coordinate = coordinates[coordinate_index]
+                if coordinate in sources:
+                    indices.append(coordinate_index)
+            indices = np.array(indices)
+        a = dist_matrix[indices]
+        a = a[:, indices]
+        a[a == np.inf] = 0
+        maximum = 0
+        if len(a) > 0:
+            maximum = np.max(a)
+        return maximum / half_target_velocity
+
     def map_rectangles_to_corners(self, corners):
         iterations = int(len(corners) / 4)
         rtc = {}
@@ -802,7 +1140,7 @@ class SectionMap(object):
         CAMERA_MIN, CAMERA_MAX = 0, np.deg2rad(self.camera_max_angle)
         YAW_MIN, YAW_MAX = 0, 2 * np.pi
         CXPB = 0.02
-        MUTPB = 0.8
+        MUTPB = 0.7
         NGEN = 100
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMin)
@@ -1332,8 +1670,24 @@ class SectionMap(object):
     def pickle_sections(self, section_file):
         if self.sections_objects is not None:
             print("section_objects", self.sections_objects)
+            d = {
+                "objects": self.sections_objects,
+                "additional": {
+                    "transitions": {
+                        "sections": self.section_transition,
+                        "regions": self.region_transition,
+                        "points": self.point_transition
+                    },
+                    "intersections": {
+                        "sections": self.section_intersections,
+                        "regions": self.region_intersections,
+                        "points": self.point_intersections
+                    }
+
+                }
+            }
             with open(section_file, "wb") as fp:  # Pickling
-                pck.dump(self.sections_objects, fp, protocol=2)
+                pck.dump(d, fp, protocol=2)
         else:
             raise Exception("Sections not found, did you create them?")
 
@@ -1607,8 +1961,8 @@ if __name__ == '__main__':
     json_file = "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_2999--1-f--1-n-10_7_32/section_file.json"
     # convert(pickle_file, json_file)
     # SectionUtils.show_sections(SectionUtils.unjson_sections(json_file), False)
-    #SectionUtils.show_sections(SectionUtils.unjson_sections(json_file), True)
-    #show_voronoi(json_file)
-    create_section_from_file(
-        "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_2999--1-f--1-n-10_7_32")
+    SectionUtils.show_sections(SectionUtils.unjson_sections(json_file)["objects"], True)
+    # show_voronoi(json_file)
+    #create_section_from_file(
+    #    "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_2999--1-f--1-n-10_7_32")
     pass

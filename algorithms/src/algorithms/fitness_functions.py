@@ -32,6 +32,24 @@ class Maximum(FitnessFunction):
         ids = np.sort(np.array([i for (i, object) in objects.items()]))
         return np.array([objects[i].score for i in ids])
 
+class RestrictedProbability(FitnessFunction):
+
+    def score(self, objects, properties):
+        ids = np.sort(np.array([i for (i, object) in objects.items()]))
+        scores = np.array([objects[i].score for i in ids])
+        ratios = np.zeros(len(ids))
+        sorted_scores_indices = np.array(np.argsort(scores))[::-1]
+        updated_score = []
+        #print("Scores, ids, sorted_scores", scores, ids, sorted_scores_indices)
+        for index in sorted_scores_indices:
+            updated_score.append(scores[index] * (1 - np.clip(ratios[index], 0, 1)))
+            for key in properties["intersections"][ids[index]]:
+                if key in ids:
+                    ids_index = np.in1d(ids, [key]).nonzero()[0][0]
+                    ratios[ids_index] +=  properties["intersections"][ids[index]][key]
+        return updated_score
+
+
 
 class Neighbour(FitnessFunction):
 

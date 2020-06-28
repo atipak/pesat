@@ -12,7 +12,7 @@ class SectionUtils():
     @staticmethod
     def unjson_sections(section_file):
         with open(section_file, "r") as fp:  # Unpickling
-            dic =  json.load(fp)
+            dic = json.load(fp)
             return SectionUtils.deserialize_dict(dic)
 
     @staticmethod

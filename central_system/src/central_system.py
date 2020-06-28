@@ -58,6 +58,7 @@ class CenralSystem(object):
         self._seen = False
         self._start_phase = True
         self._target_information = None
+        self._silent = True
 
         rospy.Subscriber(logic_configuration["avoiding"]["recommended_altitude_topic"], Float32,
                          self.callback_recommended_altitude)
@@ -214,10 +215,11 @@ class CenralSystem(object):
             desired_positions = np.array(
                 [x_next, y_next, z_next, camera_horientation_next, camera_vorientation_next, yaw_next])
             dif = desired_positions - current_positions
-            print("Current, desired position, {}, {}".format(current_positions, desired_positions))
-            print(
-               "difference: x: {}, y: {}, z: {}, horizontal {}, vertical: {}, yaw: {}".format(dif[0], dif[1], dif[2],
-                                                                                              dif[3], dif[4], dif[5]))
+            if not self._silent:
+                print("Current, desired position, {}, {}".format(current_positions, desired_positions))
+                print(
+                    "difference: x: {}, y: {}, z: {}, horizontal {}, vertical: {}, yaw: {}".format(dif[0], dif[1], dif[2],
+                                                                                                   dif[3], dif[4], dif[5]))
             if abs(dif[5]) > 0.1 or abs(dif[2]) > 0.2:
                 # desired_positions = self.rotate_lift_move(desired_positions, current_positions)
                 pass
@@ -228,7 +230,8 @@ class CenralSystem(object):
         else:
             vel = self.get_zero_velocity()
         self.publish_cmd_velocity(vel)
-        print("velocity: x: {}, y: {}, z: {}, vertical: {}, yaw: {}".format(vel[0], vel[1], vel[2], vel[4], vel[5]))
+        if not self._silent:
+            print("velocity: x: {}, y: {}, z: {}, vertical: {}, yaw: {}".format(vel[0], vel[1], vel[2], vel[4], vel[5]))
         # print(current_positions)
 
     def rotate_lift_move(self, desired_positions, current_positions):
@@ -258,7 +261,7 @@ class CenralSystem(object):
         if self.map.is_free_for_drone(map_point):
             return pose
         else:
-            rospy.loginfo("Next position got from prediction system isn't free.")
+            rospy.loginfo("Position in plan from prediction system isn't free {}.".format(pose))
             return None
 
     def publish_cmd_velocity(self, vel_command):
@@ -379,9 +382,10 @@ class CenralSystem(object):
                         self.publish_cmd_velocity(self.get_zero_velocity())
                         return
                     self._plan = self.find_states(plan)
-                    print("________________")
-                    for p in self._plan:
-                        print(p)
+                    if not self._silent:
+                        print("________________")
+                        for p in self._plan:
+                            print(p)
                     self._plan_index = 0
                 else:
                     self.publish_cmd_velocity(self.get_zero_velocity())
@@ -460,26 +464,34 @@ class CenralSystem(object):
     def split_states(self, s1, s2, states):
         if not np.allclose([s1.position.x, s1.position.y], [s2.position.x, s2.position.y]) and not np.isclose(
                 s1.position.z, s2.position.z):
+            start = np.array([s1.position.x, s1.position.y, s1.position.z])
+            end = np.array([s2.position.x, s2.position.y, s2.position.z])
+            dist = np.linalg.norm(start - end)
             u_state = np.array([s1.position.x, s1.position.y, s2.position.z])
             f_state = np.array([s2.position.x, s2.position.y, s1.position.z])
             u_state_freedom = self.map.is_free_for_drone(
                 self.map.map_point_from_real_coordinates(u_state[0], u_state[1], u_state[2]))
             f_state_freedom = self.map.is_free_for_drone(
                 self.map.map_point_from_real_coordinates(f_state[0], f_state[1], f_state[2]))
+
             if u_state_freedom or f_state_freedom:
                 states.append(s1)
                 p = Pose()
                 p.orientation.x = s2.orientation.x
                 p.orientation.y = s2.orientation.y
                 p.orientation.z = s2.orientation.z
-                if u_state_freedom:
+                if (dist > 2 and self.check_between_states(start, u_state) and u_state_freedom and self.check_between_states(
+                        u_state, end)) or (dist < 2 and u_state_freedom):
                     p.position.x = u_state[0]
                     p.position.y = u_state[1]
                     p.position.z = u_state[2]
-                else:
+                elif (dist > 2 and self.check_between_states(start, f_state) and f_state_freedom and self.check_between_states(
+                        f_state, end)) or (dist < 2 and f_state_freedom):
                     p.position.x = f_state[0]
                     p.position.y = f_state[1]
                     p.position.z = f_state[2]
+                else:
+                    print("Error in copmuting new path trough obstacles",dist, f_state_freedom, u_state_freedom, self.check_between_states(start, u_state), self.check_between_states(start, f_state), self.check_between_states(u_state, end), self.check_between_states(f_state, end))
                 states.append(p)
             else:
                 vector = np.array(
@@ -496,6 +508,23 @@ class CenralSystem(object):
                 self.split_states(p, s2, states)
         else:
             states.append(s1)
+
+    def check_between_states(self, start, end, distance=0.5):
+        begin = np.copy(start)
+        vector = np.array([end[0] - start[0], end[1] - start[1], end[2] - start[2]])
+        norm = utils.Math.normalize(vector)
+        mask = np.abs(vector) > 0
+        #print("Vector, mask", vector, mask, norm)
+        d = vector[mask][0] / norm[mask][0]
+        if d < distance:
+            return True
+        steps = int(d / distance)
+        for _ in range(0, steps):
+            begin += distance * norm
+            resp = self.map.is_free_for_drone(self.map.map_point_from_real_coordinates(begin[0], begin[1], begin[2]))
+            if not resp:
+                return False
+        return True
 
     def desired_yaw(self, current_pose):
         if self._plan_index == 0 and len(self._plan) > 1:

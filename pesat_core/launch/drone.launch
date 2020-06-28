@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
-    <arg name="world_name" default="sworld-100-0_2999--1-f--1-n-10_7_32/sworld-100-0_2999--1-f--1-n-10_7_32" />
-    <arg name="drone_x" default="8.240311622619629" />
-    <arg name="drone_y" default="20.041289806365967" />
+    <arg name="world_name" default="sworld-100-0_0998--1-f--1-n-1_59_31/sworld-100-0_0998--1-f--1-n-1_59_31" />
+    <arg name="drone_x" default="14.167283398509026" />
+    <arg name="drone_y" default="1.3889181888103472" />
     <arg name="drone_z" default="4" />
     <arg name="extra_localization" default="false" />
     <arg name="slam" default="false" />

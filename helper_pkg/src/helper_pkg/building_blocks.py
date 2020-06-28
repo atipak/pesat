@@ -2003,7 +2003,8 @@ def generate_target_launch_file(file_path, target_position=None, target="true", 
         file.write(text)
 
 
-def generate_environment_configuration_file(file_path, obstacles_file_name, world_folder_path):
+def generate_environment_configuration_file(file_path, obstacles_file_name, world_folder_path, drone_position,
+                                            target_position):
     text = """environment_configuration:
   map:
     frame: map
@@ -2021,7 +2022,16 @@ def generate_environment_configuration_file(file_path, obstacles_file_name, worl
     camera_registration_service: "/cctv/registration"
     camera_update_topic: "/cctv/update"
     camera_notification_topic: "/cctv/notifications"
-    camera_switch_topic: "/cctv/switch\"""".format(obstacles_file_name, world_folder_path)
+    camera_switch_topic: "/cctv/switch\"
+  init_positions:
+    target:
+      x: {}
+      y: {}
+    drone:
+      x: {}
+      y: {}
+      z: {}
+    """.format(obstacles_file_name, world_folder_path, target_position[0], target_position[1], drone_position[0], drone_position[1], drone_position[2])
     with open(file_path, "w") as file:
         file.write(text)
 
@@ -2056,7 +2066,8 @@ def create_new_map(substitute_paths, create_section_file, size, built, height, p
         path = "/home/patik/Diplomka/dp_ws/src/pesat_resources/config/"
         environment_configuration_file_name = "environment_configuration.yaml"
         abs_path = path + environment_configuration_file_name
-        generate_environment_configuration_file(abs_path, obstacles_file_name, world_folder_path)
+        generate_environment_configuration_file(abs_path, obstacles_file_name, world_folder_path, drone_position,
+                                                target_position)
     if create_section_file:
         from algorithms.src.algorithms import section_map_creator
         rvalue = section_map_creator.create_section_from_file(world_folder_path)
@@ -2069,7 +2080,7 @@ def create_new_map(substitute_paths, create_section_file, size, built, height, p
 
 if __name__ == "__main__":
     # generate_experiments_submaps()
-    create_new_map(True, True, 100,0.3,-1,"f","n")
+    create_new_map(True, True, 100, 0.1, -1, "f", "n")
 
     # generate_random_maps_from_submaps()
     # grid_map = Building.grid_map()

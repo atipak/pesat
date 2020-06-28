@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import numpy as np
 
 
 class ReplaningFunction(object):
@@ -65,4 +66,19 @@ class NoReplaning(ReplaningFunction):
         super(NoReplaning, self).__init__()
 
     def replaning(self, objects, chosen_objects, properties, iteration):
+        return False, None
+
+class ProbabilityChangeReplanning(ReplaningFunction):
+    def __init__(self):
+        super(ProbabilityChangeReplanning, self).__init__()
+
+    def replaning(self, objects, chosen_objects, properties, iteration):
+        if properties["is_target_visible"]:
+            return True, None
+        original_score = np.sum(properties["original_score"])
+        print("ORIGINAL SCORE {}".format(original_score))
+        new_score = np.sum([objects[i].score for i in chosen_objects])
+        print("NEW CALCULATED SCORE {}".format(new_score))
+        if new_score < 0.2 * original_score and len(chosen_objects) > 3:
+            return True, None
         return False, None

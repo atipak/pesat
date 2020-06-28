@@ -604,7 +604,7 @@ class Target():
         while not rospy.is_shutdown():
             current_position = self.get_current_position()
             if current_position is not None:
-                self.f.write("{}, {}, {}, {}\n".format(self._strategy, rospy.Time.now().to_sec(),
+                self.f.write("{}, {}, {}, {}\n".format(rospy.Time.now().to_sec(),self._strategy,
                                                        current_position.x, current_position.y))
                 if self._destination_position is None:
                     velocity = 3.0# self._current_velocity

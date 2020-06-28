@@ -3,9 +3,13 @@ import matplotlib.pyplot as plt
 import yaml
 from pesat_utils.pesat_math import Math
 from pesat_utils.base_map import BaseMap
+import itertools
 import copy
 from scipy import stats
 import os
+import re
+import json
+from section_algorithm_utils import SectionUtils
 
 
 def velocity_join_files():
@@ -578,7 +582,7 @@ def resolve_subplot_info(info, d_set, folder_path):
         if not os.path.exists(os.path.join(folder_path, "images")):
             os.mkdir(os.path.join(folder_path, "images"))
         plt.savefig(
-            "{}/{}.png".format(os.path.join(folder_path,  "images"), str(index)))
+            "{}/{}.png".format(os.path.join(folder_path, "images"), str(index)))
         plt.close()
 
 
@@ -775,6 +779,490 @@ def obstacles_corners(world_map):
         obstacles.append(obstacle)
     return np.array(obstacles)
 
+
+def get_data_from_target_prediction(text_file_path, less=True):
+    data = {}
+    with open(text_file_path, "r") as file:
+        for line in file.readlines():
+            parts = convert_to_float(line.split(","))
+            rounded_time = np.round(parts[0])
+            if rounded_time in data:
+                if ((parts[1] < data[rounded_time][1]) == less):
+                    data[rounded_time] = parts
+                    data[rounded_time][0] = parts[0]
+            else:
+                data[rounded_time] = parts
+    return data
+
+
+def convert_to_float(arr):
+    ar = []
+    for a in arr:
+        try:
+            ar.append(float(a))
+        except:
+            ar.append(a)
+    return ar
+
+
+def fill_unfilled(data, found_time=np.inf, max_time=np.inf):
+    keys = data.keys()
+    sorted = np.sort(list(keys))
+    filled_data = {}
+    last_in = int(sorted[0])
+    end_time = int(sorted[-1]) if max_time == np.inf else int(max_time)
+    finish = False
+    for i in range(0, end_time + 1):
+        if i not in keys:
+            filled_data[i] = data[last_in]
+        else:
+            filled_data[i] = data[i]
+            last_in = i
+        if i in keys and i > found_time and data[i][1] < 6.0:
+            finish = True
+        if i in keys and finish and i > found_time and data[i][1] > 6.0:
+            break
+    for j in range(i, end_time):
+        filled_data[j] = data[last_in]
+    return filled_data
+
+
+def find_seen(data, ignore_until=0.0):
+    for k in np.sort(list(data.keys())):
+        if float(k) < ignore_until:
+            continue
+        if data[k][1] == 1:
+            return k
+    return np.inf
+
+
+def legend(paths):
+    names = []
+    for path in paths:
+        name = os.path.basename(path)
+        name = parse_name(name)
+        names.append(name)
+    return names
+
+
+def parse_name(name):
+    # 'drone_log_file_100-0_2999--1-f--1-n-10_7_32.json (kopie).txt'
+    a = re.findall(".*_([0-9]*)-0_([0-9]*)-.*-[n|f]-.*-[n|y]-(.*).json(.*)", name)
+    world_name = "Svět vel: {}, zast: 0.{}, id: {}".format(int(a[0][0]), int(a[0][1]), a[0][2])
+    return [world_name, a[0][0], a[0][1], a[0][2], a[0][3]]
+
+
+def create_time_entropy_plot(data, names, size, ratio, folder_path):
+    fig, ax = plt.subplots()
+    for i in range(len(data)):
+        d = data[i]
+        times = []
+        values = []
+        for k in np.sort(list(d.keys())):
+            times.append(k)
+            values.append(d[k][1])
+        ax.plot(times, values, label=names[i])
+    ax.set_xlabel("Čas")
+    ax.set_ylabel("Entropie")
+    ax.set_title("Mapy o zastavěnosti {}%".format(ratio))
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.2,
+                     box.width, box.height * 0.8])
+
+    # Put a legend below current axis
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+              fancybox=True, shadow=True)
+    if not os.path.exists(os.path.join(folder_path, "images", str(size), str(ratio))):
+        os.makedirs(os.path.join(folder_path, "images", str(size), str(ratio)))
+    plt.savefig(
+        "{}/{}.png".format(os.path.join(folder_path, "images", str(size), str(ratio)), "entropy-{}".format("-".join(names))), cmap="gray")
+    plt.close()
+
+
+def find_all_first_seen(paths, ignore_until=0.0):
+    first_seens = []
+    for path in paths:
+        data = get_data_from_target_prediction(path, False)
+        first_seens.append(find_seen(data, ignore_until))
+    return first_seens
+
+
+def parse_file_name(name):
+    a = re.findall(".*_([0-9]*)-0_([0-9]*)-.*-[n|f]-.*-[n|y]-(.*).json.*", name)
+    return a[0][0], a[0][1], a[0][2]
+
+
+def paths_for_first_seen():
+    return paths_for_testing("target_prediction_")
+
+
+def paths_for_entropy():
+    return paths_for_testing("drone_")
+
+
+def paths_for_testing(starting_word):
+    basepath = "/home/patik/.ros/searching_test/"
+    groups = {}
+    for file in os.listdir(basepath):
+        if file.startswith(starting_word):
+            path = os.path.join(basepath, file)
+            size, ratio, index = parse_file_name(file)
+            ratio = int(str(np.round(float("0." + str(ratio)), 1)).split(".")[1]) * 10
+            if size not in groups:
+                groups[size] = {}
+            if ratio not in groups[size]:
+                groups[size][ratio] = []
+            groups[size][ratio].append(path)
+    return groups
+
+
+def find_index(paths, index, end):
+    for i in range(len(paths)):
+        path = paths[i]
+        if str(path).find(index) != -1 and str(path).find(end) != -1:
+            return i
+    return -1
+
+def create_subsets(i):
+    a = []
+    def findsubsets(s, n):
+        return list(itertools.combinations(s, n))
+    s = set(range(i))
+    for j in range(i):
+        a.extend(findsubsets(s, j + 1))
+    return a
+
+def pick_paths(subset, paths):
+    a = []
+    for s in subset:
+        a.append(paths[s])
+    return a
+
+def test_time_entropy_plot():
+    first_seen_paths_groups = paths_for_first_seen()
+    paths_groups = paths_for_entropy()
+    folder_path = "/home/patik/.ros/searching_test"
+    for size in paths_groups:
+        for ratio in paths_groups[size]:
+            first_seen_paths = sorted(first_seen_paths_groups[size][ratio])
+            paths = sorted(paths_groups[size][ratio])
+            subsets = create_subsets(len(paths))
+            for subset in subsets:
+                chosen_paths = pick_paths(subset, paths)
+                chosen_first_seen_paths = pick_paths(subset, first_seen_paths)
+                first_seen = find_all_first_seen(chosen_first_seen_paths, 60.0)
+                first_seen_maximum = np.copy(first_seen) + 1
+                first_seen_maximum[first_seen_maximum == np.inf] = 0.0
+                first_seen_maximum = np.max(first_seen_maximum)
+                data_list = []
+                legends = legend(chosen_paths)
+                names = [leg[0] for leg in legends]
+                indices = [leg[3] for leg in legends]
+                ends = [leg[4] for leg in legends]
+                for i in range(len(indices)):
+                    index = indices[i]
+                    end = ends[i]
+                    j = find_index(chosen_paths, index, end)
+                    if j == -1:
+                        continue
+                    k = find_index(chosen_first_seen_paths, index, end)
+                    if k == -1:
+                        continue
+                    path = chosen_paths[j]
+                    data = get_data_from_target_prediction(path)
+                    data = fill_unfilled(data, first_seen[k], first_seen_maximum)
+                    data_list.append(data)
+                create_time_entropy_plot(data_list, names, size, ratio, folder_path)
+
+
+def divide_to_groups(paths):
+    groups = {}
+    for path in paths:
+        name = os.path.basename(path)
+        a = re.findall(".*-([0-9]*)-0_([0-9]*)-.*-[n|f]-.*-[n|y]-.*", name)
+        size = a[0][0]
+        ratio = int(str(np.round(float("0." + str(a[0][1])), 1)).split(".")[1]) * 10
+        if size not in groups:
+            groups[size] = {}
+        if ratio not in groups[size]:
+            groups[size][ratio] = []
+        groups[size][ratio].append(path)
+    return groups
+
+
+def map_statistics_paths(folder_path):
+    paths = []
+    for folder in os.listdir(folder_path):
+        folder_join_path = os.path.join(folder_path, folder)
+        if os.path.isdir(folder_join_path) and folder.startswith("sworld") and folder.find("-f-") != -1:
+            paths.append(folder_join_path)
+    return paths
+
+
+def test_compare_map_statistics():
+    world_folder_path = "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/"
+    paths = map_statistics_paths(world_folder_path)
+    folder_path = "/home/patik/.ros/searching_test"
+    groups = divide_to_groups(paths)
+    for size in groups:
+        for ratio in groups[size]:
+            all_statistics, all_name = compare_map_statistics(groups[size][ratio])
+            d = section_statistics(groups[size][ratio])
+            all_statistics.update(d)
+            d = world_statistics(groups[size][ratio])
+            all_statistics.update(d)
+            s, n = compute_statistics(all_statistics)
+            create_statistics_graph(s, n, folder_path, size, ratio)
+            create_statistics_error_graph(all_statistics, folder_path, size, ratio)
+
+
+def section_statistics(paths):
+    visibility = []
+    for path in paths:
+        path = os.path.join(path, "section_file.json")
+        d = SectionUtils.unjson_sections(path)
+        try:
+            objects = d["objects"]
+            for i, o in objects.items():
+                for j, p in o.objects.items():
+                    for k, q in p.objects.items():
+                        visibility.append(len(q.objects) * 0.25)
+        except Exception as e:
+            print(e)
+    return {"points_visibility": visibility}
+
+
+def world_statistics(paths):
+    areas = []
+    heights = []
+    for path in paths:
+        files = os.listdir(path)
+        for file in files:
+            if file.startswith("sworld") and file.endswith(".json"):
+                path = os.path.join(path, file)
+                area, height = read_world_map(path)
+                areas.extend(area)
+                heights.extend(height)
+    return {"obstacles_areas": areas, "obstacles_heights": heights}
+
+
+def read_world_map(path):
+    areas = []
+    heights = []
+    with open(path, "r") as file:
+        information = json.load(file)
+        objects = information["objects"]["statical"]
+        for o in objects:
+            areas.append(o["x_size"] * o["y_size"])
+            heights.append(o["z_size"])
+    return areas, heights
+
+
+def rename_name(name):
+    if name == "visibility":
+        return "Viditelnost"
+    if name == "borders_counts":
+        return "Počet přechodů"
+    if name == "borders_sums":
+        return "Délka přechodů"
+    if name == "reduction_effectivity":
+        return "Efektivita redukce"
+    if name == "points_distances":
+        return "Vzdálenost bodů"
+    if name == "average_height":
+        return "Průměrná výška bodů"
+    if name == "clusters_distances":
+        return "Vzdálenost regionů"
+    if name == "clusters_on_size":
+        return "Poměr počtu regionů na velikost"
+    if name == "obstacles":
+        return "Počet překážek na sekci"
+    if name == "areas":
+        return "Obsah"
+    if name == "obstacles_heights":
+        return "Výška budov"
+    if name == "points_visibility":
+        return "Plocha viditelná z bodů"
+    if name == "obstacles_areas":
+        return "Obsah půdorysu budov"
+    return name
+
+
+def approriate_metrics(name):
+    if name == "visibility":
+        return "Podíl viditelných pixelů a jejich celkového počtu"
+    if name == "borders_counts":
+        return "Jednotky"
+    if name == "borders_sums":
+        return "Podíl délky přechodů a obvodu sekce"
+    if name == "reduction_effectivity":
+        return "Podíl množství bodů před a po redukci"
+    if name == "points_distances":
+        return "m"
+    if name == "average_height":
+        return "m"
+    if name == "clusters_distances":
+        return "m"
+    if name == "clusters_on_size":
+        return "Poměr"
+    if name == "obstacles":
+        return "Jednotky"
+    if name == "areas":
+        return "m^2"
+    if name == "obstacles_heights":
+        return "m"
+    if name == "points_visibility":
+        return "m^2"
+    if name == "obstacles_areas":
+        return "m^2"
+    return name
+
+def ignore_column_for_given_key(name):
+    if name == "visibility":
+        return [0,1]
+    if name == "borders_counts":
+        return []
+    if name == "borders_sums":
+        return []
+    if name == "reduction_effectivity":
+        return []
+    if name == "points_distances":
+        return []
+    if name == "average_height":
+        return [0,1]
+    if name == "clusters_distances":
+        return []
+    if name == "clusters_on_size":
+        return []
+    if name == "obstacles":
+        return []
+    if name == "areas":
+        return [2]
+    if name == "obstacles_heights":
+        return []
+    if name == "points_visibility":
+        return [0,1]
+    if name == "obstacles_areas":
+        return [0,1]
+    return []
+
+def create_statistics_graph(data, names, folder_path, size, ratio):
+    # ["Minimum", "Maximum", "Průměr"]
+    for key in data[0]:
+        values = []
+        chosen_names = []
+        ignored = ignore_column_for_given_key(key)
+        for j in range(len(data)):
+            if j in ignored:
+                continue
+            values.append(data[j][key])
+            chosen_names.append(names[j])
+        fig, ax = plt.subplots()
+        plt.box(False)
+        rects = ax.bar(chosen_names, values, width=((0.8 / len(names)) * len(chosen_names)))
+        ax.set_title("{}".format(rename_name(key)), fontsize=18, pad=15.0)
+        # ax.set_xlim(0, 0.8)
+        ax.set_frame_on(False)
+        ax.set_ylabel(approriate_metrics(key), fontsize=16)
+        for rect in rects:
+            height = np.round(rect.get_height(), 3)
+            ax.annotate('{}'.format(height),
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom', fontsize=16)
+        if not os.path.exists(os.path.join(folder_path, "images")):
+            os.makedirs(os.path.join(folder_path, "images", str(size), str(ratio)))
+        plt.savefig(
+            "{}/{}.png".format(os.path.join(folder_path, "images", str(size), str(ratio)), str(key)), cmap="gray")
+        plt.close()
+
+
+def graph_groups():
+    groups = [
+        ["average_height", "obstacles_heights"],
+        ["points_visibility", "obstacles_areas"],
+        ["borders_counts", "obstacles"]
+    ]
+    return groups
+
+
+def create_statistics_error_graph(data, folder_path, size, ratio):
+    groups = graph_groups()
+    for group in groups:
+        means = []
+        stds = []
+        names = []
+        fig, ax = plt.subplots()
+        plt.box(False)
+        for member in group:
+            means.append(np.mean(data[member]))
+            stds.append(np.std(data[member]))
+            names.append(rename_name(member))
+        x_pos = np.arange(0, len(names))
+        rects = ax.bar(x_pos, means,
+                       yerr=stds,
+                       align='center',
+                       alpha=0.5,
+                       ecolor='black',
+                       capsize=10)
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(names)
+        ax.set_frame_on(False)
+        ax.set_ylabel(approriate_metrics(group[0]), fontsize=16)
+        if not os.path.exists(os.path.join(folder_path, "images")):
+            os.makedirs(os.path.join(folder_path, "images", str(size), str(ratio)))
+        plt.savefig(
+            "{}/{}.png".format(os.path.join(folder_path, "images", str(size), str(ratio)), ",".join(group)), cmap="gray")
+        plt.close()
+
+
+
+def compare_map_statistics(paths):
+    mean_statistics = {}
+    min_statistics = {}
+    max_statistics = {}
+    all_data_statistics = {}
+    for path in paths:
+        path = os.path.join(path, "section_statics.json")
+        with open(path, "r") as file:
+            d = json.load(file)
+            for key in d:
+                if key not in mean_statistics:
+                    mean_statistics[key] = []
+                    min_statistics[key] = []
+                    max_statistics[key] = []
+                if key not in all_data_statistics:
+                    all_data_statistics[key] = []
+                value = d[key]
+                if isinstance(value, list):
+                    all_data_statistics[key].extend(value)
+                    mean_statistics[key].append(np.mean(value))
+                    min_statistics[key].append(np.min(value))
+                    max_statistics[key].append(np.max(value))
+                else:
+                    all_data_statistics[key].append(value)
+                    mean_statistics[key].append(value)
+                    max_statistics[key].append(value)
+                    min_statistics[key].append(value)
+    return all_data_statistics, "all"
+
+
+def compute_statistics(data):
+    min_data = {}
+    max_data = {}
+    mean_data = {}
+    for d in data:
+        min_data[d] = np.min(data[d])
+        max_data[d] = np.max(data[d])
+        mean_data[d] = np.mean(data[d])
+    return [min_data, max_data, mean_data], ["Minimum", "Maximum", "Průměr"]
+
+
+test_compare_map_statistics()
+test_time_entropy_plot()
+exit(32)
 
 # texture_join_files()
 json_file = "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_0996--1-n--1-n-123456789/sworld-100-0_0996--1-n--1-n-123456789.json"

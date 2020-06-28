@@ -140,7 +140,7 @@ class Database(object):
         self._first_iteration = True
 
     def init_db(self, world_map, particles_count=2000, max_values=(3, 2, 0.5), frames_count=3,
-                init_frames=None):
+                init_frames=None, target_position=None):
         rounded_time = utils.Math.rounding(rospy.Time.now().to_sec())
         if rounded_time - frames_count * 0.5 < 0:
             rounded_time = frames_count * 0.5
@@ -148,11 +148,23 @@ class Database(object):
             frame = np.zeros((particles_count, len(utils.DataStructures.point_cloud_name())))
             positions = np.array(np.nonzero(world_map.target_obstacle_map))
             # print("shape", world_map.target_obstacle_map.shape)
-            points = zip(positions[1, :], positions[0, :])
+            points = np.array(zip(positions[1, :], positions[0, :]))
             tree = cKDTree(points)
-            positions_indices = np.random.randint(0, len(positions[0]), particles_count)
-            frame[:, 0] = positions[0, positions_indices] + np.random.uniform(0, 0.5, (particles_count))
-            frame[:, 1] = positions[1, positions_indices] + np.random.uniform(0, 0.5, (particles_count))
+            map_x, map_y = world_map.get_index_on_map(target_position["x"], target_position["y"])
+            different_position = 5
+            positions_indices = np.random.randint(0, len(positions[0]), different_position - 1)
+            p_count = int(particles_count / different_position)
+            maximal_distance = np.sqrt(5) * 20 # 1 / 0.5
+            iii = np.zeros(particles_count)
+            index = 0
+            for i in positions_indices:
+                near_points_ii = tree.query_ball_point([positions[0, i], positions[1, i]], maximal_distance)
+                iii[index * p_count:(index + 1) * p_count]= np.random.choice(near_points_ii, p_count)
+                index += 1
+            near_points_ii = tree.query_ball_point([map_x, map_y], maximal_distance)
+            iii[index * p_count:] = np.random.choice(near_points_ii, particles_count - index * p_count)
+            positions_indices = np.array(iii, dtype=np.int32)
+            frame[:, 0], frame[:, 1] = world_map.get_coordination_from_map_indices_vectors(points[positions_indices, 0], points[positions_indices, 1])
             frame[:, 2] = np.random.uniform(0.5, max_values[2], particles_count)
             frame[:, 5] = np.random.uniform(0, 2 * np.pi, particles_count)
             frame[:, 6] = np.arange(0, particles_count)
@@ -173,8 +185,8 @@ class Database(object):
                         new_frame[j, 5] = frame[j, 5]
                     else:
                         index = np.random.choice(i, 1)
-                        new_frame[j, 0] = positions[0, index] + np.random.uniform(0, 0.5, 1)[0]
-                        new_frame[j, 1] = positions[1, index] + np.random.uniform(0, 0.5, 1)[0]
+                        new_frame[j, 0], new_frame[j, 1] = world_map.get_coordination_from_map_indices_vectors(
+                            np.array([positions[0, index]]), np.array([positions[1, index]]))
                         new_frame[j, 2] = np.random.uniform(0.5, max_values[2], 1)[0]
                         yaw = utils.Math.calculate_yaw_from_points(0, 0, frame[j, 0] - new_frame[j, 0],
                                                                    frame[j, 1] - new_frame[j, 1])

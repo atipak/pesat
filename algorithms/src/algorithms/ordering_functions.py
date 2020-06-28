@@ -10,6 +10,7 @@ import graph_tool.all as gt
 from sko.GA import GA_TSP
 from sko.SA import SA_TSP
 from sko.ACA import ACA_TSP
+import copy
 
 
 class ExtendedOrderingFunction(object):
@@ -37,10 +38,10 @@ class TSPath(ExtendedOrderingFunction):
     def extended_select(self, selected_objects, scored_objects, objects, properties, start_position_index,
                         end_position_index=None):
         print("TSPath")
-        if len(end_position_index) > 1:
-            return np.array([])
         distances = properties["distances"]
-        dist_sum = np.sum(distances)
+        transitions = properties["transitions"]
+        intersections = properties["intersections"]
+        times = properties["times"]
         ids = np.sort(np.array([i for (i, object) in objects.items()]))
         try:
             start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
@@ -51,20 +52,83 @@ class TSPath(ExtendedOrderingFunction):
         selected_objects_list = list(selected_objects)
         if start_index not in selected_objects_list:
             selected_objects_list.append(start_index)
+        end_state_is_start_state = False
+        end_indices = []
+        founded = []
         if end_position_index is not None and len(end_position_index) > 0:
-            end_index = np.in1d(ids, end_position_index).nonzero()[0][0]
-            if end_index not in selected_objects_list and end_index != start_index:
-                selected_objects_list.append(end_index)
+            end_indices = np.in1d(ids, end_position_index).nonzero()[0]
+            for end_index in end_indices:
+                if end_index in selected_objects_list:
+                    founded.append(end_index)
+            # no end state in selected object was found, add all end states
+            if len(founded) == 0:
+                for end_index in end_indices:
+                    if end_index not in selected_objects_list and end_index != start_index:
+                        selected_objects_list.append(end_index)
+            # is start index in end_indices?
+            if len(founded) == 1:
+                ii = np.in1d(founded, [start_index]).nonzero()[0]
+                print("ff", ii)
+                # the onlz end state ios start state
+                if len(ii) == 1:
+                    e = None
+                    print("None because start = end and it is only end  state")
+                    end_state_is_start_state = True
+                else:
+                    e = np.in1d(selected_objects_list, founded).nonzero()[0]
+            else:
+                e = np.in1d(selected_objects_list, end_indices).nonzero()[0]
         else:
-            end_index = start_index
+            e = None
         s = np.in1d(selected_objects_list, [start_index]).nonzero()[0][0]
-        e = np.in1d(selected_objects_list, [end_index]).nonzero()[0][0]
         # tour = self.graphtoolway(selected_objects_list, distances, dist_sum, end_index, start_index, s)
-        path = self.scikitopt("ga", selected_objects_list, s, e, distances, dist_sum)
+        only_selected_objects = []
+        print("Selected {}".format(selected_objects_list))
+        score_of_only_selected_objects = []
+        for index in selected_objects_list:
+            only_selected_objects.append(objects[ids[index]])
+            score_of_only_selected_objects.append(scored_objects[index])
+        self.score_function = TimeDependentCalculation(only_selected_objects, score_of_only_selected_objects, times,
+                                                       transitions, intersections, s, e if e is not None and len(e) > 0 else None)
+        path = self.scikitopt("ga", selected_objects_list, s, distances)
+        if end_position_index is not None and len(end_position_index) == 1 and end_position_index[
+            0] == start_position_index and (len(path) == 0 or (len(path) > 0 and path[-1] != s)):
+            print("p", path, s )
+            print("Path 0", ids[path])
+            path = list(path)
+            path.append(s)
+            path = np.array(path)
+        if not end_state_is_start_state and len(founded) == 0 and len(end_indices) > 0:
+            # we had to add new
+            ind = np.in1d(path, end_indices).nonzero()[0][0]
+            print("Found first index {} in path where is first end state".format(ind))
+            subpath = path[:ind + 1]
+            print("From path {} to subpath {}".format(path, subpath))
+            path = subpath
+        elif end_state_is_start_state:
+            # if last state is not in end states then either path is not plausible or the end state isnt added because start state = end state
+            print("Start state is same like end state {}, {}.".format(end_position_index, e))
+            path = list(path)
+            path.append(s)
+            path = np.array(path)
         path = np.array(selected_objects_list)[path]
         # tour = self.scikitopt("sa", selected_objects_list, s, e, distances, dist_sum)
         # tour = self.scikitopt("aca", selected_objects_list, s, e, distances, dist_sum)
+        print("Path", ids[path])
         return ids[path]
+
+    def useable_subpath(self, path, score, end_indices):
+        avg = np.average(score)
+        end = 1
+        for i in range(len(score) - 1, 0, -1):
+            if score[i] > avg:
+               end = i + 1
+        subpath = np.array(path)[:end]
+        if len(path) > 0 and len(end_indices) > 0 and path[-1] in end_indices and len(subpath) != len(path):
+            pass
+            
+
+
 
     def graphtoolway(self, selected_objects_list, distances, dist_sum, end_index, start_index, s):
         g = gt.Graph(directed=False)
@@ -127,43 +191,49 @@ class TSPath(ExtendedOrderingFunction):
             improvement_factor = 1 - best_distance / distance_to_beat  # Calculate how much the route has improved.
         return route  # When the route is no longer improving substantially, stop searching and return the route.
 
-    def scikitopt(self, typ, selected, begin_index, end_index, distances, dist_sum):
+    def scikitopt(self, typ, selected, begin_index, distances):
         selected = np.array(selected)
-        selected_distances = distances[np.ix_(selected, selected)]
-        distance_matrix = np.empty((selected_distances.shape[0] + 1, selected_distances.shape[1] + 1))
-        distance_matrix[1:, 1:] = selected_distances
-        distance_matrix[0, :] = dist_sum
-        distance_matrix[:, 0] = dist_sum
-        distance_matrix[0, begin_index + 1] = 0
-        distance_matrix[begin_index + 1, 0] = 0
-        distance_matrix[0, end_index + 1] = 0
-        distance_matrix[end_index + 1, 0] = 0
+        distance_matrix = distances[np.ix_(selected, selected)]
+        print("shape", distance_matrix.shape)
         if typ == "ga":
-            points = self.gatsp(distance_matrix)
+            points = self.gatsp(distance_matrix, begin_index)
         if typ == "sa":
             points = self.satsp(distance_matrix)
         if typ == "aca":
             points = self.acatsp(distance_matrix)
-        index = np.in1d(points, [0]).nonzero()[0][0]
-        points = np.roll(points, -index)[1:] - 1
-        if points[0] != begin_index:
-            points = points[::-1]
         return points
 
-    def gatsp(self, distance_matrix):
+    def gatsp(self, distance_matrix, begin_index):
         def cal_total_distance(routine):
             '''The objective function. input routine, return total distance.
             cal_total_distance(np.arange(num_points))
             '''
+            """
             num_points, = routine.shape
             ii = np.arange(0, num_points)
             ii %= num_points
             jj = np.roll(ii, 1)
             return np.sum(distance_matrix[routine[ii], routine[jj]])
+            """
+            return self.score_function.calculate_partial_score(routine)
 
-        ga_tsp = GA_TSP(func=cal_total_distance, n_dim=distance_matrix.shape[0], size_pop=50, max_iter=50,
-                        prob_mut=0.01)
-        best_points, best_distance = ga_tsp.fit()
+        n_dim = len(distance_matrix)
+        iter = 50
+        # in every second sample should be changed value
+        mut_prob = 1.0 / (2 * n_dim)
+        # at least every sample should be created "3-times"
+        size_pop = int(np.clip(np.ceil((3 * n_dim) / iter), 10, 100))
+        while True:
+            ga_tsp = GA_TSP(func=cal_total_distance, n_dim=distance_matrix.shape[0], size_pop=size_pop, max_iter=iter,
+                            prob_mut=mut_prob)
+            best_points, best_distance = ga_tsp.fit()
+            print("Distance {}".format(best_distance))
+            if best_distance != np.inf and not np.isnan(best_distance):
+                break
+            else:
+                #exit(32)
+                pass
+        #exit(32)
         return best_points
 
     def satsp(self, distance_matrix):
@@ -198,130 +268,6 @@ class TSPath(ExtendedOrderingFunction):
 
         best_x, best_y = aca.fit()
         return best_x
-
-
-class NeighboursPath(ExtendedOrderingFunction):
-
-    def extended_select(self, selected_objects, scored_objects, objects, properties, start_position_index,
-                        end_position_index=[]):
-        print("NeighboursPath")
-        if len(end_position_index) > 1:
-            return []
-        # calculate distances for neighbours
-        distances = properties["distances"]
-        dist = np.zeros((distances.shape[0], distances.shape[1]))
-        ids = np.sort(np.array([i for (i, object) in objects.items()]))
-        i = 0
-        for object_index in ids:
-            neighbours = np.array([key for key in objects[object_index].neighbors if key in ids])
-            neighbours = np.in1d(ids, neighbours).nonzero()[0]
-            if len(neighbours) > 0:
-                dist[i, neighbours] = distances[i, neighbours]
-            i += 1
-        graph = csr_matrix(dist)
-        dist_matrix, predecessors = dijkstra(csgraph=graph, directed=False, return_predecessors=True)
-        try:
-            start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
-        except IndexError as e:
-            print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index,
-                                                                          end_position_index))
-            raise Exception("Start index in ids not found.")
-        # where we start and the way we will go
-        lasts = [start_index]
-        way = [start_index]
-        # if end position is not None, then we have to end up in this position
-        back_way = []
-        end_index = -1
-        if len(end_position_index) > 0 and end_position_index[0] != start_position_index:
-            end_index = np.in1d(ids, [end_position_index[0]]).nonzero()[0][0]
-            lasts.append(end_index)
-            back_way.extend([end_index])
-        rest = selected_objects[:]
-        if start_index in rest:
-            i = list(rest).index(start_index)
-            ii = np.r_[0:i, i + 1: len(rest)]
-            rest = rest[ii]
-        if end_index in rest:
-            i = list(rest).index(end_index)
-            ii = np.r_[0:i, i + 1:len(rest)]
-            rest = rest[ii]
-        # find better part for complete way from start to end
-        # we calculate for both sides of way and we take the better one
-        rest = np.array(rest)
-        while len(rest) > 0:
-            maximum = []
-            maximum_last = lasts[0]
-            for last in lasts:
-                for x in rest:
-                    path = utils.Graph.get_path(predecessors, last, x)[::-1]
-                    intersection = np.intersect1d(path, rest)
-                    if len(maximum) < len(intersection):
-                        maximum = path
-                        maximum_last = last
-            if maximum_last == lasts[0]:
-                way.extend(maximum[1:])
-                lasts[0] = maximum[-1]
-            else:
-                back_way.extend(maximum[1:])
-                lasts[1] = maximum[-1]
-            rest = rest[np.bitwise_not(np.in1d(rest, maximum))]
-        way.extend(np.flip(back_way))
-        return ids[way]
-
-
-class DirectPath(ExtendedOrderingFunction):
-
-    def extended_select(self, selected_objects, scored_objects, objects, properties, start_position_index,
-                        end_position_index=[]):
-        print("DirectPath")
-        object_distances = properties["distances"]
-        # where we start and the way we will go
-        ids = np.sort(np.array([i for (i, object) in objects.items()]))
-        try:
-            start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
-        except IndexError as e:
-            print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index,
-                                                                          end_position_index))
-            raise Exception("Start index in ids not found.")
-        lasts = [start_index]
-        way = [start_index]
-        # if end position is not None, then we have to end up in this position
-        back_way = []
-        end_index = -1
-        if len(end_position_index) > 0 and end_position_index[0] != start_position_index:
-            end_index = np.in1d(ids, [end_position_index[0]]).nonzero()[0][0]
-            lasts.append(end_index)
-            back_way.extend(end_index)
-        rest = np.array(selected_objects[:])
-        if start_index in rest:
-            i = list(rest).index(start_index)
-            ii = np.r_[0:i, i + 1: len(rest)]
-            rest = rest[ii]
-        if end_index in rest:
-            i = list(rest).index(end_index)
-            ii = np.r_[0:i, i + 1:len(rest)]
-            rest = rest[ii]
-        while len(rest) > 0:
-            minimum = None
-            minimum_last = lasts[0]
-            minimum_index = 0
-            for last in lasts:
-                distances = object_distances[last, np.in1d(range(len(object_distances[last])), rest)]
-                m = np.min(distances)
-                if minimum is None or minimum > m:
-                    minimum = m
-                    minimum_index = np.argmin(distances)
-            mask = np.ones((len(rest)), dtype=np.bool)
-            mask[minimum_index] = False
-            if minimum_last == lasts[0]:
-                way.append(rest[minimum_index])
-                lasts[0] = rest[minimum_index]
-            else:
-                back_way.append(rest[minimum_index])
-                lasts[1] = rest[minimum_index]
-            rest = rest[mask]
-        way.extend(np.flip(back_way))
-        return ids[way]
 
 
 class AStarSearch(ExtendedOrderingFunction):
@@ -513,7 +459,8 @@ class AStarSearch(ExtendedOrderingFunction):
         try:
             start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
         except IndexError as e:
-            print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index, end_position_index))
+            print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index,
+                                                                          end_position_index))
             raise Exception("Start index in ids not found.")
 
         for v_index in range(len(objects)):
@@ -631,8 +578,265 @@ class AStarSearch(ExtendedOrderingFunction):
         return ids[path]
 
 
+class NeighboursPath(ExtendedOrderingFunction):
+
+    def extended_select(self, selected_objects, scored_objects, objects, properties, start_position_index,
+                        end_position_index=[]):
+        print("NeighboursPath")
+        if len(end_position_index) > 1:
+            return []
+        # calculate distances for neighbours
+        distances = properties["distances"]
+        dist = np.zeros((distances.shape[0], distances.shape[1]))
+        ids = np.sort(np.array([i for (i, object) in objects.items()]))
+        i = 0
+        for object_index in ids:
+            neighbours = np.array([key for key in objects[object_index].neighbors if key in ids])
+            neighbours = np.in1d(ids, neighbours).nonzero()[0]
+            if len(neighbours) > 0:
+                dist[i, neighbours] = distances[i, neighbours]
+            i += 1
+        graph = csr_matrix(dist)
+        dist_matrix, predecessors = dijkstra(csgraph=graph, directed=False, return_predecessors=True)
+        try:
+            start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        except IndexError as e:
+            print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index,
+                                                                          end_position_index))
+            raise Exception("Start index in ids not found.")
+        # where we start and the way we will go
+        lasts = [start_index]
+        way = [start_index]
+        # if end position is not None, then we have to end up in this position
+        back_way = []
+        end_index = -1
+        if len(end_position_index) > 0 and end_position_index[0] != start_position_index:
+            end_index = np.in1d(ids, [end_position_index[0]]).nonzero()[0][0]
+            lasts.append(end_index)
+            back_way.extend([end_index])
+        rest = selected_objects[:]
+        if start_index in rest:
+            i = list(rest).index(start_index)
+            ii = np.r_[0:i, i + 1: len(rest)]
+            rest = rest[ii]
+        if end_index in rest:
+            i = list(rest).index(end_index)
+            ii = np.r_[0:i, i + 1:len(rest)]
+            rest = rest[ii]
+        # find better part for complete way from start to end
+        # we calculate for both sides of way and we take the better one
+        rest = np.array(rest)
+        while len(rest) > 0:
+            maximum = []
+            maximum_last = lasts[0]
+            for last in lasts:
+                for x in rest:
+                    path = utils.Graph.get_path(predecessors, last, x)[::-1]
+                    intersection = np.intersect1d(path, rest)
+                    if len(maximum) < len(intersection):
+                        maximum = path
+                        maximum_last = last
+            if maximum_last == lasts[0]:
+                way.extend(maximum[1:])
+                lasts[0] = maximum[-1]
+            else:
+                back_way.extend(maximum[1:])
+                lasts[1] = maximum[-1]
+            rest = rest[np.bitwise_not(np.in1d(rest, maximum))]
+        way.extend(np.flip(back_way))
+        return ids[way]
+
+
+class DirectPath(ExtendedOrderingFunction):
+
+    def extended_select(self, selected_objects, scored_objects, objects, properties, start_position_index,
+                        end_position_index=[]):
+        print("DirectPath")
+        object_distances = properties["distances"]
+        # where we start and the way we will go
+        ids = np.sort(np.array([i for (i, object) in objects.items()]))
+        try:
+            start_index = np.in1d(ids, [start_position_index]).nonzero()[0][0]
+        except IndexError as e:
+            print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index,
+                                                                          end_position_index))
+            raise Exception("Start index in ids not found.")
+        lasts = [start_index]
+        way = [start_index]
+        # if end position is not None, then we have to end up in this position
+        back_way = []
+        end_index = -1
+        if len(end_position_index) > 0 and end_position_index[0] != start_position_index:
+            end_index = np.in1d(ids, [end_position_index[0]]).nonzero()[0][0]
+            lasts.append(end_index)
+            back_way.extend(end_index)
+        rest = np.array(selected_objects[:])
+        if start_index in rest:
+            i = list(rest).index(start_index)
+            ii = np.r_[0:i, i + 1: len(rest)]
+            rest = rest[ii]
+        if end_index in rest:
+            i = list(rest).index(end_index)
+            ii = np.r_[0:i, i + 1:len(rest)]
+            rest = rest[ii]
+        while len(rest) > 0:
+            minimum = None
+            minimum_last = lasts[0]
+            minimum_index = 0
+            for last in lasts:
+                distances = object_distances[last, np.in1d(range(len(object_distances[last])), rest)]
+                m = np.min(distances)
+                if minimum is None or minimum > m:
+                    minimum = m
+                    minimum_index = np.argmin(distances)
+            mask = np.ones((len(rest)), dtype=np.bool)
+            mask[minimum_index] = False
+            if minimum_last == lasts[0]:
+                way.append(rest[minimum_index])
+                lasts[0] = rest[minimum_index]
+            else:
+                back_way.append(rest[minimum_index])
+                lasts[1] = rest[minimum_index]
+            rest = rest[mask]
+        way.extend(np.flip(back_way))
+        return ids[way]
+
+
+class TimeDependentCalculation():
+    def __init__(self, objects, scored, distances, transitions, intersections, start_index, end_index):
+        self.nodes = set([])
+        self.inner_nodes = set([])
+        self.mappping = np.array(np.sort([objects[i].object_id for i in range(len(objects))]))
+        self.start_index = start_index
+        self.end_index = end_index
+        for o in objects:
+            self.inner_nodes.add(o.object_id)
+            self.nodes.add(o.object_id)
+        for node in self.inner_nodes:
+            for transition_id in transitions[node]:
+                self.nodes.add(transition_id)
+        self.storage = {}
+        self.init_graph = {objects[i].object_id: scored[i] for i in range(len(scored))}
+        self.maximal_score = np.sum(scored)
+        #print("Maximal score {}".format(self.maximal_score))
+        self.init_times = {objects[i].object_id: objects[i].maximal_time for i in range(len(objects))}
+        self.distances = distances
+        self.transitions = transitions
+        self.intersections = intersections
+        self.init_score = self.init_graph[self.mappping[start_index]]
+        self.init_graph = self.remove_node(self.init_graph, self.mappping[start_index])
+        print(self.init_graph, self.init_score)
+        print("Inner nodes {}".format(self.inner_nodes))
+        print("Nodes {}".format(self.nodes))
+        #print("Times {}".format(self.init_times))
+
+    def individual_sequence_score(self, sample):
+        t_sample = self.map_to_ids(sample)
+        score = []
+        last_score = self.maximal_score
+        for j in range(len(sample) - 1):
+            hash = ""
+            for integer in t_sample[:j + 2]:
+                hash += str(integer)
+            if hash not in self.storage:
+                raise Exception("Hash not in storage")
+            else:
+                stored = self.storage[hash]
+                current_score = stored[1]
+                score.append(np.abs(last_score - current_score))
+                last_score = current_score
+        return score
+
+    def map_to_ids(self, sample):
+        return self.mappping[sample - 1]
+
+    def calculate_partial_score(self, sample):
+        start_graph = copy.copy(self.init_graph)
+        start_times = copy.copy(self.init_times)
+        #print("Sample", sample)
+        current_score = 0
+        if sample[0] != self.start_index:
+            #print("Wrong start index", self.start_index, sample)
+            return np.inf
+        if self.end_index is not None and self.start_index not in self.end_index:
+            #print("se",self.start_index, self.end_index, sample)
+            if sample[-1] not in self.end_index:
+                #print("Wrong end index", self.end_index)
+                return np.inf
+        t_sample = self.map_to_ids(sample)
+        #print("T sample {}".format(t_sample))
+        i = len(sample)
+        for i in range(len(sample), -1, -1):
+            hash = ""
+            for integer in t_sample[:i]:
+                hash += str(integer)
+            if hash in self.storage:
+                stored = self.storage[hash]
+                current_score = stored[1]
+                start_graph = stored[0]
+                break
+        for j in range(i, len(sample) - 1):
+            dist = int(self.distances[sample[j], sample[j + 1]])
+            start_graph, score = self.calculate_score(dist, t_sample[j + 1], start_graph, start_times)
+            #print("Score", score)
+            current_score += score
+            hash = ""
+            for integer in t_sample[:j + 2]:
+                hash += str(integer)
+            self.storage[hash] = [start_graph, current_score]
+        #print("Storage: {}".format(self.storage))
+        #print("End score", self.maximal_score - current_score)
+        graph_score = current_score #+ self.residual_inner_score(start_graph)
+        return self.maximal_score - graph_score
+
+    def residual_inner_score(self, graph):
+        score = 0
+        for node in self.inner_nodes:
+            score += graph[node]
+        return score
+
+    def calculate_score(self, next_step, next_node, start_graph, inner_nodes_time):
+        returned_graph = copy.copy(start_graph)
+        #print("Returned graph0", returned_graph)
+        #print(next_step, "next step")
+        for i in range(next_step):
+            returned_graph = self.make_step(returned_graph, inner_nodes_time)
+        score = returned_graph[next_node]
+        #print("Returned score")
+        returned_graph = self.remove_node(returned_graph, next_node)
+        #print("Returned graph", returned_graph)
+        return returned_graph, score
+
+    def remove_node(self, graph, remove_node):
+        # transitions
+        partial_add_constant = graph[remove_node] / (len(self.nodes) - 1)
+        graph[remove_node] = 0
+        for node in self.intersections[remove_node]:
+            if node in self.inner_nodes:
+                partial_add_constant += self.intersections[remove_node][node] * graph[node] / (len(self.nodes) - 1)
+                graph[node] -= self.intersections[remove_node][node] * graph[node]
+        for node in self.inner_nodes:
+            graph[node] += partial_add_constant
+        return graph
+
+    def make_step(self, graph, inner_nodes_time):
+        new_graph = {}
+        for node in graph:
+            new_graph[node] = 0
+        # transitions
+        for node in self.inner_nodes:
+            decrease = graph[node] * (1 / inner_nodes_time[node])
+            #print("decrease", decrease)
+            new_graph[node] = graph[node] * (1 - (1 / inner_nodes_time[node]))
+            for transition_id in self.transitions[node]:
+                if transition_id in self.inner_nodes:
+                    new_graph[transition_id] = self.transitions[node][transition_id] * decrease
+        return new_graph
+
+
 ################################################
 # END
+
 
 class Graph:
 
@@ -822,3 +1026,10 @@ class NeighboursPathPlanning(ExtendedOrderingFunction):
             dist[object_index, neighbours] = properties[object_index, neighbours]
         return self.path_planing.extended_select(selected_objects, scored_objects, objects, dist,
                                                  start_position_index, end_position_index)
+
+
+if __name__ == '__main__':
+    selected_objects, scored_objects, objects, properties, sample = [0, 1, 2, 3, 4, 5], [0, 2, 5, 4, 2, 3], [], [], [0,
+                                                                                                                     1,
+                                                                                                                     2,
+                                                                                                                     3]

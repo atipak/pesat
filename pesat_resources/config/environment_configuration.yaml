@@ -1,8 +1,8 @@
 environment_configuration:
   map:
     frame: map
-    obstacles_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_2999--1-f--1-n-10_7_32/sworld-100-0_2999--1-f--1-n-10_7_32.json
-    section_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_2999--1-f--1-n-10_7_32/section_file.json
+    obstacles_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_0998--1-f--1-n-1_59_31/sworld-100-0_0998--1-f--1-n-1_59_31.json
+    section_file: /home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_0998--1-f--1-n-1_59_31/section_file.json
     size: 10
   world:
     path: $(find pesat_resources)/worlds
@@ -16,3 +16,12 @@ environment_configuration:
     camera_update_topic: "/cctv/update"
     camera_notification_topic: "/cctv/notifications"
     camera_switch_topic: "/cctv/switch"
+  init_positions:
+    target:
+      x: 23.38019287586212
+      y: -28.47852686047554
+    drone:
+      x: 14.167283398509026
+      y: 1.3889181888103472
+      z: 4
+    

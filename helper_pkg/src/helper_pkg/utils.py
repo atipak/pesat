@@ -104,7 +104,7 @@ class DataStructures():
         rounded_center = (Math.rounding(center[0]) / step, Math.rounding(center[1]) / step)
         rounded_data[:, 0] = np.clip(np.round((data[:, 0] + width / 2.0) * step) + rounded_center[0], 0, width * step - 1).astype(
             np.int32)
-        rounded_data[:, 1] = np.clip(np.round((data[:, 1] + height / 2.0) * step) + rounded_center[1], 0,height * step - 1).astype(np.int32)
+        rounded_data[:, 1] = - (np.clip(np.round((data[:, 1] + height / 2.0) * step) + rounded_center[1], 0,height * step - 1).astype(np.int32))
         image = np.zeros((int(width * step),int(height * step)))
         values, counts = np.unique(rounded_data, return_counts=True, axis=0)
         image[values[:, 0].astype(np.int32), values[:, 1].astype(np.int32)] = counts / float(len(data))
