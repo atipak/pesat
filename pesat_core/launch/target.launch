@@ -4,8 +4,8 @@
 	<arg name="target" default="true" />
 	<arg name="targetloc" default="true" />
 	<arg name="cctv" default="true" />
-	<arg name="target_x" default="23.38019287586212"/>
-    <arg name="target_y" default="-28.47852686047554"/>
+	<arg name="target_x" default="-139.01939149171113"/>
+    <arg name="target_y" default="236.13914961397649"/>
     <arg name="target_z" default="1"/>
 
     <group ns="target">

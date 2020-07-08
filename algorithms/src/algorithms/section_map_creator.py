@@ -7,7 +7,6 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import dijkstra, shortest_path
 from scipy.cluster.hierarchy import fclusterdata
-from scipy.optimize import minimize
 from scipy.spatial import cKDTree, Voronoi, voronoi_plot_2d
 import cv2
 from shapely.geometry import Polygon, LineString, MultiPolygon, Point, MultiPoint
@@ -17,16 +16,13 @@ from pesat_utils.base_map import BaseMap
 from pesat_utils.camera_calculation import CameraCalculation
 from pesat_utils.graph import Graph
 import time
-import triangle
 import matplotlib
 
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 from shapely.ops import triangulate, nearest_points
-from shapely.strtree import STRtree
 from shapely.validation import explain_validity
-from scipy.optimize import differential_evolution
 import random
 from deap import base
 from deap import creator
@@ -34,15 +30,12 @@ from deap import tools
 import traceback
 
 import multiprocessing
-from multiprocessing import Queue
 import pickle as pck
 from copyreg import pickle
 from types import MethodType
 from section_algorithm_utils import SectionUtils
 from section_algorithm_utils import SectionMapObjectTypes
 from section_algorithm_utils import SectionMapObject
-
-import graph_tool.all as gt
 
 prefix = "../../../"
 logic_configuration_file = prefix + "pesat_resources/config/logic_configuration.yaml"
@@ -95,6 +88,7 @@ class SectionMap(object):
         self.section_map_image = None
         self.section_objects = None
         self.iterations = 0
+        self.edges_array = True
 
     def load_yaml_files(self):
         with open(drone_configuration_file, 'r') as stream:
@@ -152,7 +146,10 @@ class SectionMap(object):
         self.points_heights_sections_list = []
         self.obstacles_in_section = []
         # end
+        last_time = time.time()
         for section in sections:
+            print("Section with section index {} is in processing in time from last processing time {}".format(
+                section_index, time.time() - last_time))
             section_object = SectionMapObject()
             section_object.type = SectionMapObjectTypes.Section
             section_object.object_id = section_index
@@ -177,6 +174,9 @@ class SectionMap(object):
             # end logging
             sections_regions = regions[section_index]
             section_map, section_map_without_obstacles = self.section_map(section, world_map)
+            section_coordinates = np.nonzero(section_map)
+            section_graph, mapping_coor_to_vertex = self.create_section_graph(
+                list(zip(section_coordinates[1], section_coordinates[0])))
             for region in sections_regions:
                 region_object = SectionMapObject()
                 region_object.type = SectionMapObjectTypes.Region
@@ -235,8 +235,9 @@ class SectionMap(object):
                     points_centers.append(point[:2])
                     points_heights.append(point[2])
                     point_object.data = point
-                    point_object.maximal_time = self.calculate_time([o for i, o in point_object.objects.items()],
-                                                                    half_target_velocity)
+                    point_object.maximal_time = self.usable_calculate_time(section_graph, mapping_coor_to_vertex,
+                                                                           [o for i, o in point_object.objects.items()],
+                                                                           half_target_velocity)
                     points_times.append(point_object.maximal_time)
                     points_times_centers.append(point_object.centroid)
                     points_visibility += len(coordinates)
@@ -263,32 +264,45 @@ class SectionMap(object):
             section_index += 1
             section_object.visibility = region_visibility * np.square(world_map.box_size)
             section_object.maximal_entropy = np.clip(np.log2(region_visibility), 0, None)
-            section_coordinates = np.nonzero(section_map)
+            # section_coordinates = np.nonzero(section_map)
             rx, ry = [], []
             for ri, ro in section_object.objects.items():
                 rx.append(ro.centroid.xy[0])
                 ry.append(ro.centroid.xy[1])
             x, y = world_map.get_index_on_map(np.array(rx), np.array(ry))
-            section_object.maximal_time = self.calculate_time(list(zip(section_coordinates[1], section_coordinates[0])),
-                                                              half_target_velocity, list(zip(x, y)))
+            section_object.maximal_time = self.usable_calculate_time(section_graph, mapping_coor_to_vertex, list(
+                zip(section_coordinates[1], section_coordinates[0])),
+                                                                     half_target_velocity, list(zip(x, y)))
             self.points_centers_sections_list.append(points_centers_list)
             self.points_heights_sections_list.append(points_heights_list)
             self.regions_centers_list.append(regions_centers)
             self.obstacles_in_section.append(np.sum(region_obstacles) / 2 - 1)
+        print("Creating neighbours")
+        begin_time = time.time()
         self.add_neighbours(points_into_voronoi, sections_objects, sections_id, regions_id, points_id, world_map)
+        print("Created {}".format(time.time() - begin_time))
         self.non_seen_visible_pixels = point_coordinates.size - np.count_nonzero(point_coordinates) - len(
             world_map.obstacles_pixels[0])
         self.all_pixels = point_coordinates.size - len(world_map.obstacles_pixels[0])
         # has to be before func fill_unfilled
+        print("Creating intersections")
+        begin_time = time.time()
         self.section_intersections, self.region_intersections, self.point_intersections = self.calculate_objects_intersections(
             point_occupancy, sections_objects)
+        print("Created {}".format(time.time() - begin_time))
+        print("Filling unfiled")
+        begin_time = time.time()
         self.fill_unfilled(world_map, point_occupancy)
-        self.calculate_points_transitions(point_occupancy, world_map, sections_objects)
+        print("Created {}".format(time.time() - begin_time))
+        print("Calculate transtions")
+        begin_time = time.time()
+        # self.calculate_points_transitions(point_occupancy, world_map, sections_objects)
         self.section_transition, self.region_transition, self.point_transition = self.calculate_transition(sections,
                                                                                                            obstacles,
                                                                                                            point_occupancy,
                                                                                                            world_map,
                                                                                                            sections_objects)
+        print("Created {}".format(time.time() - begin_time))
         self.sections_objects = sections_objects
 
     def fill_unfilled(self, world_map, point_occupancy):
@@ -355,7 +369,7 @@ class SectionMap(object):
                                                                                          point_occupancy[i][j][l])] += 1
                         rr = region_intersections[
                             min(mapping[point_occupancy[i][j][k]], mapping[point_occupancy[i][j][l]])][max(
-                                mapping[point_occupancy[i][j][k]], mapping[point_occupancy[i][j][l]])]
+                            mapping[point_occupancy[i][j][k]], mapping[point_occupancy[i][j][l]])]
                         if [min(i, j), max(i, j)] not in rr:
                             rr.append([min(i, j), max(i, j)])
         pi = {}
@@ -638,20 +652,36 @@ class SectionMap(object):
         # self.print_vertices(verticies, obstacles)
         begin = time.time()
         edges, unchanged_edges = self.create_edges(verticies, delimiters, world_map, environment_configuration)
-        self.edges = edges
+        self.edges = None  # edges
         print("Edges for graph created:", np.count_nonzero(edges), "during time", time.time() - begin)
         # SectionMap.print_edges(verticies, edges, obstacles)
         # first section is map
         verticies_indices = range(len(verticies))
         sections_for_reduction = [verticies_indices[delimiters[len(delimiters) - 2] + 1:]]
+        section_polygons = [Polygon(self.section_to_verticies(sections_for_reduction[0], verticies))]
         # print(sections_for_reduction)
         sections = []
         maximum = np.max(edges)
-        self._max_section_area = np.clip(int(world_map.real_width * world_map.real_height / 50), 4000, 20000)
+        minimum_section_area, maximum_section_area, minimum_width, maximum_width = 2500, 20000, 100, 1000
+        width_diff, area_diff = maximum_width - minimum_width, maximum_section_area - minimum_section_area
+        self._max_section_area = np.clip(
+            ((world_map.real_width - minimum_width) / width_diff) * area_diff + minimum_section_area,
+            minimum_section_area, maximum_section_area)
         print("Launching algorithm for making sections")
         while len(sections_for_reduction) > 0:
+            begin = time.time()
             section = np.array(sections_for_reduction.pop())
             rolled_section = np.roll(section, 1)
+            section_polygon = section_polygons.pop()
+            section_all_verticies_indeces = []
+            section_borders_vertices_indices = []
+            for vert_i in range(len(verticies)):
+                vert = Point(verticies[vert_i, 0], verticies[vert_i, 1])
+                if vert.intersects(section_polygon):
+                    section_all_verticies_indeces.append(vert_i)
+            for si in section:
+                vi = np.in1d(section_all_verticies_indeces, [si]).nonzero()[0][0]
+                section_borders_vertices_indices.append(vi)
             # saved_index = 0
             # l_index = 0
             # for l_index in range(len(section)):
@@ -667,8 +697,9 @@ class SectionMap(object):
             mask_reversed = edges[section, rolled_section] == 1.0
             edges[rolled_section[mask], section[mask]] += maximum
             edges[section[mask_reversed], rolled_section[mask_reversed]] += maximum
+            section_edges = edges[np.ix_(section_all_verticies_indeces, section_all_verticies_indeces)]
             # print(edges)
-            graph = csr_matrix(edges)
+            graph = csr_matrix(section_edges)
             _, predecessors = dijkstra(csgraph=graph, directed=False, return_predecessors=True)
             [vertex1_index] = np.random.choice(len(section), 1, False)
             # vertex1_index = saved_index
@@ -682,51 +713,62 @@ class SectionMap(object):
                 lower_index, upper_index = (v1_index, v2_index) if v1_index < v2_index else (
                     v2_index, v1_index)
                 lower_index, upper_index = int(lower_index), int(upper_index)
-                path_upper_to_lower = Graph.get_path(predecessors, section[lower_index], section[upper_index])
-                if len(np.intersect1d(path_upper_to_lower, section)) != len(path_upper_to_lower):
+                path_upper_to_lower = Graph.get_path(predecessors, section_borders_vertices_indices[lower_index],
+                                                     section_borders_vertices_indices[upper_index])
+                if len(np.intersect1d(path_upper_to_lower, section_borders_vertices_indices)) != len(
+                        path_upper_to_lower):
                     correct_path_upper_to_lower = [path_upper_to_lower[0]]
                     for pi in range(1, len(path_upper_to_lower)):
                         p = path_upper_to_lower[pi]
-                        if p not in section:
+                        if p not in section_borders_vertices_indices:
                             correct_path_upper_to_lower.append(p)
                         else:
                             correct_path_upper_to_lower.append(p)
                             break
                     path_upper_to_lower = correct_path_upper_to_lower
-                    correct_first = np.in1d(section, correct_path_upper_to_lower[0]).nonzero()[0][0]
-                    correct_last = np.in1d(section, correct_path_upper_to_lower[-1]).nonzero()[0][0]
+                    correct_first = \
+                        np.in1d(section_borders_vertices_indices, correct_path_upper_to_lower[0]).nonzero()[0][0]
+                    correct_last = \
+                        np.in1d(section_borders_vertices_indices, correct_path_upper_to_lower[-1]).nonzero()[0][0]
                     lower_index, upper_index = (correct_first, correct_last) if correct_first < correct_last else (
                         correct_last, correct_first)
                     path_lower_to_upper = path_upper_to_lower[::-1]
                     # print("vertices", verticies[section[lower_index]], verticies[section[upper_index]])
                     # print("paths", path_upper_to_lower, path_lower_to_upper)
-                    section_one = [section[i] for i in range(lower_index + 1, upper_index)]
-                    section_two = [section[i] for i in range(upper_index + 1, len(section))]
-                    section_two_part_one = [section[i] for i in range(0, lower_index)]
+                    section_one = [section_borders_vertices_indices[i] for i in range(lower_index + 1, upper_index)]
+                    section_two = [section_borders_vertices_indices[i] for i in range(upper_index + 1, len(section))]
+                    section_two_part_one = [section_borders_vertices_indices[i] for i in range(0, lower_index)]
                     section_two.extend(section_two_part_one)
                     section_one.extend(path_upper_to_lower)
                     section_two.extend(path_lower_to_upper)
-                    if len(section_one) > 2 and len(section_two) > 2:
-                        section_one_polygon = Polygon(self.section_to_verticies(section_one, verticies))
-                        section_two_polygon = Polygon(self.section_to_verticies(section_two, verticies))
-                        if section_one_polygon.is_valid and section_two_polygon.is_valid and section_one_polygon.area > 25 and section_two_polygon.area > 25:
-                            if self.get_section_area(section_one, verticies) > self._max_section_area:
-                                sections_for_reduction.append(section_one)
+                    section_one_original = np.array(section_all_verticies_indeces)[section_one]
+                    section_two_original = np.array(section_all_verticies_indeces)[section_two]
+                    if len(section_one_original) > 2 and len(section_two_original) > 2:
+                        section_one_polygon = Polygon(self.section_to_verticies(section_one_original, verticies))
+                        section_two_polygon = Polygon(self.section_to_verticies(section_two_original, verticies))
+                        if section_one_polygon.is_valid and section_two_polygon.is_valid and section_one_polygon.area > 1000 and section_two_polygon.area > 1000:
+                            if self.get_section_area(section_one_original, verticies) > self._max_section_area:
+                                sections_for_reduction.append(section_one_original)
+                                section_polygons.append(section_one_polygon)
                             else:
-                                sections.append(section_one)
-                            if self.get_section_area(section_two, verticies) > self._max_section_area:
-                                sections_for_reduction.append(section_two)
+                                sections.append(section_one_original)
+                            if self.get_section_area(section_two_original, verticies) > self._max_section_area:
+                                sections_for_reduction.append(section_two_original)
+                                section_polygons.append(section_two_polygon)
                             else:
-                                sections.append(section_two)
+                                sections.append(section_two_original)
                             correct_path = True
                             break
             if not correct_path:
                 sections.append(section)
+            print("Section finished {}".format(time.time() - begin))
         vertex_sections = []
         for s in sections:
             vertex_sections.append(np.array(self.section_to_verticies(s, verticies)))
         vertex_sections = np.array(vertex_sections)
         self.vertex_sections = vertex_sections
+        with open("temp_file.pck", "wb") as fp:  # Pickling
+            pck.dump(np.array([verticies, self.vertex_sections]), fp, protocol=2)
         # sections info logging
         self.borders_counts, self.borders_sums = self.compute_borders_price(unchanged_edges, sections)
         return vertex_sections, obstacles
@@ -780,7 +822,10 @@ class SectionMap(object):
         print("KD tree of centers created.")
         self.vertices_tree = cKDTree(verticies)
         print("KD tree of vertices created.")
-        edges = np.zeros((len(verticies), len(verticies)))
+        if self.edges_array:
+            edges = np.zeros((len(verticies), len(verticies)))
+        else:
+            edges = {}
         rectangles_index = 0
         for index in range(len(verticies)):
             dd, ii = self.centers_tree.query(verticies[index], 5)
@@ -800,31 +845,82 @@ class SectionMap(object):
                 if bottom_delimiter <= v <= upper_delimiter:
                     continue
                 if under_vision_map is not None:
-                    edges[index, v] = self.calculate_distance(verticies[index], verticies[v], under_vision_map,
-                                                              world_map)
+                    if self.edges_array:
+                        edges[index, v] = self.calculate_distance(verticies[index], verticies[v], under_vision_map,
+                                                                  world_map)
+                    else:
+                        if index not in edges:
+                            edges[index] = {}
+                        edges[index][v] = self.calculate_distance(verticies[index], verticies[v], under_vision_map,
+                                                                  world_map)
                 else:
-                    edges[index, v] = Math.array_euclidian_distance(verticies[index], verticies[v])
+                    if self.edges_array:
+                        edges[index, v] = Math.array_euclidian_distance(verticies[index], verticies[v])
+                    else:
+                        if index not in edges:
+                            edges[index] = {}
+                        edges[index][v] = Math.array_euclidian_distance(verticies[index], verticies[v])
             if index == delimiters[rectangles_index]:
                 if rectangles_index - 1 < 0:
-                    edges[index, 0] = 1.0
+                    if self.edges_array:
+                        edges[index, 0] = 1.0
+                    else:
+                        if index not in edges:
+                            edges[index] = {}
+                        edges[index][0] = 1.0
                 else:
-                    edges[index, delimiters[rectangles_index - 1] + 1] = 1.0
+                    if self.edges_array:
+                        edges[index, delimiters[rectangles_index - 1] + 1] = 1.0
+                    else:
+                        if index not in edges:
+                            edges[index] = {}
+                        edges[index][delimiters[rectangles_index - 1] + 1] = 1.0
                 rectangles_index += 1
             else:
-                edges[index, index + 1] = 1.0
-        for v1 in range(len(edges)):
-            for v2 in range(len(edges[v1])):
-                if edges[v1, v2] > 0 and edges[v2, v1] == 0:
-                    edges[v2, v1] = edges[v1, v2]
+                if self.edges_array:
+                    edges[index, index + 1] = 1.0
+                else:
+                    if index not in edges:
+                        edges[index] = {}
+                    edges[index][index + 1] = 1.0
+        if self.edges_array:
+            for v1 in range(len(edges)):
+                for v2 in range(len(edges[v1])):
+                    if edges[v1, v2] > 0 and edges[v2, v1] == 0:
+                        edges[v2, v1] = edges[v1, v2]
+        else:
+            for v1 in edges:
+                for v2 in edges[v1]:
+                    if edges[v1][v2] > 0 and (v2 not in edges or v1 not in edges[v2] or edges[v2][v1] == 0):
+                        if v2 not in edges:
+                            edges[v2] = {}
+                        edges[v2][v1] = edges[v1][v2]
         edges_copy = copy.deepcopy(edges)
         self.recalculate_edges(edges)
         return edges, edges_copy
 
     def recalculate_edges(self, edges):
-        maximum = np.max(edges)
-        minimum = np.min(edges)
-        edges[np.logical_and(edges > 0, edges != 1.0)] = maximum * edges[
-            np.logical_and(edges > 0, edges != 1.0)] + maximum
+        if self.edges_array:
+            edges_count = edges.size
+            maximum = np.max(edges)
+        else:
+            maximum = -np.inf
+            edges_count = 0
+            for i in edges:
+                for j in edges[i]:
+                    if edges[i][j] > maximum:
+                        maximum = edges[i][j]
+                        edges_count += 1
+        # minimum = np.min(edges)
+        if self.edges_array:
+            edges[np.logical_and(edges > 0, edges != 1.0)] = maximum * edges[
+                np.logical_and(edges > 0, edges != 1.0)] + maximum
+        else:
+            for i in edges:
+                for j in edges[i]:
+                    if edges[i][j] > 0 and edges[i][j] != 0:
+                        edges[i][j] = maximum * edges[i][j] + maximum
+        return maximum, edges_count
 
     def calculate_distance(self, vertex, vertex2, sector_map, world_map):
         hit = world_map.through_obstacles(np.array([vertex[0], vertex[1], 0.5]),
@@ -886,6 +982,62 @@ class SectionMap(object):
         self.vertices = np.array(verticies)
         self.delimiters = np.array(delimiters)
         return self.vertices, self.delimiters
+
+    def create_section_graph(self, possible_coordinates):
+        mapping_coor_to_vertex = {}
+        mapping_vertex_to_coor = []
+        index = 0
+        for o in possible_coordinates:
+            if o[0] not in mapping_coor_to_vertex:
+                mapping_coor_to_vertex[o[0]] = {}
+            if o[1] not in mapping_coor_to_vertex[o[0]]:
+                mapping_coor_to_vertex[o[0]][o[1]] = index
+                mapping_vertex_to_coor.append(o)
+                index += 1
+        c = np.sqrt(2) * 0.5
+        graph = np.zeros((index, index))
+        for v_index in range(index):
+            coor = mapping_vertex_to_coor[v_index]
+            for i in [-1, 0, 1]:
+                for j in [-1, 0, 1]:
+                    if i == j:
+                        continue
+                    if (coor[0] + i) in mapping_coor_to_vertex and (coor[1] + j) in mapping_coor_to_vertex[
+                        (coor[0] + i)]:
+                        v1_index = mapping_coor_to_vertex[(coor[0] + i)][(coor[1] + j)]
+                        if np.sum(np.abs([i, j])) == 2:
+                            graph[v_index, v1_index] = c
+                            graph[v1_index, v_index] = c
+                        else:
+                            graph[v_index, v1_index] = 0.5
+                            graph[v1_index, v_index] = 0.5
+        graph = csr_matrix(graph)
+        dist_matrix = np.array(shortest_path(csgraph=graph, directed=False))
+        return dist_matrix, mapping_coor_to_vertex
+
+    def usable_calculate_time(self, dist_matrix, mapping_coor_to_vertex, coordinates, half_target_velocity,
+                              sources=None):
+        indices = []
+        for o in coordinates:
+            indices.append(mapping_coor_to_vertex[o[0]][o[1]])
+        sorted_indices = np.sort(indices)
+        matrix = dist_matrix[np.ix_(sorted_indices, sorted_indices)]
+        if sources is None:
+            indices = np.arange(0, len(sorted_indices))
+        else:
+            indices = []
+            for coordinate_index in range(len(coordinates)):
+                coordinate = coordinates[coordinate_index]
+                if coordinate in sources:
+                    indices.append(coordinate_index)
+            indices = np.array(indices)
+        a = matrix[indices]
+        a = a[:, indices]
+        a[a == np.inf] = 0
+        maximum = 0
+        if len(a) > 0:
+            maximum = np.max(a)
+        return maximum / half_target_velocity
 
     def calculate_time(self, coordinates, half_target_velocity, sources=None):
         mapping_coor_to_vertex = {}
@@ -1136,7 +1288,7 @@ class SectionMap(object):
 
     def create_regions(self, world_map, sections, obstacles):
         section_points = []
-        HEIGHTS_MIN, HEIGHTS_MAX = 3, 16
+        HEIGHTS_MIN, HEIGHTS_MAX = 2, 2
         CAMERA_MIN, CAMERA_MAX = 0, np.deg2rad(self.camera_max_angle)
         YAW_MIN, YAW_MAX = 0, 2 * np.pi
         CXPB = 0.02
@@ -1144,7 +1296,7 @@ class SectionMap(object):
         NGEN = 100
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMin)
-        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        pool = multiprocessing.Pool(2)
         m = multiprocessing.Manager()
         q = m.Queue()
         inp = [(section, obstacles, world_map, HEIGHTS_MIN, CAMERA_MIN, YAW_MIN, HEIGHTS_MAX, CAMERA_MAX, YAW_MAX,
@@ -1824,6 +1976,7 @@ def create_section_from_file(map_folder_path):
                     break
                 except Exception as e:
                     print("Error occured!")
+                    print(traceback.format_exc())
                     print(e)
                     print("Restarting algorihtm!")
                     if it > 5:
@@ -1846,32 +1999,38 @@ def create_section_from_file(map_folder_path):
                 if sec is None:
                     raise Exception("Problem with pickling")
             except Exception as e:
+                print(traceback.format_exc())
                 print(e)
                 allright = False
             try:
                 section_map_creator.print_orientation_points(orientation_file_path, visibility_pixels_file_path)
             except Exception as e:
+                print(traceback.format_exc())
                 print(e)
                 allright = False
             try:
                 section_map_creator.print_vertices(points_file_path)
             except Exception as e:
+                print(traceback.format_exc())
                 print(e)
                 allright = False
             try:
                 section_map_creator.print_edges(edges_file_path, 1, -1)
             except Exception as e:
+                print(traceback.format_exc())
                 print(e)
                 allright = False
             try:
                 section_map_creator.print_section(sections_file_path)
             except Exception as e:
+                print(traceback.format_exc())
                 print(e)
                 allright = False
             try:
                 with open(section_information, "w") as file:
                     json.dump(stats, file, indent=2)
             except Exception as e:
+                print(traceback.format_exc())
                 print(e)
                 allright = False
             break
@@ -1963,6 +2122,8 @@ if __name__ == '__main__':
     # SectionUtils.show_sections(SectionUtils.unjson_sections(json_file), False)
     SectionUtils.show_sections(SectionUtils.unjson_sections(json_file)["objects"], True)
     # show_voronoi(json_file)
-    #create_section_from_file(
+    # create_section_from_file(
     #    "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-100-0_2999--1-f--1-n-10_7_32")
+    create_section_from_file(
+        "/home/patik/Diplomka/dp_ws/src/pesat_resources/worlds/sworld-10-0_0965-1-n--1-n-16_54_38")
     pass
