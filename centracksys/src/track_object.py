@@ -27,7 +27,7 @@ class PredictionLocalization(pm.PredictionManagement):
         self._default_system = 0
         enum = namedtuple("State", ["searching", "tracking"])
         self._states = enum(0, 1)
-        self._state = self._states.tracking
+        self._state = self._states.searching
         self._tfBuffer = tf2_ros.Buffer()
         self._tfListener = tf2_ros.TransformListener(self._tfBuffer)
         self._drone_base_link_frame = drone_configuration["properties"]["base_link"]
@@ -82,13 +82,14 @@ class PredictionLocalization(pm.PredictionManagement):
             self._state = self._states.tracking
         elif self._state == self._states.tracking and change_state:
             self._state = self._states.searching
-        if self._state == self._states.tracking and False:
+        if self._state == self._states.tracking:
             return 0
         else:
             return 2
 
     def change_between_tracking_and_planning(self):
         if self._target_under_supervision:
+            self._target_under_supervision_for_lasttime = rospy.Time.now()
             if self._state == self._states.searching:
                 if abs(
                         rospy.Time.now().to_sec() - self._target_without_supervision_for_lasttime.to_sec()) > self._planning_timeout:
@@ -96,15 +97,14 @@ class PredictionLocalization(pm.PredictionManagement):
                 else:
                     return False
             else:
-                self._target_under_supervision_for_lasttime = rospy.Time.now()
                 return False
         else:
+            self._target_without_supervision_for_lasttime = rospy.Time.now()
             if self._state == self._states.tracking:
                 if abs(
                         rospy.Time.now().to_sec() - self._target_under_supervision_for_lasttime.to_sec()) > self._track_timeout:
                     return True
             else:
-                self._target_without_supervision_for_lasttime = rospy.Time.now()
                 return False
 
     def prepare_kwargs(self, time, drone_positions, target_positions, world_map):

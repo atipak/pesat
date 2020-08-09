@@ -17,6 +17,8 @@ class BigDrop(SelectionFunction):
         print("sorted", sorted)
         diffs = np.abs(sorted - np.roll(sorted, -1))[:-1]
         print("Diffs", diffs)
+	if len(diffs) == 0:
+	    return [0]
         maximum = np.max(diffs)
         mean = np.mean(diffs)
         print("max, mean", maximum, mean)

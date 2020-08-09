@@ -27,6 +27,7 @@ class ReactivePrediction(pm.PredictionAlgorithm):
         self._ground_dist_limit = 0.2
         self._dronet_crop = 200
         self._minimal_height = 3
+        self._maximal_height = 10
         self._target_image_height = drone_configuration["dronet"]["target_size"]["y"]
         self._target_image_width = drone_configuration["dronet"]["target_size"]["x"]
         self._drone_size = drone_configuration["properties"]["size"]
@@ -42,7 +43,7 @@ class ReactivePrediction(pm.PredictionAlgorithm):
         self._max_target_speed_constant = 0.99
         self._target_speed_change_limit = 0.4
         self._low_target_speed_limit = 0.25
-        self._adaptive_altitude = False
+        self._adaptive_altitude = True
         self._prediction_type = self.CURRENT
         self._max_distance_limit_for_random_position = 5.0
         self.set_min_max_dist(1)
@@ -94,9 +95,9 @@ class ReactivePrediction(pm.PredictionAlgorithm):
             if final_alt <= 9.5:
                 rounded_alt = self._minimal_height
             else:
-                rounded_alt = 10
+                rounded_alt = self._maximal_height
         else:
-            rounded_alt = 3
+            rounded_alt = self._minimal_height
         return rounded_alt
 
     def recommended_ground_dist_alt(self, recommended_dist, alt):
@@ -517,3 +518,6 @@ class ReactivePrediction(pm.PredictionAlgorithm):
         kw["last_predicted_position"] = data
         kw["last_type"] = self._prediction_type
         return kw
+
+    def restart_algorithm(self):
+        self._prediction_type = self.CURRENT

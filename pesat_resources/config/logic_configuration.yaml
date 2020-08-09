@@ -17,7 +17,7 @@ logic_configuration:
     goal_angle_camera_epsilon_divider: 9.0
     position_in_time_service: "/tracker/position_in_time"
   planning:
-    timeout: 10
+    timeout: 2
     position_in_time_service: "/planner/position_in_time"
     maximum_length: 400
     maximal_time: 300

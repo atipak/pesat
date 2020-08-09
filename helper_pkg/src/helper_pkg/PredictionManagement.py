@@ -109,6 +109,9 @@ class PredictionAlgorithm(object):
     def state_variables(self, drone_positions, target_positions, map, **kwargs):
         raise NotImplementedError
 
+    def restart_algorithm(self):
+        pass
+
     def prepare_data_for_input(self, data_collection):
         input_data_collection = []
         for data in data_collection:
@@ -151,10 +154,10 @@ class Database(object):
             points = np.array(zip(positions[1, :], positions[0, :]))
             tree = cKDTree(points)
             map_x, map_y = world_map.get_index_on_map(target_position["x"], target_position["y"])
-            different_position = 5
+            different_position = 1
             positions_indices = np.random.randint(0, len(positions[0]), different_position - 1)
             p_count = int(particles_count / different_position)
-            maximal_distance = np.sqrt(5) * 20 # 1 / 0.5
+            maximal_distance = 1 / 0.5 # np.sqrt(5) * 20 # 
             iii = np.zeros(particles_count)
             index = 0
             for i in positions_indices:
@@ -255,6 +258,7 @@ class PredictionManagement(object):
         self._state_variables = []
         self._last_prediction_update_time = []
         self._default_system = 0
+        self._last_recommended_prediction_alg = self._default_system
         self._last_positions_times = [-1, -1]
         self._earliest_positions_times = [float("inf"), float("inf")]
         self._ignore_true_prediction = 0
@@ -490,6 +494,10 @@ class PredictionManagement(object):
 
     def set_recommended_prediction_alg(self):
         self._default_system = self.compute_recommended_prediction_alg()
+        if self._last_recommended_prediction_alg != self._default_system:
+            self._last_recommended_prediction_alg = self._default_system
+            self._prediction_systems[self._default_system].restart_algorithm()
+
 
     def predict_object_pose(self, time, renew=False, preparation=False):
         rounded_time = utils.Math.rounding(time)

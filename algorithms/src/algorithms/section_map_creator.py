@@ -1288,7 +1288,7 @@ class SectionMap(object):
 
     def create_regions(self, world_map, sections, obstacles):
         section_points = []
-        HEIGHTS_MIN, HEIGHTS_MAX = 2, 2
+        HEIGHTS_MIN, HEIGHTS_MAX = 3, 16
         CAMERA_MIN, CAMERA_MAX = 0, np.deg2rad(self.camera_max_angle)
         YAW_MIN, YAW_MAX = 0, 2 * np.pi
         CXPB = 0.02

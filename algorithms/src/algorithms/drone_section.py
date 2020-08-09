@@ -39,6 +39,8 @@ class SectionsAlgrotihms(object):
         self.sections = sections
         self._transitions = properties["transitions"]
         self._intersections = properties["intersections"]
+        self._true_intersections = properties["intersections"]
+        self._empty_intersections = self.create_empty_intersections(self._intersections)
         self.world_map = world_map
         self._region_plan, self._region_index, self._region_plan_score = [], 0, []
         self._section_plan, self._section_index, self._section_plan_score = [], 0, []
@@ -87,6 +89,7 @@ class SectionsAlgrotihms(object):
         self._last_returned_point_indices = None
         self._last_returned_yaw = None
         self._is_target_seen = False
+	self._need_to_update = True
 
     # inner states
     def update_probability_map(self, target_positions):
@@ -115,6 +118,14 @@ class SectionsAlgrotihms(object):
                             coordinates[coor[0]][coor[1]] = []
                         coordinates[coor[0]][coor[1]].append([section_index, region_index, point_index])
         return coordinates
+
+    def create_empty_intersections(self, intersections):
+        empty_intersections = {}
+        for key in intersections:
+            empty_intersections[key] = {}
+            for key1 in intersections[key]:
+                empty_intersections[key][key1] = {}
+        return empty_intersections
 
     def calculate_entropy(self, value):
         return np.clip(np.nan_to_num(-np.log2(value)), 0, None) * value
@@ -425,10 +436,13 @@ class SectionsAlgrotihms(object):
                 if end_point == item[0]:
                     self.log_info("Find start point item {}".format(item[1]))
                     return item[1]
-        else:
+	else:
             return self.find_closest_for_centroid(last_map_object.objects[end_point].centroid, current_map_object)
 
     def decide_right_mechanism(self, objects, end_positions, object_type):
+	if self._need_to_update:
+	    self.update_scores()
+	self._need_to_update = False
         first_obstacles = 4
         scores = [o.score for (_, o) in objects.items()]
         sorted = np.sort(scores)[::-1]
@@ -445,7 +459,14 @@ class SectionsAlgrotihms(object):
             entropies = np.array([objects[i].entropy for i in ids])
             max_entropies = np.array([objects[i].maximal_entropy for i in ids])
             sort_indices = np.argsort(scores)[::-1]
-            mask = sort_indices[:int(len(sort_indices)/ 2)]
+            avg = np.average(scores)
+            mask = []
+            for ii in sort_indices:
+                if scores[ii] < avg:
+                    break
+                mask.append(ii)
+            mask = np.array(mask)
+            #mask = sort_indices[:int(len(sort_indices)/ 2)]
             self.log_info(
                 "First obstacles {}, mask {}".format(sorted[:first_obstacles], mask))
             selected_entropies = entropies[mask]
@@ -462,6 +483,10 @@ class SectionsAlgrotihms(object):
         #      self._selection_algorithms_names[selection_function] + ", ordering: " +
         #      self._extended_selection_algorithms_names[ordering_function])
         # print("End positions ", end_positions)
+        if score_function >= 1:
+            self._intersections = self._empty_intersections
+        else:
+            self._intersections = self._true_intersections
         self.log_info(
             "Mechanism score fun {}, select fun {}, ordering fun {}".format(score_function, selection_function,
                                                                             ordering_function))
@@ -692,6 +717,14 @@ class SectionsAlgrotihms(object):
             self.log_info("End of request for point with index {}".format(i), -1)
         return point_plan[index], region, section
 
+    def delete_plan(self):
+        self._iterations_section = 0
+        self.replan_section_check = False
+        self._section_plan = np.array([])
+        self._section_plan_score = []
+        self._section_index = 0
+        self.delete_after_section_replan()
+
     def delete_after_section_replan(self):
         self.log_info("Delete after section replan")
         self._last_planned_section = -1
@@ -772,7 +805,7 @@ class SectionsAlgrotihms(object):
         self.log_info(
             "drone difference: x: {}, y: {}, z: {}, verical: {}, yaw: {}".format(dif[0], dif[1], dif[2], dif[3],
                                                                                  dif[4]))
-        if np.count_nonzero(dif < 0.1) == 5:
+        if dif[0] < 0.1 and dif[1] < 0.1 and dif[2] < 0.1 and dif[4] < 0.1:
             self.log_info("next")
             return True
         return False
@@ -823,6 +856,7 @@ class SectionsAlgrotihms(object):
             self.drone_last_position[np.r_[:3, 4:len(self.drone_last_position)]])
         converted_current_point = self.convert_to_correct_world_joints(current_point)
         if self.are_close(converted_current_point, converted_last_position):
+	    self.update_scores()
             if self.replan_section():
                 self.delete_after_section_replan()
                 if not self._silent:
@@ -913,13 +947,14 @@ class SectionAlgorithm(pm.PredictionAlgorithm):
                 utils.DataStructures.pointcloud2_to_array(target_position), map.real_width, map.real_height,
                 map.resolution)
             self._algorithm.update_probability_map(target_probability_map)
-            if not self._first_update:
-                self._algorithm.update_scores()
+            #if not self._first_update:
+            #    self._algorithm.update_scores()
             current_drone_position = None
             if "current_position" in kwargs:
                 current_drone_position = kwargs["current_position"]
             position = self._algorithm.next_point(current_drone_position)
             self.log(kwargs, target_probability_map, current_drone_position, position)
+	    self._algorithm._need_to_update = True
             return np.array([position])
         else:
             current_drone_position = None
@@ -930,6 +965,7 @@ class SectionAlgorithm(pm.PredictionAlgorithm):
             else:
                 current_drone_position = drone_position
             self.log(kwargs, None, current_drone_position, current_drone_position)
+	    self._algorithm._need_to_update = True
             return current_drone_position
 
     def log(self, kwargs, target_probability_map, drone_position, target_point):
@@ -967,3 +1003,6 @@ class SectionAlgorithm(pm.PredictionAlgorithm):
         str_array = [str(a) for a in array]
         s = delimiter.join(str_array)
         return s
+
+    def restart_algorithm(self):
+        self._algorithm.delete_plan()

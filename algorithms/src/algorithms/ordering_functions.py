@@ -48,7 +48,11 @@ class TSPath(ExtendedOrderingFunction):
         except IndexError as e:
             print("Error {}, ids {}, start index {}, end index {}".format(e, ids, start_position_index,
                                                                           end_position_index))
-            raise Exception("Start index in ids not found.")
+	    if len(selected_objects) > 0:
+		start_index = np.random.choice(selected_objects, 1)[0]
+	    else:
+		start_index = np.argmax(scored_objects)
+            #raise Exception("Start index in ids not found.")
         selected_objects_list = list(selected_objects)
         if start_index not in selected_objects_list:
             selected_objects_list.append(start_index)
@@ -100,7 +104,8 @@ class TSPath(ExtendedOrderingFunction):
             path = np.array(path)
         if not end_state_is_start_state and len(founded) == 0 and len(end_indices) > 0:
             # we had to add new
-            ind = np.in1d(path, end_indices).nonzero()[0][0]
+	    print("Path {}, end indices {}".format(path, end_indices))
+            ind = np.in1d(np.array(selected_objects_list)[path], end_indices).nonzero()[0][0]
             print("Found first index {} in path where is first end state".format(ind))
             subpath = path[:ind + 1]
             print("From path {} to subpath {}".format(path, subpath))
@@ -108,9 +113,10 @@ class TSPath(ExtendedOrderingFunction):
         elif end_state_is_start_state:
             # if last state is not in end states then either path is not plausible or the end state isnt added because start state = end state
             print("Start state is same like end state {}, {}.".format(end_position_index, e))
-            path = list(path)
-            path.append(s)
-            path = np.array(path)
+	    if len(path) > 0 and path[-1] != s: 
+		path = list(path)
+		path.append(s)
+		path = np.array(path)
         path = np.array(selected_objects_list)[path]
         # tour = self.scikitopt("sa", selected_objects_list, s, e, distances, dist_sum)
         # tour = self.scikitopt("aca", selected_objects_list, s, e, distances, dist_sum)
@@ -286,7 +292,7 @@ class AStarSearch(ExtendedOrderingFunction):
 
         def __init__(self, touched_v, touched_e, target, weight, v_inner_distances, e_distances, v_time, v_score,
                      v_maximal_time, v_entropy, v_maximal_entropy, v_required, v_visibilities, v_required_path,
-                     requested_count, battery_life, predecessors, g):
+                     requested_count, battery_life, predecessors, g, target_score):
             super(AStarSearch.Visitor, self).__init__()
             self.score_coef = 3
             self.entropy_coef = 2
@@ -312,6 +318,7 @@ class AStarSearch(ExtendedOrderingFunction):
             self.predecessors = predecessors
             self.g = g
             self.visibility = 0
+            self.target_score = target_score
             for v in self.g.vertices():
                 self.visibility += self.v_visibilities[v]
 
@@ -343,7 +350,7 @@ class AStarSearch(ExtendedOrderingFunction):
                 return value
             return value - np.clip(time / float(maximal_time), 0, 1) * (value - min_value)
 
-        def time_entropy_function(self, time, maximal_time, value, max_value):
+        def time_function(self, time, maximal_time, value, max_value):
             if maximal_time == 0:
                 return value
             return value + np.clip(time / float(maximal_time), 0, 1) * (max_value - value)
@@ -368,11 +375,11 @@ class AStarSearch(ExtendedOrderingFunction):
             time_in_target = self.v_inner_distances[source_v] + self.e_distances[e] + self.v_time[source_v]
             for v in self.g.vertices():
                 if int(v) not in path:
-                    s = self.time_score_function(time_in_target, self.v_maximal_time[v], self.v_score[v],
-                                                 0.33 * self.v_score[v])
+                    s = self.time_function(time_in_target, self.v_maximal_time[v], self.v_score[v],
+                                                 self.target_score)
                     score += (self.v_score[v] - s)
-                    entropy += self.time_entropy_function(time_in_target, self.v_maximal_time[v], self.v_entropy[v],
-                                                          self.v_maximal_entropy[v])
+                    entropy += self.time_function(time_in_target, self.v_maximal_time[v], self.v_entropy[v],
+                                                  self.v_maximal_entropy[v])
                     visibility += self.v_visibilities[v]
             return entropy, score, visibility
 
@@ -382,10 +389,10 @@ class AStarSearch(ExtendedOrderingFunction):
             weight = 0
             # time
             time_in_target = self.v_inner_distances[source_v] + self.e_distances[e] + self.v_time[source_v]
-            time_score = self.time_score_function(time_in_target, self.v_maximal_time[target_v], self.v_score[target_v],
-                                                  0.33 * self.v_score[target_v])
-            time_entropy = self.time_entropy_function(time_in_target, self.v_maximal_time[target_v],
-                                                      self.v_entropy[source_v], self.v_maximal_entropy[source_v])
+            time_score = self.time_function(time_in_target, self.v_maximal_time[target_v],
+                                            self.v_score[target_v], self.target_score)
+            time_entropy = self.time_function(time_in_target, self.v_maximal_time[target_v],
+                                              self.v_entropy[source_v], self.v_maximal_entropy[source_v])
             target_entropy = entropy - time_entropy
             target_score = score - (self.v_score[target_v] - time_score)
             target_visibility = visibility - self.v_visibilities[target_v]
@@ -421,6 +428,7 @@ class AStarSearch(ExtendedOrderingFunction):
         inner_distances /= self.max_speed
         inner_distances /= np.max(inner_distances)
         entropies = np.array([objects[i].entropy for i in ids])
+        target_score = 1/10 * np.sum(scored_objects)
         visibility /= np.max(visibility)
         g = gt.Graph()
         _ = g.add_vertex(len(objects))
@@ -555,7 +563,7 @@ class AStarSearch(ExtendedOrderingFunction):
         visitor = AStarSearch.Visitor(touch_v, touch_e, verticies_position_indices, weight, v_inner_distances,
                                       e_distances, v_time, v_score, v_maximal_time, v_entropy, v_maximal_entropy,
                                       v_required, v_visibilities, v_required_path, len(selected_objects), battery_life,
-                                      predecessors, g)
+                                      predecessors, g, target_score)
         dist, pred = gt.astar_search(g, g.vertex(start_index), weight, visitor, heuristic=lambda v: self.h(v, h_dist))
         if visitor.target_vertex is not None:
             v = visitor.target_vertex
@@ -825,12 +833,12 @@ class TimeDependentCalculation():
             new_graph[node] = 0
         # transitions
         for node in self.inner_nodes:
-            decrease = graph[node] * (1 / inner_nodes_time[node])
+            decrease = graph[node] * (1 / max(inner_nodes_time[node], 1))
             #print("decrease", decrease)
-            new_graph[node] = graph[node] * (1 - (1 / inner_nodes_time[node]))
+            new_graph[node] += graph[node] * (1 - (1 / max(inner_nodes_time[node], 1)))
             for transition_id in self.transitions[node]:
                 if transition_id in self.inner_nodes:
-                    new_graph[transition_id] = self.transitions[node][transition_id] * decrease
+                    new_graph[transition_id] += self.transitions[node][transition_id] * decrease
         return new_graph
 
 

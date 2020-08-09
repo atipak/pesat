@@ -826,6 +826,30 @@ def fill_unfilled(data, found_time=np.inf, max_time=np.inf):
         filled_data[j] = data[last_in]
     return filled_data
 
+def fill_unfilled_with_constant_and_threshold(data, constants, threshold=None, found_time=np.inf, max_time=np.inf):
+    keys = data.keys()
+    sorted = np.sort(list(keys))
+    filled_data = {}
+    end_time = int(sorted[-1]) if max_time == np.inf else int(max_time)
+    finish = False
+    for i in range(0, end_time + 1):
+        if i not in keys:
+            filled_data[i] = [i, constants[1]]
+        else:
+            if threshold is not None:
+                if data[i][1] < threshold:
+                    filled_data[i] = [i, constants[0]]
+                else:
+                    filled_data[i] = [i, constants[1]]
+            else:
+                filled_data[i] =  [i, constants[0]]
+        if i in keys and i > found_time and data[i][1] < 6.0:
+            finish = True
+        if i in keys and finish and i > found_time and data[i][1] > 6.0:
+            break
+    for j in range(i, end_time):
+        filled_data[j] = [i, constants[1]]
+    return filled_data
 
 def find_seen(data, ignore_until=0.0):
     for k in np.sort(list(data.keys())):
@@ -852,7 +876,7 @@ def parse_name(name):
     return [world_name, a[0][0], a[0][1], a[0][2], a[0][3]]
 
 
-def create_time_entropy_plot(data, names, size, ratio, folder_path):
+def create_time_entropy_plot(data, names, size, ratio, folder_path, title = None):
     fig, ax = plt.subplots()
     for i in range(len(data)):
         d = data[i]
@@ -864,7 +888,10 @@ def create_time_entropy_plot(data, names, size, ratio, folder_path):
         ax.plot(times, values, label=names[i])
     ax.set_xlabel("Čas")
     ax.set_ylabel("Entropie")
-    ax.set_title("Mapy o zastavěnosti {}%".format(ratio))
+    if title is not None:
+        ax.set_title(title)
+    else:
+        ax.set_title("Mapy o zastavěnosti {}%".format(ratio))
     # Shrink current axis by 20%
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.2,
@@ -876,7 +903,8 @@ def create_time_entropy_plot(data, names, size, ratio, folder_path):
     if not os.path.exists(os.path.join(folder_path, "images", str(size), str(ratio))):
         os.makedirs(os.path.join(folder_path, "images", str(size), str(ratio)))
     plt.savefig(
-        "{}/{}.png".format(os.path.join(folder_path, "images", str(size), str(ratio)), "entropy-{}".format("-".join(names))), cmap="gray")
+        "{}/{}.png".format(os.path.join(folder_path, "images", str(size), str(ratio)),
+                           "entropy-{}".format("-".join(names))), cmap="gray")
     plt.close()
 
 
@@ -924,20 +952,25 @@ def find_index(paths, index, end):
             return i
     return -1
 
+
 def create_subsets(i):
     a = []
+
     def findsubsets(s, n):
         return list(itertools.combinations(s, n))
+
     s = set(range(i))
     for j in range(i):
         a.extend(findsubsets(s, j + 1))
     return a
+
 
 def pick_paths(subset, paths):
     a = []
     for s in subset:
         a.append(paths[s])
     return a
+
 
 def test_time_entropy_plot():
     first_seen_paths_groups = paths_for_first_seen()
@@ -1007,27 +1040,33 @@ def test_compare_map_statistics():
     groups = divide_to_groups(paths)
     for size in groups:
         for ratio in groups[size]:
-            all_statistics, all_name = compare_map_statistics(groups[size][ratio])
-            d = section_statistics(groups[size][ratio])
-            all_statistics.update(d)
-            d = world_statistics(groups[size][ratio])
-            all_statistics.update(d)
-            s, n = compute_statistics(all_statistics)
-            create_statistics_graph(s, n, folder_path, size, ratio)
-            create_statistics_error_graph(all_statistics, folder_path, size, ratio)
+            try:
+                all_statistics, all_name = compare_map_statistics(groups[size][ratio])
+                d = section_statistics(groups[size][ratio])
+                all_statistics.update(d)
+                d = world_statistics(groups[size][ratio])
+                all_statistics.update(d)
+                s, n = compute_statistics(all_statistics)
+                create_statistics_graph(s, n, folder_path, size, ratio)
+                create_statistics_error_graph(all_statistics, folder_path, size, ratio)
+            except Exception as e:
+                print(e)
 
 
 def section_statistics(paths):
     visibility = []
     for path in paths:
-        path = os.path.join(path, "section_file.json")
-        d = SectionUtils.unjson_sections(path)
         try:
-            objects = d["objects"]
-            for i, o in objects.items():
-                for j, p in o.objects.items():
-                    for k, q in p.objects.items():
-                        visibility.append(len(q.objects) * 0.25)
+            path = os.path.join(path, "section_file.json")
+            d = SectionUtils.unjson_sections(path)
+            try:
+                objects = d["objects"]
+                for i, o in objects.items():
+                    for j, p in o.objects.items():
+                        for k, q in p.objects.items():
+                            visibility.append(len(q.objects) * 0.25)
+            except Exception as e:
+                print(e)
         except Exception as e:
             print(e)
     return {"points_visibility": visibility}
@@ -1118,9 +1157,10 @@ def approriate_metrics(name):
         return "m^2"
     return name
 
+
 def ignore_column_for_given_key(name):
     if name == "visibility":
-        return [0,1]
+        return [0, 1]
     if name == "borders_counts":
         return []
     if name == "borders_sums":
@@ -1130,7 +1170,7 @@ def ignore_column_for_given_key(name):
     if name == "points_distances":
         return []
     if name == "average_height":
-        return [0,1]
+        return [0, 1]
     if name == "clusters_distances":
         return []
     if name == "clusters_on_size":
@@ -1142,10 +1182,41 @@ def ignore_column_for_given_key(name):
     if name == "obstacles_heights":
         return []
     if name == "points_visibility":
-        return [0,1]
+        return [0, 1]
     if name == "obstacles_areas":
-        return [0,1]
+        return [0, 1]
     return []
+
+
+def divide_by_constant(name):
+    if name == "visibility":
+        return 1
+    if name == "borders_counts":
+        return 2
+    if name == "borders_sums":
+        return 1
+    if name == "reduction_effectivity":
+        return 1
+    if name == "points_distances":
+        return 1
+    if name == "average_height":
+        return 1
+    if name == "clusters_distances":
+        return 1
+    if name == "clusters_on_size":
+        return 1
+    if name == "obstacles":
+        return 1
+    if name == "areas":
+        return 1
+    if name == "obstacles_heights":
+        return 1
+    if name == "points_visibility":
+        return 1
+    if name == "obstacles_areas":
+        return 1
+    return 1
+
 
 def create_statistics_graph(data, names, folder_path, size, ratio):
     # ["Minimum", "Maximum", "Průměr"]
@@ -1182,7 +1253,7 @@ def create_statistics_graph(data, names, folder_path, size, ratio):
 def graph_groups():
     groups = [
         ["average_height", "obstacles_heights"],
-        ["points_visibility", "obstacles_areas"],
+        ["points_visibility"],
         ["borders_counts", "obstacles"]
     ]
     return groups
@@ -1194,11 +1265,14 @@ def create_statistics_error_graph(data, folder_path, size, ratio):
         means = []
         stds = []
         names = []
-        fig, ax = plt.subplots()
+        if len(group) == 1:
+            fig, ax = plt.subplots(figsize=(5.5, 8))
+        else:
+            fig, ax = plt.subplots()
         plt.box(False)
         for member in group:
-            means.append(np.mean(data[member]))
-            stds.append(np.std(data[member]))
+            means.append(np.mean(data[member]) / divide_by_constant(member))
+            stds.append(np.std(data[member]) / divide_by_constant(member))
             names.append(rename_name(member))
         x_pos = np.arange(0, len(names))
         rects = ax.bar(x_pos, means,
@@ -1214,9 +1288,9 @@ def create_statistics_error_graph(data, folder_path, size, ratio):
         if not os.path.exists(os.path.join(folder_path, "images")):
             os.makedirs(os.path.join(folder_path, "images", str(size), str(ratio)))
         plt.savefig(
-            "{}/{}.png".format(os.path.join(folder_path, "images", str(size), str(ratio)), ",".join(group)), cmap="gray")
+            "{}/{}.png".format(os.path.join(folder_path, "images", str(size), str(ratio)), ",".join(group)),
+            cmap="gray")
         plt.close()
-
 
 
 def compare_map_statistics(paths):
@@ -1226,26 +1300,29 @@ def compare_map_statistics(paths):
     all_data_statistics = {}
     for path in paths:
         path = os.path.join(path, "section_statics.json")
-        with open(path, "r") as file:
-            d = json.load(file)
-            for key in d:
-                if key not in mean_statistics:
-                    mean_statistics[key] = []
-                    min_statistics[key] = []
-                    max_statistics[key] = []
-                if key not in all_data_statistics:
-                    all_data_statistics[key] = []
-                value = d[key]
-                if isinstance(value, list):
-                    all_data_statistics[key].extend(value)
-                    mean_statistics[key].append(np.mean(value))
-                    min_statistics[key].append(np.min(value))
-                    max_statistics[key].append(np.max(value))
-                else:
-                    all_data_statistics[key].append(value)
-                    mean_statistics[key].append(value)
-                    max_statistics[key].append(value)
-                    min_statistics[key].append(value)
+        try:
+            with open(path, "r") as file:
+                d = json.load(file)
+                for key in d:
+                    if key not in mean_statistics:
+                        mean_statistics[key] = []
+                        min_statistics[key] = []
+                        max_statistics[key] = []
+                    if key not in all_data_statistics:
+                        all_data_statistics[key] = []
+                    value = d[key]
+                    if isinstance(value, list):
+                        all_data_statistics[key].extend(value)
+                        mean_statistics[key].append(np.mean(value))
+                        min_statistics[key].append(np.min(value))
+                        max_statistics[key].append(np.max(value))
+                    else:
+                        all_data_statistics[key].append(value)
+                        mean_statistics[key].append(value)
+                        max_statistics[key].append(value)
+                        min_statistics[key].append(value)
+        except Exception as e:
+            print(e)
     return all_data_statistics, "all"
 
 
@@ -1260,6 +1337,54 @@ def compute_statistics(data):
     return [min_data, max_data, mean_data], ["Minimum", "Maximum", "Průměr"]
 
 
+def read_entropy_from_file(file_path):
+    try:
+        data = get_data_from_target_prediction(file_path)
+        data = fill_unfilled(data)
+        return data
+    except Exception as e:
+        print(e)
+
+
+def read_search_and_track_from_file(file_path):
+    try:
+        data = get_data_from_target_prediction(file_path)
+        data = fill_unfilled_with_constant_and_threshold(data, [2, 3])
+        return data
+    except Exception as e:
+        print(e)
+
+
+def read_seen_unseen_from_file(file_path):
+    try:
+        data = get_data_from_target_prediction(file_path)
+        data = fill_unfilled_with_constant_and_threshold(data, [1, 2], 0.5)
+        return data
+    except Exception as e:
+        print(e)
+
+
+def create_combined_graph():
+    entropy_file_path = "/home/patik/.ros/searching_test/drone_log_file_500-0_0996-1-f--1-y-20_11_56.json.txt"
+    target_file_path = "/home/patik/.ros/searching_test/target_prediction_log_file_500-0_0996-1-f--1-y-20_11_56.json.txt"
+    data_list = [
+        read_entropy_from_file(entropy_file_path),
+        read_seen_unseen_from_file(target_file_path),
+        #read_search_and_track_from_file(entropy_file_path)
+    ]
+    names = [
+        "Entropie ",
+        "Viditelnost",
+        #"Vyhledává-Sleduje"
+    ]
+    size = 500
+    ratio = 10
+    folder_path = "/home/patik/.ros/searching_test"
+    create_time_entropy_plot(data_list, names, size, ratio, folder_path, "Mapa o zastavěnosti 10% a velikosti 500 metrů")
+
+
+create_combined_graph()
+exit(32)
 test_compare_map_statistics()
 test_time_entropy_plot()
 exit(32)

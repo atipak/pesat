@@ -2080,8 +2080,8 @@ def create_new_map(substitute_paths, create_section_file, size, built, height, p
 
 if __name__ == "__main__":
     # generate_experiments_submaps()
-    # create_new_map(True, True, 10, 0.1, 1, "f", "y")
-
+    create_new_map(True, True, 100, 0.2, -1, "f", "n")
+    # generate_random_map_by_origin_method(10, 0.1, 1.5, "f", "y", "32_15_10")
     # generate_random_maps_from_submaps()
     # grid_map = Building.grid_map()
     # dynamic_avoidance_map()
